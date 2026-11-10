@@ -36,6 +36,23 @@ npm test           # logic tests: every exercise is checked against a reference 
 Requires Node 18 or newer. The app uses a relative base path, so the contents of `dist/` can be
 hosted anywhere: GitHub Pages, a school server, or copied to a phone.
 
+## Publish it (GitHub Pages)
+
+The workflow in `.github/workflows/deploy.yml` tests, builds and publishes the app on every push to `main`.
+
+One-time setup, in the repository on github.com:
+
+1. **Settings > Pages > Build and deployment > Source: GitHub Actions.**
+2. Open the **Actions** tab, choose **Deploy to GitHub Pages**, press **Run workflow**.
+3. When the run is green, open `https://<your-username>.github.io/<repository-name>/` on a phone.
+   For this repository that is `https://stevenssemambo.github.io/coder/`.
+
+On the phone: open the link in Chrome, then menu > **Install app** (or **Add to Home screen**).
+Open **Settings** in the app and press **Download** for Python while on Wi-Fi. After that, turn on
+airplane mode and check that lessons, C and Python still run.
+
+If the run fails at **Test**, a change broke an exercise; nothing is published until it is fixed.
+
 ## How it is built
 
 ```
