@@ -4,11 +4,13 @@
 import { level1a } from './py/level1-a.js';
 import { level1b } from './py/level1-b.js';
 import { level1c } from './py/level1-c.js';
+import { level2a } from './py/level2-a.js';
+import { level2b } from './py/level2-b.js';
 
 export const pythonCourse = {
   id: 'py-start',
   language: 'python',
   title: 'Python: From Zero to Builder',
-  subtitle: 'No experience needed. In Level 1 you build a working shop till.',
-  lessons: [...level1a, ...level1b, ...level1c],
+  subtitle: 'No experience needed. Build a shop till in Level 1 and a stock manager in Level 2.',
+  lessons: [...level1a, ...level1b, ...level1c, ...level2a, ...level2b],
 };
