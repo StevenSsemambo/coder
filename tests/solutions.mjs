@@ -3,6 +3,10 @@
 
 const C = (body) => `#include <stdio.h>\n\nint main() {\n${body}\n    return 0;\n}\n`;
 
+import { level3Solution as L3 } from '../src/content/py/level3-b.js';
+
+const py25 = () => `import json\n\n${L3.PRODUCT}\n\n${L3.SHOP_BASE}\n\n${L3.SHOP_SAVE}\n\nshop = Shop()\nshop.add_product("Sugar", 4500, 20)\nshop.add_product("Rice", 3000, 15)\nshop.sell(input(), int(input()))\nshop.save("duuka.json")\n\ntomorrow = Shop()\ntomorrow.load("duuka.json")\ntomorrow.report()\n`;
+
 export const solutions = {
   'c1-hello': C('    printf("Hello, Uganda!\\n");'),
   'c1-twolines': C('    printf("Welcome to C\\n");\n    printf("Let\'s learn together\\n");'),
@@ -55,4 +59,21 @@ export const solutions = {
   'py16-sumuntil': 'total = 0\nwhile True:\n    n = int(input())\n    if n == 0:\n        break\n    total = total + n\nprint("Total:", total)\n',
   'py16-menu': 'while True:\n    choice = input()\n    if choice == "1":\n        print("Hello")\n    elif choice == "2":\n        print("Goodbye")\n        break\n    else:\n        print("Invalid")\n',
   'py17-stock': `stock = {"sugar": 20, "rice": 15, "salt": 40}\nprices = {"sugar": 4500, "rice": 3000, "salt": 800}\nsales_total = 0\n\ndef show_stock():\n    for item, qty in stock.items():\n        print(f"{item}: {qty}")\n\ndef sell(item, quantity):\n    if item not in stock:\n        print("We do not sell that")\n        return 0\n    if stock[item] < quantity:\n        print("Not enough stock")\n        return 0\n    stock[item] = stock[item] - quantity\n    return prices[item] * quantity\n\nwhile True:\n    print("1. Show stock  2. Sell  3. Close shop")\n    choice = input()\n    if choice == "1":\n        show_stock()\n    elif choice == "2":\n        item = input()\n        try:\n            quantity = int(input())\n            sales_total = sales_total + sell(item, quantity)\n        except ValueError:\n            print("Please type a number")\n    elif choice == "3":\n        break\n    else:\n        print("Invalid choice")\nprint(f"Shop closed. Sales today: {sales_total}")\n`,
+
+  'py18-sms': 'sms = input()\nname, amount, city = sms.split(",")\nprint(f"{name} sent {int(amount):,} from {city}")\n',
+  'py18-money': 'price = int(input())\nprint(f"UGX {price:,}")\n',
+  'py19-unique': 'visitors = ["Amina", "Okello", "Amina", "Nakato", "Okello", "Zed"]\nprint("Unique visitors:", len(set(visitors)))\n',
+  'py19-common': 'monday = {"Amina", "Zed", "Okello"}\ntuesday = {"Nakato", "Amina", "Zed"}\nprint(sorted(monday & tuesday))\n',
+  'py20-circle': 'import math\nr = float(input())\nprint(f"Area: {math.pi * r ** 2:.2f}")\n',
+  'py20-dice': 'import random\n\nrandom.seed(3)\nfor i in range(3):\n    print(random.randint(1, 6))\n',
+  'py21-discount': 'prices = [1000, 2500, 4000]\nprint([p * 9 // 10 for p in prices])\n',
+  'py21-cheap': 'prices = {"sugar": 4500, "rice": 3000, "salt": 800, "tea": 500}\nprint([item for item, price in prices.items() if price < 3000])\n',
+  'py22-notes': 'with open("list.txt", "w") as f:\n    f.write("milk\\neggs\\nbread\\n")\n\nnumber = 1\nwith open("list.txt") as f:\n    for line in f:\n        print(f"{number}. {line.strip()}")\n        number = number + 1\n',
+  'py22-total': 'with open("sales.txt", "w") as f:\n    f.write("sugar,4500\\nrice,3000\\nsalt,800\\ntea,500\\n")\n\ntotal = 0\nwith open("sales.txt") as f:\n    for line in f:\n        name, price = line.strip().split(",")\n        total = total + int(price)\nprint("Total:", total)\n',
+  'py22-diary': 'text = input()\nwith open("diary.txt", "w") as f:\n    f.write(text + "\\n")\nwith open("diary.txt") as f:\n    print("Saved:", f.read().strip())\n',
+  'py23-save': 'import json\n\nstock = {"sugar": 20, "rice": 15}\nwith open("stock.json", "w") as f:\n    json.dump(stock, f)\nwith open("stock.json") as f:\n    loaded = json.load(f)\nloaded["sugar"] = loaded["sugar"] + 5\nprint("Sugar now:", loaded["sugar"])\n',
+  'py23-parse': 'import json\n\ndata = json.loads(input())\nprint(f"{data[\'name\']} sent {data[\'amount\']}")\n',
+  'py24-wallet': 'class Wallet:\n    def __init__(self, balance):\n        self.balance = balance\n\n    def deposit(self, amount):\n        self.balance = self.balance + amount\n\n    def withdraw(self, amount):\n        if amount > self.balance:\n            print("Not enough money")\n        else:\n            self.balance = self.balance - amount\n\nwallet = Wallet(int(input()))\nwallet.deposit(int(input()))\nwallet.withdraw(int(input()))\nprint("Balance:", wallet.balance)\n',
+  'py24-product': 'class Product:\n    def __init__(self, name, price, stock):\n        self.name = name\n        self.price = price\n        self.stock = stock\n\n    def total_value(self):\n        return self.price * self.stock\n\nname = input()\nprice = int(input())\nstock = int(input())\np = Product(name, price, stock)\nprint(f"{p.name} stock is worth {p.total_value()}")\n',
+  'py25-shop': py25(),
 };

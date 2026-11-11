@@ -5,6 +5,19 @@
 const MAX_OUTPUT = 20000; // characters; stops runaway print loops from eating memory
 const indexURL = new URL('../pyodide/', self.location.href).href;
 
+// Deletes everything a program left in its working folder.
+const CLEANUP = [
+  'import os, shutil',
+  'for _n in os.listdir("."):',
+  '    try:',
+  '        if os.path.isdir(_n) and not os.path.islink(_n):',
+  '            shutil.rmtree(_n)',
+  '        else:',
+  '            os.remove(_n)',
+  '    except Exception:',
+  '        pass',
+].join('\n');
+
 let pyodide = null;
 let initPromise = null;
 
@@ -69,6 +82,12 @@ self.onmessage = async (ev) => {
       /* ignore */
     }
     globals.destroy();
+    // Files a program created must not leak into the next program (or the next Run of the same one).
+    try {
+      py.runPython(CLEANUP);
+    } catch (_) {
+      /* ignore */
+    }
   }
   self.postMessage({ type: 'result', id, error });
 };

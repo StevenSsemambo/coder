@@ -56,6 +56,7 @@ async function runPython(code, stdin = '') {
     error = String(e.message || e);
   }
   globals.destroy();
+  py.runPython('import os, shutil\nfor _n in os.listdir("."):\n    try:\n        shutil.rmtree(_n) if os.path.isdir(_n) else os.remove(_n)\n    except Exception:\n        pass');
   return { stdout: out.join(''), error, timedOut: false };
 }
 const runLang = (language, code, stdin) => (language === 'c' ? runC(code, stdin) : runPython(code, stdin));
