@@ -37,13 +37,15 @@ export function courseView(courseId) {
     h('p', { class: 'muted' }, course.subtitle),
     course.lessons.map((lesson, i) => {
       const done = lesson.exercises.filter((e) => state.progress[e.id]?.passed).length;
-      return h(
+      const startsLevel = lesson.level && lesson.level !== course.lessons[i - 1]?.level;
+      const row = h(
         'a',
         { class: 'card lesson-row', href: `#/lesson/${course.id}/${lesson.id}` },
         h('span', { class: 'lesson-num' }, String(i + 1)),
         h('div', { class: 'grow' }, h('h3', null, lesson.title), h('p', { class: 'muted small' }, lesson.summary)),
         h('span', { class: `chip ${done === lesson.exercises.length ? 'chip-ok' : ''}` }, `${done}/${lesson.exercises.length}`),
       );
+      return startsLevel ? [h('h2', { class: 'section-title' }, lesson.level), row] : row;
     }),
   );
   // referenced so bundlers keep the helper import used for future "continue" logic

@@ -11,6 +11,7 @@ import { translateError, extractLine } from '../src/lib/errors.js';
 import { normalizeC, prepareSource } from '../src/lib/csource.js';
 import { dayKey } from '../src/lib/storage.js';
 import { solutions } from './solutions.mjs';
+import { validateBlock, fillTemplate, reorderProgram, shuffleOrder } from '../src/content/blocks.js';
 
 const require = createRequire(import.meta.url);
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -80,6 +81,113 @@ for (const ex of all) {
 }
 for (const id of Object.keys(solutions)) check(`solution ${id} belongs to a real exercise`, ids.has(id));
 console.log(`  ${all.length} exercises checked`);
+
+// ---- 1b. lessons: every example must run and show what the lesson says -------------------
+section('Lessons (every interactive block is run on the real runtime)');
+{
+  const permutations = (items) => (items.length <= 1 ? [items] : items.flatMap((x, i) => permutations([...items.slice(0, i), ...items.slice(i + 1)]).map((rest) => [x, ...rest])));
+  const same = (a, b) => normalizeOutput(a) === normalizeOutput(b);
+  const lessonIds = new Set();
+  let blocksRun = 0;
+
+  for (const course of courses) {
+    for (const lesson of course.lessons) {
+      check(`lesson ${lesson.id}: unique id`, !lessonIds.has(lesson.id));
+      lessonIds.add(lesson.id);
+      check(`lesson ${lesson.id}: has at least one exercise`, lesson.exercises?.length >= 1);
+
+      // Lessons written in the rich format (they have a level) must follow the teaching pattern.
+      if (lesson.level) {
+        const kinds = lesson.blocks.map((b) => b.t);
+        check(`lesson ${lesson.id}: opens with a real-life story`, kinds[0] === 'story');
+        check(`lesson ${lesson.id}: ends with a recap`, kinds.at(-1) === 'recap' || kinds.slice(-2).includes('recap'));
+        const interactive = kinds.filter((k) => ['try', 'predict', 'fill', 'reorder', 'bug', 'quiz', 'project'].includes(k)).length;
+        check(`lesson ${lesson.id}: has at least 2 interactive blocks`, interactive >= 2, `found ${interactive}`);
+      }
+
+      for (const [i, block] of lesson.blocks.entries()) {
+        const id = `${lesson.id} block ${i + 1} (${block.t})`;
+        const problems = validateBlock(block);
+        check(`${id}: well formed`, problems.length === 0, problems.join('; '));
+        if (problems.length) continue;
+        const language = course.language;
+        const stdin = block.stdin ?? '';
+
+        if (block.t === 'code' && block.output !== undefined) {
+          const r = await runLang(language, block.text, '');
+          blocksRun += 1;
+          check(`${id}: shown output is what the code prints`, !r.error && same(r.stdout, block.output), `expected ${JSON.stringify(block.output)} got ${JSON.stringify(r.stdout)} ${r.error || ''}`);
+        }
+        if (block.t === 'try' || block.t === 'project') {
+          const r = await runLang(language, block.code, stdin);
+          blocksRun += 1;
+          const ok = !r.error && (block.output === undefined || same(r.stdout, block.output));
+          check(`${id}: runs and matches`, ok, `expected ${JSON.stringify(block.output)} got ${JSON.stringify(r.stdout)} ${r.error || ''}`);
+        }
+        if (block.t === 'predict') {
+          const r = await runLang(language, block.code, stdin);
+          blocksRun += 1;
+          check(`${id}: marked answer is what the code prints`, !r.error && same(r.stdout, block.options[block.answer]), `answer ${JSON.stringify(block.options[block.answer])} got ${JSON.stringify(r.stdout)} ${r.error || ''}`);
+          const wrong = block.options.filter((_, k) => k !== block.answer).filter((o) => same(r.stdout, o));
+          check(`${id}: no wrong option equals the real output`, wrong.length === 0);
+        }
+        if (block.t === 'bug') {
+          const broken = await runLang(language, block.code, stdin);
+          const fixed = await runLang(language, block.fixed, stdin);
+          blocksRun += 2;
+          check(`${id}: buggy code really fails`, !!broken.error);
+          check(`${id}: fixed code runs`, !fixed.error, fixed.error || '');
+        }
+        if (block.t === 'fill') {
+          const good = await runLang(language, fillTemplate(block), stdin);
+          blocksRun += 1;
+          check(`${id}: correct answers give the shown output`, !good.error && same(good.stdout, block.output), `got ${JSON.stringify(good.stdout)} ${good.error || ''}`);
+          for (const [b, blank] of block.blanks.entries()) {
+            for (const option of blank.options.filter((o) => o !== blank.answer)) {
+              const answers = block.blanks.map((x) => x.answer);
+              answers[b] = option;
+              const r = await runLang(language, fillTemplate(block, answers), stdin);
+              blocksRun += 1;
+              check(`${id}: wrong option "${option}" does not also work`, !!r.error || !same(r.stdout, block.output));
+            }
+          }
+        }
+        if (block.t === 'reorder') {
+          const solved = await runLang(language, reorderProgram(block), stdin);
+          blocksRun += 1;
+          check(`${id}: right order gives the shown output`, !solved.error && same(solved.stdout, block.output), `got ${JSON.stringify(solved.stdout)} ${solved.error || ''}`);
+          const order = shuffleOrder(block.lines.length, i + 1);
+          check(`${id}: starts shuffled`, !order.every((v, k) => v === k));
+          if (block.lines.length <= 6) {
+            const target = block.lines.join('\n');
+            const alt = permutations(block.lines).filter((p) => p.join('\n') !== target);
+            let works = null;
+            for (const p of alt) {
+              const r = await runLang(language, p.join('\n') + '\n', stdin);
+              blocksRun += 1;
+              if (!r.error && same(r.stdout, block.output)) { works = p; break; }
+            }
+            check(`${id}: only one order is correct`, works === null, works ? `this order also works: ${JSON.stringify(works)}` : '');
+          }
+        }
+        if (block.t === 'mistakes') {
+          for (const [k, m] of block.items.entries()) {
+            const s = m.stdin ?? '';
+            const right = await runLang(language, m.right, s);
+            blocksRun += 1;
+            check(`${id} item ${k + 1}: the fix runs`, !right.error, right.error || '');
+            if (!m.logic) {
+              const wrong = await runLang(language, m.wrong, s);
+              blocksRun += 1;
+              check(`${id} item ${k + 1}: the mistake really fails`, !!wrong.error);
+            }
+          }
+        }
+      }
+    }
+  }
+  console.log(`  ${lessonIds.size} lessons checked, ${blocksRun} code runs`);
+}
 
 // ---- 2. wrong answers are rejected -------------------------------------------------
 section('Grader behaviour');

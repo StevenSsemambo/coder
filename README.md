@@ -19,7 +19,8 @@ This is the **Phase 0 prototype** described in the project document.
 | Error translator: plain English and Kiswahili (Luganda needs a native speaker) | Working |
 | Progress, streaks and saved drafts (IndexedDB) | Working |
 | Installs to the home screen and works with the network off | Working (tested) |
-| Courses: C (4 lessons, 12 exercises) and Python (2 lessons, 6 exercises) | Draft content |
+| Courses: C (4 lessons, 12 exercises, draft) and Python (Level 1: 11 lessons, 22 exercises, ends with a shop-till project) | Python Level 1 written, C draft |
+| Rich lessons: real-life stories, analogies, runnable examples, predict-the-output, fill-the-gaps, put-in-order, find-the-bug, mistake museum, recap cards | Working |
 
 Not built yet: C memory visualizer, lecturer mode, certificates, phone-to-phone sharing,
 on-device AI tutor, Java and VB.NET. See the roadmap in the project document.
@@ -64,6 +65,14 @@ public/pack-sw.js   serves the downloaded Python files when offline
 scripts/prepare-runtimes.mjs   copies Pyodide, bundles and patches the C interpreter
 tests/         logic tests and reference solutions
 ```
+
+### Writing lessons
+
+Lessons are plain JavaScript data. The block types (story, analogy, try, predict, fill, reorder, bug,
+quiz, recap, mistakes, project) are documented at the top of `src/content/blocks.js`. `npm test` runs
+**every** example, answer, fix and project step on the real runtime, so a lesson cannot teach
+something that does not work. It also checks that puzzles have exactly one right answer and that a
+lesson opens with a story and ends with a recap.
 
 ### Runtimes
 

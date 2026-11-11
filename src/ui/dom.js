@@ -28,12 +28,16 @@ export function replace(el, ...children) {
   return append(el, children);
 }
 
-/** Turn `code` spans in a string into <code> elements. Returns an array of nodes. */
+/** Turn `code` spans and **bold** words in a string into elements. Returns an array of nodes. */
 export function richText(text) {
   return String(text)
-    .split(/(`[^`]+`)/g)
+    .split(/(`[^`]+`|\*\*[^*]+\*\*)/g)
     .filter(Boolean)
-    .map((part) => (part.startsWith('`') && part.endsWith('`') ? h('code', null, part.slice(1, -1)) : part));
+    .map((part) => {
+      if (part.startsWith('`') && part.endsWith('`') && part.length > 1) return h('code', null, part.slice(1, -1));
+      if (part.startsWith('**') && part.endsWith('**') && part.length > 4) return h('strong', null, part.slice(2, -2));
+      return part;
+    });
 }
 
 /** Close the on-screen keyboard and bring the tab bar back (called when a run starts). */

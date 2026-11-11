@@ -1,22 +1,8 @@
-import { h, richText } from '../dom.js';
+import { h } from '../dom.js';
 import { getCourse, getLesson } from '../../content/index.js';
 import { state } from '../../state.js';
 import { warmUp } from '../../lib/runners.js';
-
-function renderBlock(block) {
-  switch (block.t) {
-    case 'p':
-      return h('p', null, richText(block.text));
-    case 'code':
-      return h('pre', { class: 'code' }, h('code', null, block.text));
-    case 'list':
-      return h('ul', { class: 'bullets' }, block.items.map((item) => h('li', null, richText(item))));
-    case 'tip':
-      return h('div', { class: 'tip' }, h('strong', null, 'Tip'), h('p', null, richText(block.text)));
-    default:
-      return null;
-  }
-}
+import { renderBlock } from '../lesson-blocks.js';
 
 export function lessonView(courseId, lessonId) {
   const course = getCourse(courseId);
@@ -26,12 +12,19 @@ export function lessonView(courseId, lessonId) {
   // Start loading the language runtime while the student reads.
   warmUp(course.language);
 
+  const ctx = { cleanups: [] };
+  const position = course.lessons.findIndex((l) => l.id === lesson.id);
+  const previous = course.lessons[position - 1];
+  const next = course.lessons[position + 1];
+
   const node = h(
     'div',
     { class: 'view lesson' },
     h('a', { class: 'back', href: `#/course/${course.id}` }, `← ${course.title}`),
+    lesson.level ? h('span', { class: 'chip chip-accent lesson-level' }, lesson.level) : null,
     h('h1', null, lesson.title),
-    lesson.blocks.map(renderBlock),
+    lesson.minutes ? h('p', { class: 'muted small' }, `About ${lesson.minutes} minutes`) : null,
+    lesson.blocks.map((block, index) => renderBlock(block, { language: course.language, index, ctx })),
     h('h2', { class: 'section-title' }, 'Practice'),
     lesson.exercises.map((e) => {
       const p = state.progress[e.id];
@@ -43,6 +36,12 @@ export function lessonView(courseId, lessonId) {
         h('span', { class: 'chevron', 'aria-hidden': 'true' }, '›'),
       );
     }),
+    h(
+      'div',
+      { class: 'lesson-nav' },
+      previous ? h('a', { class: 'btn', href: `#/lesson/${course.id}/${previous.id}` }, '← Previous') : h('span'),
+      next ? h('a', { class: 'btn btn-primary', href: `#/lesson/${course.id}/${next.id}` }, 'Next lesson →') : h('a', { class: 'btn', href: `#/course/${course.id}` }, 'Back to course'),
+    ),
   );
-  return { node };
+  return { node, cleanup: () => ctx.cleanups.forEach((fn) => fn()) };
 }
