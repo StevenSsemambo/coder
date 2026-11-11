@@ -4,6 +4,12 @@
 const C = (body) => `#include <stdio.h>\n\nint main() {\n${body}\n    return 0;\n}\n`;
 
 import { level3Solution as L3 } from '../src/content/py/level3-b.js';
+import { level4Solution as L4 } from '../src/content/py/level4.js';
+import { level5Solution as L5 } from '../src/content/py/level5.js';
+
+const py34 = () => `from collections import defaultdict\nfrom datetime import date\n\n${L5.ANALYZE}\n\nn = int(input())\nlines = [input() for i in range(n)]\nby_item, by_day = analyze(lines)\nprint("Revenue by item:")\nranking = sorted(by_item.items(), key=lambda pair: pair[1], reverse=True)\nfor item, money in ranking:\n    print(f"{item}: {money:,}")\nprint(f"Total: {sum(by_item.values()):,}")\nbest = max(by_day, key=by_day.get)\nweekday = date.fromisoformat(best).strftime("%A")\nprint(f"Best day: {weekday} {best} ({by_day[best]:,})")\n`;
+
+const py29 = () => `${L4.ACCOUNT}\n\n${L4.SAVINGS}\n\nacc = SavingsAccount("Amina", 1000)\nwhile True:\n    line = input()\n    if line == "done":\n        break\n    parts = line.split()\n    action = parts[0]\n    if action == "deposit":\n        acc.deposit(int(parts[1]))\n    elif action == "withdraw":\n        acc.withdraw(int(parts[1]))\n    elif action == "interest":\n        acc.add_interest(int(parts[1]))\n    elif action == "balance":\n        print("Balance:", acc.balance)\n\nprint(acc.history)\n`;
 
 const py25 = () => `import json\n\n${L3.PRODUCT}\n\n${L3.SHOP_BASE}\n\n${L3.SHOP_SAVE}\n\nshop = Shop()\nshop.add_product("Sugar", 4500, 20)\nshop.add_product("Rice", 3000, 15)\nshop.sell(input(), int(input()))\nshop.save("duuka.json")\n\ntomorrow = Shop()\ntomorrow.load("duuka.json")\ntomorrow.report()\n`;
 
@@ -76,4 +82,20 @@ export const solutions = {
   'py24-wallet': 'class Wallet:\n    def __init__(self, balance):\n        self.balance = balance\n\n    def deposit(self, amount):\n        self.balance = self.balance + amount\n\n    def withdraw(self, amount):\n        if amount > self.balance:\n            print("Not enough money")\n        else:\n            self.balance = self.balance - amount\n\nwallet = Wallet(int(input()))\nwallet.deposit(int(input()))\nwallet.withdraw(int(input()))\nprint("Balance:", wallet.balance)\n',
   'py24-product': 'class Product:\n    def __init__(self, name, price, stock):\n        self.name = name\n        self.price = price\n        self.stock = stock\n\n    def total_value(self):\n        return self.price * self.stock\n\nname = input()\nprice = int(input())\nstock = int(input())\np = Product(name, price, stock)\nprint(f"{p.name} stock is worth {p.total_value()}")\n',
   'py25-shop': py25(),
+  'py26-top': 'sales = {"Amina": 45000, "Okello": 82000, "Nakato": 61000, "Zed": 12000}\nranking = sorted(sales.items(), key=lambda pair: pair[1], reverse=True)\nfor place, (name, total) in enumerate(ranking[:3], 1):\n    print(f"{place}. {name}")\n',
+  'py26-cheapest': 'items = [("sugar", 4500), ("rice", 3000), ("salt", 800), ("tea", 500)]\nordered = sorted(items, key=lambda item: item[1])\nprint(", ".join([name for name, price in ordered]))\n',
+  'py27-discount': 'def discount(price, percent=10):\n    return price - price * percent // 100\n\nprice = int(input())\nprint(discount(price))\nprint(discount(price, percent=25))\n',
+  'py27-stats': 'def stats(numbers):\n    return min(numbers), max(numbers), sum(numbers) / len(numbers)\n\nnumbers = [int(x) for x in input().split()]\nlow, high, average = stats(numbers)\nprint("Min:", low)\nprint("Max:", high)\nprint("Average:", average)\n',
+  'py28-savings': 'class Account:\n    def __init__(self, balance):\n        self.balance = balance\n\n    def deposit(self, amount):\n        self.balance = self.balance + amount\n\nclass SavingsAccount(Account):\n    def add_interest(self, percent):\n        interest = self.balance * percent // 100\n        self.deposit(interest)\n\nsavings = SavingsAccount(int(input()))\nsavings.add_interest(10)\nsavings.deposit(1000)\nprint("Balance:", savings.balance)\n',
+  'py28-vehicles': 'class Vehicle:\n    def __init__(self, name, wheels):\n        self.name = name\n        self.wheels = wheels\n\n    def describe(self):\n        return f"{self.name} has {self.wheels} wheels"\n\nclass Taxi(Vehicle):\n    def __init__(self):\n        super().__init__("Taxi", 4)\n\nclass Boda(Vehicle):\n    def __init__(self):\n        super().__init__("Boda boda", 2)\n\nprint(Boda().describe())\nprint(Taxi().describe())\n',
+  'py29-momo': py29(),
+  'py30-words': 'from collections import Counter\n\nline = input()\nword, n = Counter(line.split()).most_common(1)[0]\nprint(f"{word}: {n}")\n',
+  'py30-group': 'from collections import defaultdict\n\nsales = [("Kampala", 5000), ("Gulu", 2000), ("Kampala", 3000), ("Mbale", 1500), ("Gulu", 4000)]\ntotals = defaultdict(int)\nfor district, amount in sales:\n    totals[district] += amount\nfor district in sorted(totals):\n    print(f"{district}: {totals[district]}")\n',
+  'py31-due': 'from datetime import date, timedelta\n\ntext = input()\nstart = date.fromisoformat(text)\nprint("Due:", start + timedelta(days=30))\n',
+  'py31-days': 'from datetime import date\n\nfirst = input()\nsecond = input()\na = date.fromisoformat(first)\nb = date.fromisoformat(second)\nprint(f"{(b - a).days} days")\n',
+  'py32-zip': 'names = ["Amina", "Okello", "Nakato"]\nscores = [80, 65, 92]\nfor name, score in zip(names, scores):\n    print(f"{name}: {score}")\n',
+  'py32-gen': 'def evens(limit):\n    for n in range(2, limit + 1, 2):\n        yield n\n\nprint(list(evens(int(input()))))\n',
+  'py33-phone': 'def is_valid_phone(number):\n    return len(number) == 10 and number.isdigit() and number.startswith("07")\n\nassert is_valid_phone("0772123456")\nassert not is_valid_phone("077212345")\nassert not is_valid_phone("0172123456")\nassert not is_valid_phone("07721234ab")\nprint("All tests passed")\n',
+  'py33-leap': 'def is_leap(year):\n    return year % 400 == 0 or (year % 4 == 0 and year % 100 != 0)\n\nassert is_leap(2024)\nassert not is_leap(2026)\nassert not is_leap(2100)\nassert is_leap(2000)\nprint("All tests passed")\n',
+  'py34-report': py34(),
 };
