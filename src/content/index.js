@@ -1,7 +1,8 @@
 import { cCourse } from './c-course.js';
 import { pythonCourse } from './python-course.js';
+import { webCourse } from './web-course.js';
 
-export const courses = [cCourse, pythonCourse];
+export const courses = [cCourse, pythonCourse, webCourse];
 
 export const getCourse = (id) => courses.find((c) => c.id === id);
 export const getLesson = (courseId, lessonId) => getCourse(courseId)?.lessons.find((l) => l.id === lessonId);

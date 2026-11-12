@@ -1,6 +1,7 @@
 // Runs student code in Web Workers so a bad program can never freeze the interface.
 // One worker per language. A program that runs past its time limit is stopped.
 import { prepareSource } from './csource.js';
+import { runConsoleJs } from './webrun.js';
 
 const WORKER_FILES = { python: 'py.worker.js', c: 'c.worker.js' };
 export const DEFAULT_TIMEOUT_MS = 8000;
@@ -121,5 +122,7 @@ export function warmUp(language) {
 
 /** Run code. Resolves { stdout, stderr, error, timedOut, initFailed, truncated, ms }. */
 export function runCode(language, code, stdin = '', { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
+  // JavaScript with no page: runs in a throw-away worker (console.log becomes the output).
+  if (language === 'web') return runConsoleJs(typeof code === 'string' ? code : code.js || '', stdin, Math.min(timeoutMs, 5000));
   return runners[language].run(prepareSource(language, code), stdin, timeoutMs);
 }

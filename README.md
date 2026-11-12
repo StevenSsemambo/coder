@@ -19,6 +19,7 @@ This is the **Phase 0 prototype** described in the project document.
 | Error translator: plain English and Kiswahili (Luganda needs a native speaker) | Working |
 | Progress, streaks and saved drafts (IndexedDB) | Working |
 | Installs to the home screen and works with the network off | Working (tested) |
+| **Web track** (HTML, CSS, JavaScript with a sandboxed live preview and auto-checker): 9 lessons, 27 exercises. Roadmap in `docs/WEB-TRACK.md` | Level 1 to 3 started |
 | Courses: C (4 lessons, 12 exercises, draft) and Python (Level 1: 11 lessons, 22 exercises, ends with a shop-till project) | Python Level 1 written, C draft |
 | Rich lessons: real-life stories, analogies, runnable examples, predict-the-output, fill-the-gaps, put-in-order, find-the-bug, mistake museum, recap cards | Working |
 

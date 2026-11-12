@@ -30,7 +30,7 @@ const RULES = [
   // ---- both languages ------------------------------------------------------
   {
     id: 'timeout',
-    languages: ['python', 'c'],
+    languages: ['python', 'c', 'web'],
     match: /Time limit exceeded/i,
     build: () => ({
       en: {
@@ -42,6 +42,149 @@ const RULES = [
         title: 'Programu yako imechukua muda mrefu mno',
         why: 'Huenda ina kitanzi kisichoisha (infinite loop), yaani kitanzi ambacho sharti lake halibadiliki kuwa uongo, au inasubiri kitu ambacho hakitakuja.',
         fix: 'Angalia sharti la kitanzi chako na hakikisha kigezo cha kitanzi kinabadilika ndani ya kitanzi, mfano i++. Kisha endesha tena.',
+      },
+    }),
+  },
+
+
+  // ---- JavaScript (web track) -----------------------------------------------
+  {
+    id: 'js-ref',
+    languages: ['web'],
+    match: /ReferenceError: (\w+) is not defined/,
+    build: (m) => ({
+      en: {
+        title: `"${m[1]}" is not defined`,
+        why: `JavaScript does not know the name "${m[1]}". You may have misspelled it, used it before creating it with let or const, or forgotten quotes around text.`,
+        fix: `Check the spelling (capital and small letters matter). Create it first: const ${m[1]} = ... If you meant text, write "${m[1]}" in quotes.`,
+      },
+      sw: {
+        title: `"${m[1]}" haijafafanuliwa`,
+        why: `JavaScript haijui jina "${m[1]}". Huenda umekosea tahajia, umelitumia kabla ya kulitengeneza kwa let au const, au umesahau alama za nukuu kwenye maandishi.`,
+        fix: `Angalia tahajia (herufi kubwa na ndogo zinajalisha). Litengeneze kwanza: const ${m[1]} = ... Kama ulimaanisha maandishi, andika "${m[1]}" ndani ya nukuu.`,
+      },
+    }),
+  },
+  {
+    id: 'js-null-property',
+    languages: ['web'],
+    match: /Cannot read properties of (null|undefined) \(reading '([^']+)'\)|can't access property "([^"]+)", .+ is (null|undefined)|(null|undefined) is not an object \(evaluating '[^.']+\.([^')]+)'\)/,
+    build: (m) => {
+      const what = m[1] || m[4] || m[5];
+      const prop = m[2] || m[3] || m[6];
+      return {
+        en: {
+          title: `Your code tried to use "${prop}" on something that is ${what}`,
+          why: what === 'null' ? 'This almost always means getElementById or querySelector found nothing. The id or selector is spelled differently in your HTML, or your script runs before the page has that element.' : 'You asked for a part of something that does not exist yet, for example the 5th item of a list with 3 items.',
+          fix: what === 'null' ? 'Compare the id or selector in your JavaScript with your HTML, letter by letter. Put the script tag at the end of the body, just before </body>.' : 'Print the value with console.log() just before the error line, and check that it holds what you expect.',
+        },
+        sw: {
+          title: `Msimbo wako ulijaribu kutumia "${prop}" kwenye kitu ambacho ni ${what}`,
+          why: what === 'null' ? 'Hii karibu kila mara inamaanisha getElementById au querySelector haikupata kitu. Id au selector imeandikwa tofauti kwenye HTML yako, au script yako inaendeshwa kabla ukurasa haujapata kipengele hicho.' : 'Uliomba sehemu ya kitu ambacho bado hakipo, kwa mfano kipengee cha 5 kwenye orodha yenye vipengee 3.',
+          fix: what === 'null' ? 'Linganisha id au selector kwenye JavaScript yako na HTML yako, herufi kwa herufi. Weka tagi ya script mwishoni mwa body, kabla ya </body>.' : 'Chapisha thamani kwa console.log() kabla ya mstari wenye hitilafu, kisha hakikisha ina unachotarajia.',
+        },
+      };
+    },
+  },
+  {
+    id: 'js-not-function',
+    languages: ['web'],
+    match: /TypeError: ([\w.$]+) is not a function/,
+    build: (m) => ({
+      en: {
+        title: `"${m[1]}" is not a function`,
+        why: `You wrote ${m[1]}( ) as if it were a function, but it is something else, or its name is misspelled.`,
+        fix: `Check the spelling and capital letters of ${m[1]}. Method names like addEventListener and querySelector are case sensitive.`,
+      },
+      sw: {
+        title: `"${m[1]}" si function`,
+        why: `Uliandika ${m[1]}( ) kana kwamba ni function, lakini ni kitu kingine, au jina lake lina makosa ya tahajia.`,
+        fix: `Angalia tahajia na herufi kubwa za ${m[1]}. Majina kama addEventListener na querySelector yanajali herufi kubwa na ndogo.`,
+      },
+    }),
+  },
+  {
+    id: 'js-const',
+    languages: ['web'],
+    match: /TypeError: Assignment to constant variable/,
+    build: () => ({
+      en: {
+        title: 'You changed a const',
+        why: 'A variable made with const can never get a new value.',
+        fix: 'Change const to let at the place where the variable is created, if it needs to change.',
+      },
+      sw: {
+        title: 'Umebadilisha const',
+        why: 'Kigezo kilichotengenezwa kwa const hakiwezi kupewa thamani mpya.',
+        fix: 'Badilisha const kuwa let pale kigezo kinapotengenezwa, kama kinahitaji kubadilika.',
+      },
+    }),
+  },
+  {
+    id: 'js-redeclared',
+    languages: ['web'],
+    match: /SyntaxError: Identifier '(\w+)' has already been declared/,
+    build: (m) => ({
+      en: {
+        title: `"${m[1]}" was created twice`,
+        why: `You wrote let or const ${m[1]} two times. A name can be created only once.`,
+        fix: `Keep the first let or const ${m[1]}. For the second one, write only ${m[1]} = new value (no let or const).`,
+      },
+      sw: {
+        title: `"${m[1]}" imetengenezwa mara mbili`,
+        why: `Umeandika let au const ${m[1]} mara mbili. Jina linaweza kutengenezwa mara moja tu.`,
+        fix: `Acha let au const ${m[1]} ya kwanza. Kwa ya pili, andika tu ${m[1]} = thamani mpya (bila let au const).`,
+      },
+    }),
+  },
+  {
+    id: 'js-syntax-eof',
+    languages: ['web'],
+    match: /SyntaxError: Unexpected end of input|SyntaxError: missing \) after argument list|SyntaxError: Unexpected token '?}'?|SyntaxError: Unexpected token '?\)'?|SyntaxError: Unexpected EOF/,
+    build: () => ({
+      en: {
+        title: 'A bracket is missing or in the wrong place',
+        why: 'JavaScript reached a place where the brackets do not match: a ( [ { was opened and never closed, or a closing one has nothing to close.',
+        fix: 'Go through the code and count: every ( needs a ), every { needs a }, every [ needs a ]. Look at the line number shown and the lines just above it.',
+      },
+      sw: {
+        title: 'Mabano yamekosekana au yapo mahali pasipofaa',
+        why: 'JavaScript imefika mahali ambapo mabano hayalingani: ( [ { ulifunguliwa bila kufungwa, au kuna kifunga kisicho na cha kufunga.',
+        fix: 'Pitia msimbo na uhesabu: kila ( inahitaji ), kila { inahitaji }, kila [ inahitaji ]. Angalia mstari ulioonyeshwa na mistari ya juu yake.',
+      },
+    }),
+  },
+  {
+    id: 'js-syntax',
+    languages: ['web'],
+    match: /SyntaxError: (Unexpected (?:token|identifier|string|number)[^\n]*|Invalid or unexpected token)/,
+    build: (m) => ({
+      en: {
+        title: 'JavaScript cannot read this line',
+        why: `Something is written in a way JavaScript does not understand (${m[1]}). Common causes: a missing comma or quote, a missing bracket on the line above, or a typo in a keyword.`,
+        fix: 'Look at the line number shown and the line just before it. Check commas, quotes and brackets.',
+      },
+      sw: {
+        title: 'JavaScript haiwezi kusoma mstari huu',
+        why: `Kuna kitu kimeandikwa kwa namna ambayo JavaScript haielewi (${m[1]}). Sababu za kawaida: koma au nukuu iliyokosekana, bano lililokosekana kwenye mstari wa juu, au kosa la tahajia kwenye neno muhimu.`,
+        fix: 'Angalia mstari ulioonyeshwa na mstari kabla yake. Kagua koma, nukuu na mabano.',
+      },
+    }),
+  },
+  {
+    id: 'js-stack',
+    languages: ['web'],
+    match: /RangeError: Maximum call stack size exceeded/,
+    build: () => ({
+      en: {
+        title: 'A function kept calling itself',
+        why: 'A function calls itself (or two functions call each other) and never stops, so the browser ran out of room.',
+        fix: 'Make sure there is a condition that makes the function stop (return) before it calls itself again.',
+      },
+      sw: {
+        title: 'Function iliendelea kujiita yenyewe',
+        why: 'Function inajiita yenyewe (au function mbili zinaitana) bila kuacha, hivyo kivinjari kimeishiwa nafasi.',
+        fix: 'Hakikisha kuna sharti linalofanya function iache (return) kabla ya kujiita tena.',
       },
     }),
   },
@@ -398,6 +541,10 @@ const RULES = [
 /** Line number mentioned by the raw error, if any. */
 export function extractLine(raw, language) {
   if (!raw) return null;
+  if (language === 'web') {
+    const w = raw.match(/script\.js:(\d+)/);
+    return w ? Number(w[1]) : null;
+  }
   if (language === 'python') {
     const all = [...raw.matchAll(/File "<exec>", line (\d+)/g)];
     return all.length ? Number(all[all.length - 1][1]) : null;

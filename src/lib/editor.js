@@ -7,6 +7,9 @@ import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { tags } from '@lezer/highlight';
 import { python } from '@codemirror/lang-python';
 import { cpp } from '@codemirror/lang-cpp';
+import { html } from '@codemirror/lang-html';
+import { css } from '@codemirror/lang-css';
+import { javascript } from '@codemirror/lang-javascript';
 
 // Colours come from CSS variables so the editor follows light and dark mode.
 const highlight = HighlightStyle.define([
@@ -33,7 +36,13 @@ const theme = EditorView.theme({
   '.cm-matchingBracket': { backgroundColor: 'var(--selection)', outline: 'none' },
 });
 
-const languageExtension = (language) => (language === 'c' ? cpp() : python());
+const languageExtension = (language) => {
+  if (language === 'c') return cpp();
+  if (language === 'html') return html();
+  if (language === 'css') return css();
+  if (language === 'js') return javascript();
+  return python();
+};
 
 export function createEditor(parent, { language = 'python', doc = '', onChange } = {}) {
   const languageSlot = new Compartment();
@@ -49,7 +58,7 @@ export function createEditor(parent, { language = 'python', doc = '', onChange }
         indentOnInput(),
         bracketMatching(),
         closeBrackets(),
-        indentUnit.of('    '),
+        indentUnit.of(['html', 'css', 'js'].includes(language) ? '  ' : '    '),
         syntaxHighlighting(highlight),
         keymap.of([...closeBracketsKeymap, ...defaultKeymap, ...historyKeymap, indentWithTab]),
         languageSlot.of(languageExtension(language)),

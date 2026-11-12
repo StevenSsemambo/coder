@@ -6,9 +6,10 @@ import { gradeExercise } from '../../lib/grader.js';
 import { getDraft, saveDraft, clearDraft, recordAttempt, getProgress } from '../../lib/storage.js';
 import { state } from '../../state.js';
 import { symbolBar, stdinField, outputView, testResultsView, dock } from '../components.js';
+import { webExerciseView } from './web-exercise.js';
 
 const HINT_LABELS = ['Nudge', 'Bigger hint', 'Worked example'];
-const LANGUAGE_NAME = { c: 'C', python: 'Python' };
+const LANGUAGE_NAME = { c: 'C', python: 'Python', web: 'JavaScript' };
 
 function promptBlocks(text) {
   return text.split('\n\n').map((para) => h('p', null, para.split('\n').map((line, i, all) => [richText(line), i < all.length - 1 ? h('br') : null])));
@@ -28,6 +29,7 @@ function exampleBlock(ex) {
 export function exerciseView(courseId, lessonId, exerciseId) {
   const ex = getExercise(courseId, lessonId, exerciseId);
   if (!ex) return { node: h('div', { class: 'view' }, h('p', null, 'Exercise not found.')) };
+  if (ex.language === 'web') return webExerciseView(ex);
 
   warmUp(ex.language);
 

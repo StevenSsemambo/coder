@@ -1,0 +1,188 @@
+// Web track, Level 3: JavaScript. Lesson 8 runs in the console, lesson 9 makes the page react (the DOM).
+const page = (body, css = true) =>
+  `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>Mama Rose Rolex</title>${css ? '\n  <link rel="stylesheet" href="style.css">' : ''}\n</head>\n<body>\n${body}\n  <script src="script.js"></script>\n</body>\n</html>\n`;
+
+export const jsLessons = [
+  // ------------------------------------------------------------------------------------------------
+  {
+    id: 'w8-js-variables',
+    level: 'Level 3: JavaScript, make the page think',
+    title: 'JavaScript: variables, text and sums',
+    summary: 'Store values in variables, do sums, join text, and print with console.log.',
+    minutes: 22,
+    blocks: [
+      {
+        t: 'story',
+        title: "Rose's till",
+        text: 'At closing time Mama Rose adds up the day on paper, with a pencil behind her ear. Last week she lost 12,000 shillings to one wrong sum. **"A computer never gets tired,"** she says. **"Can you make one that does my sums?"**\n\nHTML is the structure, CSS is the looks, and **JavaScript** is the brain: it makes decisions and does the work. Today you teach it to count money.',
+      },
+      { t: 'analogy', text: 'A **variable** is a labelled jar. You write a label on the jar (`price`), put a value inside (`3000`), and later you just ask for the jar by its label. A jar made with `const` is sealed: the value inside can never change. A jar made with `let` can be emptied and refilled.' },
+      { t: 'p', text: '`console.log(...)` prints to the **console**, the notebook where JavaScript writes its answers. Every browser has one, and in this app it appears under your code. Print anything you want to look at.' },
+      { t: 'try', code: 'const price = 3000;\nconst quantity = 4;\nconsole.log(price * quantity);', output: '12000' },
+      { t: 'predict', code: 'let total = 3000;\ntotal = total + 4000;\nconsole.log(total);', question: 'What does this print?', options: ['7000', '3000', '4000', 'total'], answer: 0, explain: 'The jar `total` held 3000. Then it was refilled with its old value plus 4000, so it holds 7000.' },
+      { t: 'h', text: 'Numbers, text and the + trap' },
+      { t: 'list', items: ['A number is written plainly: `3000`. Text is written in quotes: `"Rolex"`. These are different types.', 'Maths: `+` add, `-` subtract, `*` multiply, `/` divide, `%` remainder.', '`+` between two numbers adds. `+` with text joins them together.'] },
+      { t: 'predict', code: 'console.log("UGX " + 3000 + 500);', question: 'What does this print?', options: ['UGX 3500', 'UGX 3000500', 'UGX 3000 500', '3500'], answer: 1, explain: 'Once the text "UGX " is involved, `+` joins instead of adding: "UGX " and 3000 make "UGX 3000", then 500 is joined on the end.' },
+      { t: 'h', text: 'Template literals: the easy way to mix text and values' },
+      { t: 'p', text: 'Use backticks (the ` key) instead of quotes, and put values inside `${ }`. This is how professional code builds messages. `toLocaleString("en-US")` adds the commas to a number: 3000 becomes 3,000.' },
+      { t: 'try', code: 'const item = "Rolex";\nconst cost = 3000;\nconsole.log(`${item} costs UGX ${cost.toLocaleString("en-US")}`);', output: 'Rolex costs UGX 3,000' },
+      { t: 'fill', prompt: 'Fill the gaps so the program greets Rose.', template: 'const ___ = "Rose";\nconsole.log("Hello, " + ___);', blanks: [{ options: ['name', 'Name', 'nam'], answer: 'name' }, { options: ['name', 'Name', '"name"'], answer: 'name' }], output: 'Hello, Rose' },
+      { t: 'reorder', prompt: 'Put the lines in an order that works: a jar must be filled before you use it.', lines: ['const price = 5000;', 'const total = price * 3;', 'console.log(total);'], output: '15000' },
+      { t: 'bug', code: 'const price = 3000;\nprice = 4000;\nconsole.log(price);', question: 'This program stops with an error. Why?', options: ['A const jar is sealed: you cannot put a new value in it', 'console.log is spelled wrong', '4000 is too big a number', 'Variable names must start with a capital letter'], answer: 0, explain: '`const` means constant. If the value must change, create the variable with `let` instead.', fixed: 'let price = 3000;\nprice = 4000;\nconsole.log(price);' },
+      {
+        t: 'mistakes',
+        items: [
+          { lang: 'js', logic: true, wrong: 'console.log("Total: " + 3000 + 500);', why: 'Everything after the text is joined as text, so you get "Total: 3000500". Put the sum in brackets so it is added first.', right: 'console.log("Total: " + (3000 + 500));' },
+          { lang: 'js', wrong: 'console.log("Hello);', why: 'The opening quote was never closed, so JavaScript reads the rest of the file as one long piece of text.', right: 'console.log("Hello");' },
+          { lang: 'js', wrong: 'const 2price = 5;', why: 'Variable names cannot start with a digit. Start with a letter: `price2`.', right: 'const price2 = 5;' },
+        ],
+      },
+      { t: 'quiz', question: 'Rose\'s `stock` changes all day: it starts at 20 and drops when she sells. Which line creates it?', options: ['let stock = 20;', 'const stock = 20;', 'stock := 20;', 'var stock 20;'], answer: 0, explain: 'The value changes, so it needs `let`. A `const` could never go down.' },
+      { t: 'project', title: "Rose's till (step 1)", text: 'Two plain rolex and one chicken rolex. The program works out the total and prints it with commas.', code: 'const plain = 3000;\nconst chicken = 7000;\nconst total = plain * 2 + chicken;\nconsole.log(`Total: UGX ${total.toLocaleString("en-US")}`);', output: 'Total: UGX 13,000' },
+      { t: 'recap', items: ['A variable is a labelled jar: `const` never changes, `let` can.', '`console.log()` prints to the console, your notebook for checking things.', 'Numbers are plain, text goes in quotes. `+` adds numbers but joins text.', 'Template literals use backticks and `${ }` to mix text and values.'], memory: 'const is sealed, let is refillable, console.log shows me.' },
+    ],
+    exercises: [
+      {
+        id: 'w8-total',
+        title: "Rose's total",
+        prompt: 'Create two variables with `const`: `price` is `3000` and `quantity` is `4`.\n\nThen print `Total: UGX 12000` with `console.log`. The number must be **calculated** from the variables, not typed in.',
+        files: ['js'],
+        starter: { js: '// Write your code here\n' },
+        solution: { js: 'const price = 3000;\nconst quantity = 4;\nconsole.log("Total: UGX " + price * quantity);\n' },
+        checks: [{ js: 'price', equals: 3000, label: 'price is 3000' }, { js: 'quantity', equals: 4, label: 'quantity is 4' }, { log: 'Total: UGX 12000', equals: true }, { uses: 'js', pattern: 'price\\s*\\*\\s*quantity', label: 'The total is calculated from price and quantity' }],
+        hints: ['Start with `const price = 3000;` on the first line, then the quantity.', 'Join the text and the sum: `"Total: UGX " + price * quantity`. Multiplication happens before the join.', '```\nconst price = 3000;\nconst quantity = 4;\nconsole.log("Total: UGX " + price * quantity);\n```'],
+      },
+      {
+        id: 'w8-receipt',
+        title: 'Print a receipt',
+        prompt: 'The variables are ready. Print a two-line receipt:\n\n`Receipt`\n`2 x Chicken rolex = UGX 14,000`\n\nBuild the second line with a **template literal** (backticks and `${ }`), calculating the money from `cost` and `quantity`. Use `.toLocaleString("en-US")` to get the comma.',
+        files: ['js'],
+        starter: { js: 'const item = "Chicken rolex";\nconst cost = 7000;\nconst quantity = 2;\n\n// Print the receipt below\n' },
+        solution: { js: 'const item = "Chicken rolex";\nconst cost = 7000;\nconst quantity = 2;\n\nconsole.log("Receipt");\nconsole.log(`${quantity} x ${item} = UGX ${(cost * quantity).toLocaleString("en-US")}`);\n' },
+        checks: [{ logs: ['Receipt', '2 x Chicken rolex = UGX 14,000'] }, { uses: 'js', pattern: '`[^`]*\\$\\{', label: 'You used a template literal with ${ }' }, { uses: 'js', pattern: 'cost\\s*\\*\\s*quantity', label: 'The money is calculated, not typed' }],
+        hints: ['Two `console.log` lines: one for the word Receipt, one for the details.', 'Inside backticks, `${quantity}` and `${item}` insert the variables. The sum needs its own brackets: `${(cost * quantity).toLocaleString("en-US")}`.', '```\nconsole.log("Receipt");\nconsole.log(`${quantity} x ${item} = UGX ${(cost * quantity).toLocaleString("en-US")}`);\n```'],
+      },
+      {
+        id: 'w8-change',
+        title: 'Change from a note',
+        prompt: 'A customer owes `12000` and pays with a `20000` note.\n\nCreate a variable called `change` that holds what Rose gives back (calculated from `paid` and `total`), then print `Change: UGX 8000`.',
+        files: ['js'],
+        starter: { js: 'const total = 12000;\nconst paid = 20000;\n\n// Work out the change and print it\n' },
+        solution: { js: 'const total = 12000;\nconst paid = 20000;\n\nconst change = paid - total;\nconsole.log("Change: UGX " + change);\n' },
+        checks: [{ js: 'change', equals: 8000, label: 'The variable change holds 8000' }, { log: 'Change: UGX 8000', equals: true }, { uses: 'js', pattern: 'paid\\s*-\\s*total', label: 'The change is calculated with paid - total' }],
+        hints: ['Change is what the customer paid minus what they owe.', 'Make a new variable: `const change = paid - total;` then print it with some text.', '```\nconst change = paid - total;\nconsole.log("Change: UGX " + change);\n```'],
+      },
+    ],
+  },
+
+  // ------------------------------------------------------------------------------------------------
+  {
+    id: 'w9-dom-events',
+    level: 'Level 3: JavaScript, make the page think',
+    title: 'The DOM: make the page react',
+    summary: 'Find elements, listen for taps, and change the page while the visitor watches.',
+    minutes: 25,
+    blocks: [
+      {
+        t: 'story',
+        title: 'Tap, and the bill grows',
+        text: 'Mama Rose watched a customer order on a big restaurant website. He tapped "Add", and the total changed on the screen **without the page reloading**. "I want that," she says. "Every tap, the bill grows."\n\nThat is JavaScript changing the page while people use it. It is how every app you know works: WhatsApp Web, Jumia, Facebook. Today you make your first page that reacts.',
+      },
+      { t: 'analogy', text: 'The page is a TV. HTML built the TV and CSS painted it. JavaScript is the **remote control**: it can press buttons on the TV (change the words, the colours, the pictures) and it can also listen for the viewer pressing something. The set of buttons the browser lets JavaScript reach is called the **DOM**.' },
+      {
+        t: 'list',
+        items: ['**Find** the element: `document.querySelector("#count")` finds the element with `id="count"` (use `#` for ids and `.` for classes, exactly like CSS).', '**Listen**: `button.addEventListener("click", () => { ... })` runs the code in the braces every time the button is tapped.', '**Change**: `count.textContent = 5` replaces the words inside the element.'],
+      },
+      {
+        t: 'web',
+        title: 'Tap the button in the preview. Change the 1 to 5 and see what happens.',
+        files: ['js', 'html'],
+        starter: {
+          html: page('  <p>Plates sold: <span id="count">0</span></p>\n  <button id="add">Sell a plate</button>', false),
+          js: 'const count = document.querySelector("#count");\nconst button = document.querySelector("#add");\nlet plates = 0;\n\nbutton.addEventListener("click", () => {\n  plates = plates + 1;\n  count.textContent = plates;\n});\n',
+        },
+        checks: [{ exists: '#add' }, { do: 'click', target: '#add' }, { text: '#count', equals: '1' }],
+      },
+      {
+        t: 'see',
+        files: {
+          html: page('  <p>Plates sold: <span id="count">0</span></p>\n  <button id="add">Sell a plate</button>', false),
+          js: 'const count = document.querySelector("#count");\nlet plates = 0;\ndocument.querySelector("#add").addEventListener("click", () => {\n  plates = plates + 1;\n  count.textContent = plates;\n});',
+        },
+        question: 'A customer taps the button twice. What does the page show?',
+        options: ['Plates sold: 2', 'Plates sold: 1', 'Plates sold: 0, because JavaScript cannot change the page', 'The page reloads'],
+        answer: 0,
+        explain: 'The code inside the braces runs on every tap: the first tap makes `plates` 1, the second makes it 2, and each time `textContent` writes it into the page.',
+        proof: [{ do: 'click', target: '#add' }, { do: 'click', target: '#add' }, { text: '#count', equals: '2' }],
+      },
+      { t: 'h', text: 'Changing the looks: classList' },
+      { t: 'p', text: 'You do not need to change colours one by one in JavaScript. Write a class in your CSS and let JavaScript add or remove it. `classList.toggle("dark")` adds the class if it is missing and removes it if it is there. One line gives you night mode.' },
+      {
+        t: 'web',
+        title: 'Night mode. Tap the button, then change dark to your own colours in the CSS tab.',
+        files: ['js', 'css'],
+        starter: {
+          html: page('  <button id="theme">Night mode</button>\n  <p>Hot rolex, every day.</p>'),
+          css: 'body {\n  font-family: system-ui, sans-serif;\n  background: #fdf1d3;\n  color: #1c1b18;\n  padding: 16px;\n}\nbody.dark {\n  background: #1c1b18;\n  color: #fdf1d3;\n}\n',
+          js: 'const button = document.querySelector("#theme");\n\nbutton.addEventListener("click", () => {\n  document.body.classList.toggle("dark");\n});\n',
+        },
+        checks: [{ js: 'document.body.classList.contains("dark")', equals: false, label: 'The page starts in day mode' }, { do: 'click', target: '#theme' }, { js: 'document.body.classList.contains("dark")', equals: true, label: 'One tap switches to night mode' }],
+      },
+      { t: 'tip', text: 'Put the `<script>` tag at the very end of the `<body>`, just before `</body>`. JavaScript runs the moment it is loaded. If it loads before the buttons exist, `querySelector` finds nothing and you get the famous error "Cannot read properties of null".' },
+      {
+        t: 'mistakes',
+        items: [
+          { lang: 'dom', wrong: 'const count = document.querySelector("count");', why: 'A selector for an id needs the hash: `"#count"`. Without it JavaScript looks for a tag named `<count>`, finds nothing, and gives you `null`.', right: 'const count = document.querySelector("#count");' },
+          { lang: 'dom', wrong: 'button.addEventListener("click", add());', why: 'The brackets RUN the function straight away and hand its result to the button. Give the function itself, without brackets, or wrap it in an arrow function.', right: 'button.addEventListener("click", add);' },
+          { lang: 'dom', wrong: '<head>\n  <script src="script.js"></script>\n</head>\n<body>\n  <button id="add">Add</button>\n</body>', why: 'The script runs before the button exists, so it cannot find it. Move the script to the end of the body.', right: '<body>\n  <button id="add">Add</button>\n  <script src="script.js"></script>\n</body>' },
+        ],
+      },
+      { t: 'quiz', question: 'Which event runs your code when someone taps a button?', options: ['"click"', '"tap-button"', '"press"', '"onbutton"'], answer: 0, explain: 'The event for a tap or a mouse click is called `"click"`. Others you will meet: `"input"` (typing), `"submit"` (a form), `"change"` (a selection).' },
+      {
+        t: 'web',
+        project: true,
+        title: "Mama Rose's order total",
+        text: 'Three buttons, one total. Each button carries its price in a `data-price` attribute, and one loop wires them all up.',
+        files: ['js'],
+        starter: {
+          html: page('  <h1>Order</h1>\n  <button id="plain" data-price="3000">Plain rolex (3,000)</button>\n  <button id="veggie" data-price="4000">Veggie rolex (4,000)</button>\n  <button id="chicken" data-price="7000">Chicken rolex (7,000)</button>\n  <p>Total: UGX <span id="total">0</span></p>', false),
+          js: 'const totalBox = document.querySelector("#total");\nconst buttons = document.querySelectorAll("button");\nlet total = 0;\n\nbuttons.forEach((button) => {\n  button.addEventListener("click", () => {\n    total += Number(button.dataset.price);\n    totalBox.textContent = total.toLocaleString("en-US");\n  });\n});\n',
+        },
+        checks: [{ do: 'click', target: '#plain' }, { do: 'click', target: '#chicken' }, { text: '#total', equals: '10,000' }],
+      },
+      { t: 'recap', items: ['The DOM is the set of page elements JavaScript can reach.', 'Find: `document.querySelector("#id")`. Listen: `addEventListener("click", ...)`. Change: `textContent`, `classList.toggle`.', 'Use `#` for ids and `.` for classes in the selector, like in CSS.', 'Put the script at the end of the body so the elements already exist.'], memory: 'Find it, listen to it, change it.' },
+    ],
+    exercises: [
+      {
+        id: 'w9-counter',
+        title: 'Count the plates',
+        prompt: 'Rose wants to count plates sold. The page has a button (`#add`) and a number (`#count`, starts at `0`).\n\nWrite the JavaScript so that every tap on the button adds `1` to the number shown.',
+        files: ['js', 'html'],
+        starter: { html: page('  <p>Plates sold: <span id="count">0</span></p>\n  <button id="add">Sell a plate</button>', false), js: '// Find the button and the number, then listen for clicks\n' },
+        solution: { html: page('  <p>Plates sold: <span id="count">0</span></p>\n  <button id="add">Sell a plate</button>', false), js: 'const count = document.querySelector("#count");\nconst button = document.querySelector("#add");\nlet plates = 0;\n\nbutton.addEventListener("click", () => {\n  plates = plates + 1;\n  count.textContent = plates;\n});\n' },
+        checks: [{ text: '#count', equals: '0', label: 'The page starts at 0' }, { uses: 'js', pattern: 'addEventListener\\(\\s*["\']click["\']', label: 'You listen for the click event' }, { do: 'click', target: '#add' }, { do: 'click', target: '#add' }, { text: '#count', equals: '2', label: 'After two taps the page shows 2' }, { do: 'click', target: '#add' }, { text: '#count', equals: '3', hidden: true }],
+        hints: ['Step 1: find the button and the number with `document.querySelector`. Step 2: add a click listener to the button.', 'Keep a counter in a `let` variable. In the listener, add 1 to it and write it into the page with `textContent`.', '```\nconst count = document.querySelector("#count");\nconst button = document.querySelector("#add");\nlet plates = 0;\nbutton.addEventListener("click", () => {\n  plates = plates + 1;\n  count.textContent = plates;\n});\n```'],
+      },
+      {
+        id: 'w9-total',
+        title: 'The order total',
+        prompt: 'The three order buttons carry their price in `data-price`. Make every tap add that price to the total, shown in `#total` **with commas** (like `10,000`).\n\nHint for reading the price: `button.dataset.price` gives a piece of text, so wrap it in `Number(...)`.',
+        files: ['js', 'html'],
+        starter: { html: page('  <h1>Order</h1>\n  <button id="plain" data-price="3000">Plain rolex (3,000)</button>\n  <button id="veggie" data-price="4000">Veggie rolex (4,000)</button>\n  <button id="chicken" data-price="7000">Chicken rolex (7,000)</button>\n  <p>Total: UGX <span id="total">0</span></p>', false), js: '// Wire up the three buttons\n' },
+        solution: { html: page('  <h1>Order</h1>\n  <button id="plain" data-price="3000">Plain rolex (3,000)</button>\n  <button id="veggie" data-price="4000">Veggie rolex (4,000)</button>\n  <button id="chicken" data-price="7000">Chicken rolex (7,000)</button>\n  <p>Total: UGX <span id="total">0</span></p>', false), js: 'const totalBox = document.querySelector("#total");\nconst buttons = document.querySelectorAll("button");\nlet total = 0;\n\nbuttons.forEach((button) => {\n  button.addEventListener("click", () => {\n    total += Number(button.dataset.price);\n    totalBox.textContent = total.toLocaleString("en-US");\n  });\n});\n' },
+        checks: [{ text: '#total', equals: '0', label: 'The total starts at 0' }, { do: 'click', target: '#plain' }, { text: '#total', equals: '3,000', label: 'Plain rolex makes the total 3,000' }, { do: 'click', target: '#chicken' }, { text: '#total', equals: '10,000', label: 'Adding a chicken rolex makes it 10,000' }, { do: 'click', target: '#veggie' }, { do: 'click', target: '#plain' }, { text: '#total', equals: '17,000', hidden: true }, { uses: 'js', pattern: 'dataset|getAttribute', label: 'You read the price from the button' }],
+        hints: ['Use `document.querySelectorAll("button")` to get all three, then `forEach` to give each one a click listener.', 'Keep `let total = 0;` outside the listener. Inside it: `total += Number(button.dataset.price);` then show it.', '```\nlet total = 0;\nbuttons.forEach((button) => {\n  button.addEventListener("click", () => {\n    total += Number(button.dataset.price);\n    totalBox.textContent = total.toLocaleString("en-US");\n  });\n});\n```'],
+      },
+      {
+        id: 'w9-theme',
+        title: 'Night mode',
+        prompt: 'The CSS already has a `body.dark` style. Write JavaScript so that tapping `#theme` switches the `dark` class on the `<body>` on and off.\n\nTap once for night mode, tap again to go back.',
+        files: ['js'],
+        starter: { html: page('  <button id="theme">Night mode</button>\n  <p>Hot rolex, every day.</p>'), css: 'body {\n  background: #fdf1d3;\n  color: #1c1b18;\n}\nbody.dark {\n  background: #1c1b18;\n  color: #fdf1d3;\n}\n', js: '// Make the button switch the dark class on the body\n' },
+        solution: { html: page('  <button id="theme">Night mode</button>\n  <p>Hot rolex, every day.</p>'), css: 'body {\n  background: #fdf1d3;\n  color: #1c1b18;\n}\nbody.dark {\n  background: #1c1b18;\n  color: #fdf1d3;\n}\n', js: 'const button = document.querySelector("#theme");\n\nbutton.addEventListener("click", () => {\n  document.body.classList.toggle("dark");\n});\n' },
+        checks: [{ js: 'document.body.classList.contains("dark")', equals: false, label: 'The page starts in day mode' }, { do: 'click', target: '#theme' }, { js: 'document.body.classList.contains("dark")', equals: true, label: 'One tap switches to night mode' }, { style: 'body', prop: 'background-color', is: '#1c1b18', label: 'The page really turns dark' }, { do: 'click', target: '#theme' }, { js: 'document.body.classList.contains("dark")', equals: false, label: 'A second tap switches back to day mode' }],
+        hints: ['You need a click listener on `#theme`.', 'The body is available as `document.body`. Its classes live in `document.body.classList`.', '```\nconst button = document.querySelector("#theme");\nbutton.addEventListener("click", () => {\n  document.body.classList.toggle("dark");\n});\n```'],
+      },
+    ],
+  },
+];

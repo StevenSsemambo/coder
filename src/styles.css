@@ -274,3 +274,27 @@ input[type='range'] { width: 100%; min-height: 36px; accent-color: var(--accent)
 .order-line { text-align: left; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--editor-bg); cursor: pointer; touch-action: manipulation; white-space: pre; overflow-x: auto; }
 .lesson-nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px !important; }
 .lesson-nav .btn { flex: 1; }
+
+/* ---- Web track: live workspace ------------------------------------------------------------ */
+.segmented { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: 1fr; }
+.workspace { display: grid; gap: 8px; }
+.file-tabs { display: flex; gap: 6px; overflow-x: auto; }
+.file-tab { min-height: 38px; padding: 0 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--muted); font: inherit; font-family: var(--mono); font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
+.file-tab.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.web-editor { height: min(34vh, 300px); }
+.preview-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.preview-head .grow { flex: 1; }
+.preview-stage { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fff; }
+.preview-stage.is-goal { border: 2px dashed var(--accent); }
+.preview-frame { display: block; width: 100%; height: min(38vh, 340px); border: 0; background: #fff; }
+.preview-offscreen { position: fixed; left: -9999px; top: 0; width: 375px; height: 667px; border: 0; visibility: hidden; }
+.see-reveal .preview-frame { border: 1px solid var(--line); border-radius: var(--radius); margin-top: 6px; height: 220px; }
+.web-console { padding: 8px 10px; border-radius: 12px; background: var(--editor-gutter); display: grid; gap: 8px; }
+.web-log { margin: 0; max-height: 180px; overflow: auto; white-space: pre-wrap; }
+.btn.has-error { border-color: var(--bad); color: var(--bad); }
+.web-tips { display: grid; gap: 6px; }
+.web-tip { margin: 0; padding: 8px 12px; border-radius: 12px; background: var(--warn-soft); font-size: 0.92rem; }
+.web-tip.soft { background: var(--accent-soft); }
+.file-name { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
+.web-try .web-editor, .project .web-editor { height: min(30vh, 260px); }
+.web-try .preview-frame, .project .preview-frame { height: min(32vh, 280px); }

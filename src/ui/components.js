@@ -53,6 +53,57 @@ const SYMBOLS = {
   ],
 };
 
+SYMBOLS.html = [
+  { label: '<', text: '<' },
+  { label: '>', text: '>' },
+  { label: '</', text: '</' },
+  { label: '/>', text: '/>' },
+  { label: '=\"\"', text: '=\"\"', back: 1 },
+  { label: '\" \"', text: '\"\"', back: 1 },
+  { label: '!', text: '!' },
+  { label: '#', text: '#' },
+  { label: '-', text: '-' },
+  { label: '&', text: '&' },
+  { label: ':', text: ':' },
+  { label: '/', text: '/' },
+  { label: '.', text: '.' },
+];
+SYMBOLS.css = [
+  { label: '{ }', text: '{}', back: 1 },
+  { label: ':', text: ':' },
+  { label: ';', text: ';' },
+  { label: '#', text: '#' },
+  { label: '.', text: '.' },
+  { label: '%', text: '%' },
+  { label: '( )', text: '()', back: 1 },
+  { label: ',', text: ',' },
+  { label: '-', text: '-' },
+  { label: '@', text: '@' },
+  { label: '\" \"', text: '\"\"', back: 1 },
+  { label: '/* */', text: '/*  */', back: 3 },
+];
+SYMBOLS.js = [
+  { label: '( )', text: '()', back: 1 },
+  { label: '{ }', text: '{}', back: 1 },
+  { label: '[ ]', text: '[]', back: 1 },
+  { label: '=>', text: '=>' },
+  { label: '\" \"', text: '\"\"', back: 1 },
+  { label: "' '", text: "''", back: 1 },
+  { label: '` `', text: '``', back: 1 },
+  { label: '${ }', text: '${}', back: 1 },
+  { label: ';', text: ';' },
+  { label: '=', text: '=' },
+  { label: '===', text: '===' },
+  { label: '.', text: '.' },
+  { label: '!', text: '!' },
+  { label: '+', text: '+' },
+  { label: '-', text: '-' },
+  { label: '*', text: '*' },
+  { label: '/', text: '/' },
+  { label: ',', text: ',' },
+  { label: ':', text: ':' },
+];
+
 export function symbolBar(editor, language) {
   const keep = (e) => e.preventDefault(); // keep the keyboard open and the cursor in place
   const key = (label, title, onClick, extra = '') =>
@@ -168,6 +219,26 @@ export function testResultsView(result, language) {
     h('div', { class: `results-head ${result.passed ? 'pass' : 'fail'}` }, result.passed ? 'All tests passed' : `${result.passedCount} of ${result.total} tests passed`),
     h('ul', { class: 'tests' }, rows),
     result.firstError ? errorCard(result.firstError, language) : null,
+  );
+}
+
+/** Results of the automatic page checker (web exercises). */
+export function webResultsView(result) {
+  const rows = result.cases.map((c) => {
+    const mark = c.passed ? '✓' : '✗';
+    return h(
+      'li',
+      { class: `test ${c.passed ? 'pass' : 'fail'}` },
+      h('div', { class: 'test-head' }, h('span', { class: 'mark' }, mark), h('span', null, c.hidden && !c.passed ? 'A hidden check did not pass yet' : c.hidden ? 'Hidden check' : c.name)),
+      !c.passed && !c.hidden && c.detail ? h('div', { class: 'test-detail' }, h('p', null, c.detail)) : null,
+    );
+  });
+  return h(
+    'div',
+    { class: 'results' },
+    h('div', { class: `results-head ${result.passed ? 'pass' : 'fail'}` }, result.passed ? 'Every check passed' : `${result.passedCount} of ${result.total} checks passed`),
+    h('ul', { class: 'tests' }, rows),
+    result.firstError ? errorCard(result.firstError, 'web') : null,
   );
 }
 

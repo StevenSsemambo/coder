@@ -4,6 +4,8 @@ import { createEditor } from '../lib/editor.js';
 import { runCode } from '../lib/runners.js';
 import { stdinField, outputView, symbolBar } from './components.js';
 import { shuffleOrder } from '../content/blocks.js';
+import { createWorkspace, renderOnce } from './web-workspace.js';
+import { filesFrom, FILE_NAMES } from '../lib/webgrade.js';
 
 const CHOICE_LABEL = { predict: 'Predict the output', bug: 'Find the bug', quiz: 'Quick check' };
 
@@ -182,6 +184,64 @@ function reorderBlock(block, seed) {
   );
 }
 
+// ---- live page example (web track) ------------------------------------------------------------
+function webBlock(block, ctx) {
+  const workspace = createWorkspace({ files: block.files, starter: block.starter, assets: block.assets, api: block.api, symbolsInside: true });
+  ctx.cleanups.push(() => workspace.destroy());
+  const reset = h('button', { class: 'btn btn-ghost btn-small', type: 'button', onclick: () => workspace.setFiles(block.starter) }, 'Reset');
+  return h(
+    'div',
+    { class: block.project ? 'project' : 'card try web-try' },
+    block.project ? h('div', { class: 'project-head' }, h('span', { class: 'chip chip-accent' }, 'Project step'), h('strong', null, block.title)) : h('div', { class: 'label' }, block.title || 'Try it yourself: change the code and watch the page'),
+    block.text ? paragraphs(block.text) : null,
+    workspace.node,
+    h('div', { class: 'try-actions' }, reset),
+  );
+}
+
+// ---- "what will the browser show?" (web track) ----------------------------------------------------
+function seeBlock(block, ctx) {
+  const feedback = h('div', { class: 'feedback', 'aria-live': 'polite' });
+  const reveal = h('div', { class: 'see-reveal' });
+  const buttons = [];
+  const files = filesFrom(block.files);
+  block.options.forEach((option, index) => {
+    const btn = h(
+      'button',
+      {
+        class: 'choice',
+        type: 'button',
+        onclick: () => {
+          if (index === block.answer) {
+            btn.classList.add('ok');
+            buttons.forEach((b) => { b.disabled = true; });
+            replace(feedback, h('div', { class: 'feedback-ok' }, h('strong', null, 'Correct! '), richText(block.explain)));
+            const preview = renderOnce(files, { assets: block.assets, api: block.api });
+            ctx.cleanups.push(() => preview.destroy());
+            replace(reveal, h('div', { class: 'label' }, 'Here is what the browser really shows'), preview.frame);
+          } else {
+            btn.classList.add('wrong');
+            btn.disabled = true;
+            replace(feedback, h('div', { class: 'feedback-bad' }, 'Not quite. Read the code again, tag by tag, and try another answer.'));
+          }
+        },
+      },
+      h('span', { class: 'choice-text' }, option),
+    );
+    buttons.push(btn);
+  });
+  return h(
+    'div',
+    { class: 'card choice-card' },
+    h('div', { class: 'label' }, 'What will the browser show?'),
+    ['html', 'css', 'js'].filter((f) => files[f].trim()).map((f) => [h('div', { class: 'file-name' }, FILE_NAMES[f]), h('pre', { class: 'code' }, h('code', null, files[f]))]),
+    h('p', { class: 'question' }, richText(block.question)),
+    h('div', { class: 'choices' }, buttons),
+    feedback,
+    reveal,
+  );
+}
+
 // ---- the block switch ----------------------------------------------------------------------
 export function renderBlock(block, { language, index = 0, ctx }) {
   switch (block.t) {
@@ -245,6 +305,10 @@ export function renderBlock(block, { language, index = 0, ctx }) {
       return fillBlock(block);
     case 'reorder':
       return reorderBlock(block, index + 1);
+    case 'web':
+      return webBlock(block, ctx);
+    case 'see':
+      return seeBlock(block, ctx);
     default:
       return null;
   }

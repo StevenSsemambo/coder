@@ -19,8 +19,14 @@
 //   { t: 'quiz', question, options: [], answer, explain }
 //   { t: 'fill', prompt, template, blanks: [{ options: [], answer }], output, stdin? }   fill the ___ gaps
 //   { t: 'reorder', prompt, lines: [], output, stdin? }   put the lines in the right order
+//
+// Web-track blocks (the tests render every one in a real DOM)
+//   { t: 'web', files: ['html','css','js'], starter: { html, css, js }, title?, text?, project?, checks? }
+//        an editable page with a live preview. `checks` (optional) must pass on the starter: they prove what the lesson claims.
+//   { t: 'see', files: { html, css, js }, question, options: [], answer, explain, proof: [checks] }
+//        "What will the browser show?" The `proof` checks must pass on the code: they prove the marked answer is true.
 
-export const BLOCK_TYPES = ['p', 'h', 'list', 'tip', 'code', 'story', 'analogy', 'recap', 'mistakes', 'try', 'project', 'predict', 'bug', 'quiz', 'fill', 'reorder'];
+export const BLOCK_TYPES = ['p', 'h', 'list', 'tip', 'code', 'story', 'analogy', 'recap', 'mistakes', 'try', 'project', 'predict', 'bug', 'quiz', 'fill', 'reorder', 'web', 'see'];
 
 /** The program text a `fill` block makes when the blanks hold `answers` (default: the correct ones). */
 export function fillTemplate(block, answers = block.blanks.map((b) => b.answer)) {
@@ -117,6 +123,16 @@ export function validateBlock(block) {
       if (!isText(block.prompt)) problems.push('missing prompt');
       if (!Array.isArray(block.lines) || block.lines.length < 3) problems.push('needs at least 3 lines');
       if (typeof block.output !== 'string') problems.push('missing output (the tests check it)');
+      break;
+    case 'web':
+      if (!Array.isArray(block.files) || !block.files.length || !block.files.every((f) => ['html', 'css', 'js'].includes(f))) problems.push('files must list html, css and/or js');
+      if (!block.starter || typeof block.starter !== 'object' || !Object.values(block.starter).some(isText)) problems.push('missing starter code');
+      if (block.project && !isText(block.title)) problems.push('a project step needs a title');
+      break;
+    case 'see':
+      if (!block.files || typeof block.files !== 'object' || !Object.values(block.files).some(isText)) problems.push('missing files');
+      checkChoice(block, problems);
+      if (!Array.isArray(block.proof) || !block.proof.length) problems.push('needs proof checks that make the answer verifiable');
       break;
     default:
       break;
