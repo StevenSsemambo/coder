@@ -3,107 +3,9 @@ import { h, richText } from './dom.js';
 import { state } from '../state.js';
 import { translateError, cleanRaw } from '../lib/errors.js';
 import { PACKS, formatBytes } from '../lib/packs.js';
+import { SYMBOLS, editorLanguage } from '../lib/symbols.js';
 
 // ---- symbol bar (the big fix for typing code on a phone keyboard) ------------
-const SYMBOLS = {
-  c: [
-    { label: 'Tab', text: '    ' },
-    { label: ';', text: ';' },
-    { label: '{ }', text: '{}', back: 1 },
-    { label: '( )', text: '()', back: 1 },
-    { label: '[ ]', text: '[]', back: 1 },
-    { label: '" "', text: '""', back: 1 },
-    { label: '&', text: '&' },
-    { label: '*', text: '*' },
-    { label: '#', text: '#' },
-    { label: '<', text: '<' },
-    { label: '>', text: '>' },
-    { label: '=', text: '=' },
-    { label: '==', text: '==' },
-    { label: '%', text: '%' },
-    { label: '%d', text: '%d' },
-    { label: '\\n', text: '\\n' },
-    { label: '!', text: '!' },
-    { label: '+', text: '+' },
-    { label: '-', text: '-' },
-    { label: '/', text: '/' },
-    { label: ',', text: ',' },
-  ],
-  python: [
-    { label: 'Tab', text: '    ' },
-    { label: ':', text: ':' },
-    { label: '( )', text: '()', back: 1 },
-    { label: '[ ]', text: '[]', back: 1 },
-    { label: '{ }', text: '{}', back: 1 },
-    { label: '" "', text: '""', back: 1 },
-    { label: "' '", text: "''", back: 1 },
-    { label: '=', text: '=' },
-    { label: '==', text: '==' },
-    { label: '#', text: '#' },
-    { label: '_', text: '_' },
-    { label: '+', text: '+' },
-    { label: '-', text: '-' },
-    { label: '*', text: '*' },
-    { label: '/', text: '/' },
-    { label: '%', text: '%' },
-    { label: '<', text: '<' },
-    { label: '>', text: '>' },
-    { label: ',', text: ',' },
-    { label: '.', text: '.' },
-  ],
-};
-
-SYMBOLS.html = [
-  { label: '<', text: '<' },
-  { label: '>', text: '>' },
-  { label: '</', text: '</' },
-  { label: '/>', text: '/>' },
-  { label: '=\"\"', text: '=\"\"', back: 1 },
-  { label: '\" \"', text: '\"\"', back: 1 },
-  { label: '!', text: '!' },
-  { label: '#', text: '#' },
-  { label: '-', text: '-' },
-  { label: '&', text: '&' },
-  { label: ':', text: ':' },
-  { label: '/', text: '/' },
-  { label: '.', text: '.' },
-];
-SYMBOLS.css = [
-  { label: '{ }', text: '{}', back: 1 },
-  { label: ':', text: ':' },
-  { label: ';', text: ';' },
-  { label: '#', text: '#' },
-  { label: '.', text: '.' },
-  { label: '%', text: '%' },
-  { label: '( )', text: '()', back: 1 },
-  { label: ',', text: ',' },
-  { label: '-', text: '-' },
-  { label: '@', text: '@' },
-  { label: '\" \"', text: '\"\"', back: 1 },
-  { label: '/* */', text: '/*  */', back: 3 },
-];
-SYMBOLS.js = [
-  { label: '( )', text: '()', back: 1 },
-  { label: '{ }', text: '{}', back: 1 },
-  { label: '[ ]', text: '[]', back: 1 },
-  { label: '=>', text: '=>' },
-  { label: '\" \"', text: '\"\"', back: 1 },
-  { label: "' '", text: "''", back: 1 },
-  { label: '` `', text: '``', back: 1 },
-  { label: '${ }', text: '${}', back: 1 },
-  { label: ';', text: ';' },
-  { label: '=', text: '=' },
-  { label: '===', text: '===' },
-  { label: '.', text: '.' },
-  { label: '!', text: '!' },
-  { label: '+', text: '+' },
-  { label: '-', text: '-' },
-  { label: '*', text: '*' },
-  { label: '/', text: '/' },
-  { label: ',', text: ',' },
-  { label: ':', text: ':' },
-];
-
 export function symbolBar(editor, language) {
   const keep = (e) => e.preventDefault(); // keep the keyboard open and the cursor in place
   const key = (label, title, onClick, extra = '') =>
@@ -114,7 +16,7 @@ export function symbolBar(editor, language) {
     { class: 'symbar', role: 'toolbar', 'aria-label': 'Code symbols' },
     key('Undo', 'Undo', () => editor.undo(), 'sym-wide'),
     key('Redo', 'Redo', () => editor.redo(), 'sym-wide'),
-    SYMBOLS[language].map((s) => key(s.label, `Insert ${s.label}`, () => editor.insert(s.text, s.back || 0))),
+    (SYMBOLS[editorLanguage(language)] || SYMBOLS.python).map((s) => key(s.label, `Insert ${s.label}`, () => editor.insert(s.text, s.back || 0))),
   );
 }
 

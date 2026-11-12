@@ -9,7 +9,7 @@
     "dev": "vite",
     "build": "node scripts/prepare-runtimes.mjs && vite build",
     "preview": "vite preview --host",
-    "test": "node scripts/prepare-runtimes.mjs && node tests/run.mjs"
+    "test": "node scripts/prepare-runtimes.mjs && node tests/run.mjs && node tests/render.mjs"
   },
   "devDependencies": {
     "@codemirror/autocomplete": "^6.20.4",

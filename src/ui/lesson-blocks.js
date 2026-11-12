@@ -4,6 +4,7 @@ import { createEditor } from '../lib/editor.js';
 import { runCode } from '../lib/runners.js';
 import { stdinField, outputView, symbolBar } from './components.js';
 import { shuffleOrder } from '../content/blocks.js';
+import { editorLanguage } from '../lib/symbols.js';
 import { createWorkspace, renderOnce } from './web-workspace.js';
 import { filesFrom, FILE_NAMES } from '../lib/webgrade.js';
 
@@ -15,7 +16,7 @@ const paragraphs = (text) => String(text).split('\n\n').map((para) => h('p', nul
 // ---- editable, runnable example ----------------------------------------------
 function tryBlock(block, language, ctx, label = 'Try it yourself') {
   const mount = h('div', { class: 'try-mount' });
-  const editor = createEditor(mount, { language, doc: block.code });
+  const editor = createEditor(mount, { language: editorLanguage(language), doc: block.code });
   ctx.cleanups.push(() => editor.destroy());
 
   const stdin = block.stdin !== undefined ? stdinField(block.stdin) : null;

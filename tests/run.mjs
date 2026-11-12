@@ -13,6 +13,7 @@ import { dayKey } from '../src/lib/storage.js';
 import { solutions } from './solutions.mjs';
 import { validateBlock, fillTemplate, reorderProgram, shuffleOrder } from '../src/content/blocks.js';
 import { JSDOM, VirtualConsole } from 'jsdom';
+import { SYMBOLS, editorLanguage } from '../src/lib/symbols.js';
 import { checkList, shapeResults, filesFrom } from '../src/lib/webgrade.js';
 
 const require = createRequire(import.meta.url);
@@ -337,6 +338,12 @@ section('Error translator (real messages from the runtimes)');
 
 
 // ---- 4b. web engine ---------------------------------------------------------------------
+section('Every course language has an editor language and a symbol bar (a missing one crashed lesson 8)');
+for (const course of courses) {
+  const lang = editorLanguage(course.language);
+  check(`${course.id}: symbol bar exists for "${lang}"`, Array.isArray(SYMBOLS[lang]) && SYMBOLS[lang].length > 5);
+}
+for (const l of ['html', 'css', 'js']) check(`web file type "${l}" has a symbol bar`, Array.isArray(SYMBOLS[l]) && SYMBOLS[l].length > 5);
 section('Web engine (loop guard, linters, line numbers, pretend server, checker)');
 {
   const G = SMEngine.guardLoops;
