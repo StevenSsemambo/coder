@@ -64,7 +64,7 @@ New: `web` (editable live page; optional `checks` must pass) and `see` ("what wi
 ```
 
 ### Checks
-`{ exists }` `{ count, equals|min|max }` `{ text, equals|contains|matches, index? }` `{ attr, name, equals|contains|exists:false }`
+`{ exists }` `{ count, equals|min|max }` `{ text, equals|contains|matches, index? }` `{ attr, name, equals|contains|matches|present:true|false }`
 `{ style, prop, is|not|contains|atLeast|atMost }` `{ order: [selectors] }` `{ visible, is? }` `{ field, equals }`
 `{ uses: 'html|css|js', pattern }` `{ js: 'expression', equals }` `{ log, equals? }` `{ logs: [...] }` `{ noErrors }`
 `{ lint: 'html|css' }` `{ rule: 'img-alt|html-lang|viewport|title|one-h1|form-labels|link-text|buttons-type' }`

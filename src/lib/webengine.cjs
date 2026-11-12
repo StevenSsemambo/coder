@@ -499,7 +499,7 @@ var SMEngine = (function () {
         if (!els.length) return missing(c, c.attr);
         var ok = els.some(function (e) {
           var v = e.getAttribute(c.name);
-          if (c.exists === false) return v === null;
+          if (c.present === false) return v === null;
           if (v === null) return false;
           if (c.equals === undefined && c.contains === undefined && c.matches === undefined) return true;
           return compare(c, v);
