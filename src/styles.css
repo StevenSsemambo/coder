@@ -298,3 +298,26 @@ input[type='range'] { width: 100%; min-height: 36px; accent-color: var(--accent)
 .file-name { font-family: var(--mono); font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
 .web-try .web-editor, .project .web-editor { height: min(30vh, 260px); }
 .web-try .preview-frame, .project .preview-frame { height: min(32vh, 280px); }
+
+/* ---- Fit on small phones --------------------------------------------------------------------- */
+/* Rules like `.dock { display: grid }` were beating the hidden attribute, so hidden things showed. */
+[hidden] { display: none !important; }
+/* A grid item may not shrink below its content by default: one wide symbol bar made the whole page wider than the screen. */
+.workspace { grid-template-columns: minmax(0, 1fr); }
+.workspace > *, .web-box, .web-box > * { min-width: 0; max-width: 100%; }
+.playground, .web-exercise, .web-box { overflow-x: clip; }
+.file-tabs { scrollbar-width: none; }
+.file-tabs::-webkit-scrollbar { display: none; }
+.preview-head .btn-small { min-height: 34px; padding: 0 10px; font-size: 0.85rem; }
+.web-log, .web-console, .web-tip, pre.code { max-width: 100%; overflow-wrap: anywhere; }
+.web-console pre.code, .web-exercise pre.code { overflow-x: auto; overflow-wrap: normal; }
+.preview-frame { max-width: 100%; }
+.web-editor .cm-editor { height: 100%; }
+@media (max-width: 420px) {
+  .web-editor { height: min(32vh, 260px); min-height: 150px; }
+  .preview-frame { height: min(34vh, 300px); }
+  .web-try .preview-frame, .project .preview-frame { height: 240px; }
+  .preview-head .label { display: none; }
+  .preview-head .grow { display: none; }
+  .preview-head { justify-content: flex-start; }
+}
