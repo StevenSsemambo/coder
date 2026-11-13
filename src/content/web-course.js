@@ -8,11 +8,14 @@ import { html2Lessons } from './web/html2.js';
 import { css2Lessons } from './web/css2.js';
 import { js2aLessons } from './web/js2a.js';
 import { js2bLessons } from './web/js2b.js';
+import { dom2Lessons } from './web/dom2.js';
+import { dom3Lessons } from './web/dom3.js';
+import { proLessons } from './web/pro.js';
 
 export const webCourse = {
   id: 'web-start',
   language: 'web',
   title: 'Web: Build Real Websites',
   subtitle: 'HTML, CSS and JavaScript with a live preview. Build a real business website for Mama Rose, make it beautiful and responsive, then make it react to taps.',
-  lessons: [...htmlLessons, ...html2Lessons, ...cssLessons, ...css2Lessons, jsLessons[0], ...js2aLessons, ...js2bLessons, jsLessons[1]],
+  lessons: [...htmlLessons, ...html2Lessons, ...cssLessons, ...css2Lessons, jsLessons[0], ...js2aLessons, ...js2bLessons, jsLessons[1], ...dom2Lessons, ...dom3Lessons, ...proLessons],
 };

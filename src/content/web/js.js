@@ -78,7 +78,7 @@ export const jsLessons = [
   // ------------------------------------------------------------------------------------------------
   {
     id: 'w9-dom-events',
-    level: 'Level 3: JavaScript, make the page think',
+    level: 'Level 4: JavaScript in the page',
     title: 'The DOM: make the page react',
     summary: 'Find elements, listen for taps, and change the page while the visitor watches.',
     minutes: 25,

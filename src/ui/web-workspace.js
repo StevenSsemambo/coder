@@ -55,8 +55,9 @@ export function createWorkspace({ files: editable = ['html', 'css', 'js'], start
   const consoleBtn = h('button', { type: 'button', class: 'btn btn-small', onclick: () => { consoleOpen = !consoleOpen; drawConsole(); } }, 'Console');
   const goalBtn = goal ? h('button', { type: 'button', class: 'btn btn-small', onclick: toggleGoal }, 'See the goal') : null;
   const label = h('span', { class: 'label' }, hasPage() ? 'Live preview' : 'Console');
+  const reloadBtn = h('button', { type: 'button', class: 'btn btn-small', onclick: render, title: 'Load the page again from scratch (saved data stays)' }, 'Reload page');
   const download = h('button', { type: 'button', class: 'btn btn-small btn-ghost', onclick: saveAsFile, title: 'Download this page as a file you can send or open in any browser' }, 'Save page');
-  const head = h('div', { class: 'preview-head' }, label, h('span', { class: 'grow' }), goalBtn, consoleBtn, hasPage() ? download : null);
+  const head = h('div', { class: 'preview-head' }, label, h('span', { class: 'grow' }), goalBtn, hasPage() ? reloadBtn : null, consoleBtn, hasPage() ? download : null);
 
   function drawConsole() {
     consoleBtn.textContent = errors.length ? `Console (${errors.length} error${errors.length > 1 ? 's' : ''})` : logs.length ? `Console (${logs.length})` : 'Console';

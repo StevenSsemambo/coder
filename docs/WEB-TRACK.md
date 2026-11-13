@@ -3,40 +3,26 @@
 Course id `web-start`, language `web`. One running project: a website for **Mama Rose Rolex**, Wandegeya, Kampala.
 Goal: a learner finishes able to build, deploy and sell a small business website or web app.
 
-## What exists now (9 lessons, 27 auto-checked exercises)
+## What exists now: 36 lessons, about 100 auto-checked exercises
 
 | Level | Lessons |
 |---|---|
-| 1. Your first web page (HTML) | First page (tags, headings, paragraphs) / Text, lists and links (tel:, WhatsApp) / Pictures and a proper page (alt text, skeleton, semantic tags) |
-| 2. Make it beautiful (CSS) | Colour and text, linking the stylesheet / Box model, classes / Flexbox / Responsive: media queries, fluid images, grid |
-| 3. JavaScript | Variables, text and sums (console) / The DOM: events, textContent, classList |
+| 1. Your first web page (HTML) | First page / Text, lists, links (tel:, WhatsApp) / Pictures, skeleton, semantic tags / **Forms** (inputs, labels, radio, select, validation attributes) / **Tables, figure, details, the head** (title, description, Open Graph, icon) |
+| 2. Make it beautiful (CSS) | Colour and text, linking the stylesheet / Box model, classes / Flexbox / Responsive: media queries, fluid images, grid / **Selectors, specificity, inheritance** / **Units, display, position, overflow, aspect-ratio** / **Type, gradients, shadows, buttons** / **Transitions, transforms, keyframes, reduced motion** / **Variables, dark mode, reset, naming** / **Grid in depth** (areas, span) |
+| 3. JavaScript, make the page think | Variables, text, sums / **Decisions** / **Loops** / **Functions, scope** / **Arrays** / **Objects, destructuring, spread, JSON** / **map, filter, reduce, sort** / **Strings, numbers, Math, dates** / **try/catch, throw, debugging method** / **Classes, inheritance, modules** |
+| 4. JavaScript in the page | The DOM and events / **Rendering lists, event delegation, XSS** / **Forms and validation (submit, input events, regex)** / **localStorage and JSON** / **fetch, promises, async/await, loading and error states** / **Project: Order App** (menu from API, cart, saved, checkout) |
+| 5. Go professional | **Accessibility** / **Speed, SEO (JSON-LD), security** / **Git and GitHub Pages, paths and case bugs** / **Capstone: a client website from a brief** / **Going to market: finding clients, pricing, deposits, Mobile Money, WhatsApp order links** |
 
-## Roadmap: what to write next (the engine already supports all of it)
+## Coverage audit: is anything left out?
 
-**Level 3 (finish JavaScript)**
-- 10 Decisions: `if / else`, comparison, `&&` `||` (discount rules, "open now?")
-- 11 Loops: `for`, `while`, `for...of` (print a menu, add up a till)
-- 12 Functions: parameters, return, arrow functions (`calculateTotal`)
-- 13 Arrays and objects: the menu as data, `push`, `find`
-- 14 Array methods: `map`, `filter`, `reduce` (sales report, search box)
+Covered: the full HTML element set a business site needs, the whole CSS toolbox used in production (selectors and specificity, box model, units, display, position, flexbox, grid, responsive design, typography, backgrounds, transitions and animations, variables, dark mode, naming), core JavaScript (types, operators, control flow, functions, arrays, objects, classes, modules, errors, async), the DOM (events, delegation, forms), browser storage, networking with `fetch`, accessibility, SEO, performance, web security basics, version control and deployment, and the business side (clients, quotes, deposits).
 
-**Level 4 (JavaScript in the page)**
-- 15 Forms and validation: `input`/`submit` events, `preventDefault`, error messages (order form with quantity)
-- 16 Building lists from data: `createElement`, render a menu and a cart from an array
-- 17 Remembering: `localStorage` (cart survives a refresh). The preview ships a pretend `localStorage`.
-- 18 Talking to a server: `fetch`, `async/await`, JSON, loading and error states. Use the `api` option: the exercise declares `api: { '/api/menu': [...] }` and `fetch('/api/menu')` answers offline.
-- 19 **Project:** Rose's Order App (menu from the API, cart, total in UGX, saved in localStorage, mobile layout)
-
-**Level 5 (professional skills)**
-- 20 Accessibility: keyboard, contrast, labels (rules `form-labels`, `img-alt`, `link-text` exist)
-- 21 CSS you will use every day: variables (`--brand`), transitions, hover/focus, shadows, dark mode
-- 22 DevTools and debugging a phone page, reading the console error cards
-- 23 Speed and SEO: image sizes, title/description, Open Graph, why 3G matters
-- 24 Git and GitHub Pages: publish a site for free (conceptual lesson with `quiz` and `reorder` blocks)
-- 25 **Capstone:** a real site for a real local business (portfolio piece)
-- 26 Freelancing in Uganda: scoping, pricing in UGX, Mobile Money deposits, a one-page contract, finding the first 3 clients
-
-**Level 6 (later)** Node + Express, a database, authentication, then React. These need a server runtime, so they are separate tracks.
+Deliberately **not** in this track (each needs its own runtime or is a separate career step; suggested as later tracks):
+- **A real backend and database** (Node + Express, SQL, authentication, real Mobile Money integration). The track teaches the front end and the *contract* with a server (`fetch`, JSON, POST) using a pretend server.
+- **A framework** (React or Vue) and **build tools** (Vite, npm). The module lesson explains `import/export`, but the preview runs one `script.js`.
+- **TypeScript and automated testing** frameworks.
+- **Progressive Web Apps and service workers** (installable, offline sites): an excellent next lesson for Ugandan users, because it needs a real origin.
+- **Newer CSS** (`:has()`, container queries, nesting, `@layer`), **SVG and canvas**, and **browser APIs** (geolocation, camera, clipboard, share, IntersectionObserver).
 
 ## How the track works
 
