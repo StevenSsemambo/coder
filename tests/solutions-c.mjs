@@ -3,6 +3,7 @@
 import { prog } from '../src/content/c/shared.js';
 
 const C = (body) => prog(body);
+const F = (fns, body) => `#include <stdio.h>\n\n${fns}\n\nint main() {\n${body}\n    return 0;\n}\n`;
 
 export const cSolutions = {
   'c1-hello': C('    printf("Hello, Uganda!\\n");'),
@@ -17,6 +18,145 @@ export const cSolutions = {
   'c4-count': C('    int n, i;\n    scanf("%d", &n);\n    for (i = 1; i <= n; i++) {\n        printf("%d\\n", i);\n    }'),
   'c4-sum': C('    int n, i, total = 0;\n    scanf("%d", &n);\n    for (i = 1; i <= n; i++) {\n        total = total + i;\n    }\n    printf("Sum: %d\\n", total);'),
   'c4-table': C('    int n, i;\n    scanf("%d", &n);\n    for (i = 1; i <= 12; i++) {\n        printf("%d x %d = %d\\n", n, i, n * i);\n    }'),
+
+  // Level 3: functions (lessons 11 to 15)
+  'c11-square': F(String.raw`int square(int n) {
+    return n * n;
+}`, String.raw`    int n;
+    scanf("%d", &n);
+    printf("Square: %d\n", square(n));`),
+  'c11-max3': F(String.raw`int bigger(int a, int b) {
+    if (a > b) {
+        return a;
+    }
+    return b;
+}`, String.raw`    int x, y, z;
+    scanf("%d %d %d", &x, &y, &z);
+    printf("Max: %d\n", bigger(bigger(x, y), z));`),
+  'c11-stars': F(String.raw`void stars(int n) {
+    int i;
+    for (i = 0; i < n; i++) {
+        printf("*");
+    }
+    printf("\n");
+}`, String.raw`    int n;
+    scanf("%d", &n);
+    stars(n);
+    printf("Done\n");`),
+  'c12-fee': F(String.raw`int fee(int amount) {
+    if (amount <= 5000) {
+        return 100;
+    }
+    if (amount <= 50000) {
+        return 500;
+    }
+    return 1000;
+}`, String.raw`    int amount;
+    scanf("%d", &amount);
+    printf("Fee: %d\n", fee(amount));`),
+  'c12-ticket': F(String.raw`int next_ticket() {
+    static int last = 0;
+    last++;
+    return last;
+}`, String.raw`    int n, i, t;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        t = next_ticket();
+        printf("Ticket %d\n", t);
+    }`),
+  'c12-power': F(String.raw`int power(int base, int exp) {
+    int result = 1, i;
+    for (i = 0; i < exp; i++) {
+        result = result * base;
+    }
+    return result;
+}`, String.raw`    int b, e;
+    scanf("%d %d", &b, &e);
+    printf("Power: %d\n", power(b, e));`),
+  'c13-factorial': F(String.raw`int fact(int n) {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * fact(n - 1);
+}`, String.raw`    int n;
+    scanf("%d", &n);
+    printf("Factorial: %d\n", fact(n));`),
+  'c13-sumto': F(String.raw`int sum_to(int n) {
+    if (n == 0) {
+        return 0;
+    }
+    return n + sum_to(n - 1);
+}`, String.raw`    int n;
+    scanf("%d", &n);
+    printf("Sum: %d\n", sum_to(n));`),
+  'c13-fib': F(String.raw`int fib(int n) {
+    if (n < 2) {
+        return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+}`, String.raw`    int n;
+    scanf("%d", &n);
+    printf("Fib: %d\n", fib(n));`),
+  'c14-airtime': F(String.raw`int balance;
+
+void buy(int amount) {
+    if (amount > balance) {
+        printf("Not enough balance\n");
+    } else {
+        balance = balance - amount;
+        printf("Bought %d\n", amount);
+    }
+}
+
+void show() {
+    printf("Balance: %d\n", balance);
+}`, String.raw`    int choice, amount;
+    scanf("%d", &balance);
+    scanf("%d", &choice);
+    while (choice != 0) {
+        if (choice == 1) {
+            scanf("%d", &amount);
+            buy(amount);
+        } else if (choice == 2) {
+            show();
+        }
+        scanf("%d", &choice);
+    }`),
+  'c15-fixavg': String.raw`#include <stdio.h>
+
+int main() {
+    int a, b, c;
+    float average;
+    scanf("%d %d %d", &a, &b, &c);
+    average = (a + b + c) / 3.0;
+    printf("Average: %.2f\n", average);
+    return 0;
+}
+`,
+  'c15-fixloop': String.raw`#include <stdio.h>
+
+int main() {
+    int n, i;
+    scanf("%d", &n);
+    for (i = n; i >= 1; i--) {
+        printf("%d\n", i);
+    }
+    return 0;
+}
+`,
+  'c15-fixgrade': String.raw`#include <stdio.h>
+
+int main() {
+    int marks;
+    scanf("%d", &marks);
+    if (marks >= 50) {
+        printf("Pass\n");
+    } else {
+        printf("Fail\n");
+    }
+    return 0;
+}
+`,
 
   // Level 2: loops (lessons 7 to 10)
   'c7-evens': C(String.raw`    int n, i;

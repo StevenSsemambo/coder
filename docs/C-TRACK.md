@@ -35,11 +35,11 @@ progress is saved under them). Exercise ids start with `c<lesson number>-`.
 - [x] 10. `c-till` Project: the Campus Duuka till
 
 **Level 3: Functions**
-- [ ] 11. Functions: define, call, return, prototypes
-- [ ] 12. Parameters, scope, global and `static` variables
-- [ ] 13. Recursion
-- [ ] 14. Project: a Mobile Money menu
-- [ ] 15. Finding bugs: error types, dry runs and trace tables, testing
+- [x] 11. `c-functions` Functions: define, call, return, prototypes
+- [x] 12. `c-params` Parameters, scope, global and `static` variables
+- [x] 13. `c-recursion` Recursion
+- [x] 14. `c-momo` Project: a Mobile Money menu
+- [x] 15. `c-debug` Finding bugs: error types, dry runs and trace tables, testing
 
 **Level 4: Arrays and strings**
 - [ ] 16. Arrays
@@ -73,7 +73,7 @@ Everything below was **run on the app's own bundle**, not assumed.
 | `printf` with `%d %i %u %f %c %s %x %o %e %g %%`, widths and precision (`%5d`, `%-8s`, `%05d`, `%.2f`) | `%ld`, `%lu`, `%lf` in `scanf` (read `double` is not possible; use `float` and `%f`) |
 | `scanf` for `%d %f %c %s`, reading into variables **and into array elements** (patched, see below) | `scanf` until end of input (`while (scanf(...) == 1)`); `EOF` |
 | `if`, `else if`, `switch`, `?:`, `for`, `while`, `do while`, `break`, `continue` | `goto` |
-| Functions, prototypes, recursion, `void`, array parameters, pointer parameters, globals, `static` locals | Function pointers |
+| Functions, prototypes, recursion, `void`, array parameters, pointer parameters, globals, `static` locals (after the patch below) | Function pointers |
 | 1D and 2D arrays, strings as `char` arrays, `strlen strcpy strcat strcmp strncmp`, `ctype.h`, `math.h` (`sqrt pow fabs floor ceil`), `abs`, `atoi`, `rand`/`srand` | `struct`, `union`, `enum`, `typedef struct` |
 | Pointers to variables, pointer arithmetic on arrays, `&` and `*`, `sizeof`, casts, bitwise operators, `#define`, `const` | `malloc`, `calloc`, `free` |
 | `getchar`, `putchar`, `puts`, `gets` | `fgets`, `sprintf`, `FILE`/`fopen` and all file functions |
@@ -85,7 +85,14 @@ Behaviours that differ from real C (say so honestly in lessons where they matter
 - Reading a variable that was never given a value **stops with an error**. Real C prints a random number.
 - `scanf` when the input box is empty stops with "Memory overflow", which the error translator turns into a friendly card.
 - `#define` replaces the name **everywhere, even inside quoted text**: with `#define VAT 18`, `printf("With VAT: %d")` prints `With 18: ...`. Real C leaves quoted text alone. Never give a macro a name that appears in a string.
+- A function **can see the local variables of the function that called it** (the interpreter uses looser scoping than C). Real C refuses. Lessons never rely on it and say so; block scope (`{ }` of a loop or `if`) is enforced correctly.
+- `return n;` where `n` is a `static` or global variable hands back the variable itself, not a copy, so `printf("%d %d", next(), next())` prints the same number twice. Real C leaves the order unspecified anyway: never call a counter function twice in one `printf`; store each result first.
 - `scanf("%d", ...)` reads text such as `007` as octal (7) and accepts letters. Avoid leading zeros in tests.
+
+### Other runtime fixes (Level 3)
+
+- **`static` local variables** were ignored by JSCPP (a `static` counter restarted on every call). `scripts/prepare-runtimes.mjs` now patches `interpreter.js` so a static local is created once and keeps its value; a static with no value starts at 0. Lesson 12 and `c12-ticket` exercise it.
+- **Spaces next to brackets in strings** were dropped by the interpreter inside function calls (`printf("Fee (UGX): %d")` printed `Fee(UGX):`). `src/lib/csource.js` now escapes them, the same way it already protected spaces after commas. Tests are in `tests/run.mjs`, section "C source preparation".
 
 ### The `scanf` patch
 

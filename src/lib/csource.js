@@ -4,8 +4,8 @@
 // otherwise fail correct student programs, so the source is normalised before it runs:
 //
 //   1. It rejects "int main(void)". For a student it means the same as "int main()".
-//   2. Inside a function call, its preprocessor splits string literals at commas and drops the
-//      whitespace after each comma: printf("Hello, world") prints "Hello,world".
+//   2. Inside a function call, its preprocessor splits string literals at commas and brackets and drops the
+//      whitespace next to them: printf("Hello, world") prints "Hello,world" and "Total (UGX)" loses its space.
 //      Writing that whitespace as the escape \x20 keeps the exact same string and avoids the bug.
 
 /** Split source into code, string-literal, char-literal and comment segments. */
@@ -50,9 +50,11 @@ function segments(source) {
   return out;
 }
 
-/** Whitespace after a comma, inside a string literal, written as escapes. */
+/** Whitespace inside a string literal that the interpreter would drop, written as escapes: after a comma, after a
+ *  bracket, and before a bracket (so "Total (UGX): 5" and "a, b" print exactly as typed). */
 function protectCommaSpaces(literal) {
-  return literal.replace(/,([ \t]+)/g, (_, ws) => ',' + [...ws].map((c) => (c === ' ' ? '\\x20' : '\\t')).join(''));
+  const esc = (ws) => [...ws].map((c) => (c === ' ' ? '\\x20' : '\\t')).join('');
+  return literal.replace(/([,()])([ \t]+)|([ \t]+)(?=[()])/g, (_, mark, after, before) => (before !== undefined ? esc(before) : mark + esc(after)));
 }
 
 /** "main(void)" and similar become "main()". Only touches code, never strings or comments. */

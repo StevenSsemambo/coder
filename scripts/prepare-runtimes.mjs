@@ -95,6 +95,38 @@ const PATCHES = [
       '                else if (rt.isArrayType(pointer)) {\n' +
       '                    const src_array = rt.makeCharArrayFromString(value);',
   },
+  {
+    // JSCPP ignores `static` on local variables, so a static counter restarted from its start value on every call.
+    // This keeps one variable per declaration: the first time the declaration runs it is created (a static with no
+    // value starts at 0, as in C); every later time the very same variable is put back in scope.
+    file: /JSCPP\/lib\/interpreter\.js$/,
+    why: 'static local variables must keep their value between calls',
+    find:
+      '                        if ((init == null)) {\n' +
+      '                            init = rt.defaultValue(type, true);\n' +
+      '                        }\n' +
+      '                        else {\n' +
+      '                            init = yield* interp.visit(interp, init.Expression);\n' +
+      '                        }\n' +
+      '                        rt.defVar(name, type, init);',
+    replace:
+      '                        const isStatic = Array.isArray(s.DeclarationSpecifiers) && s.DeclarationSpecifiers.includes("static");\n' +
+      '                        if (isStatic && s.__statics && s.__statics[name]) {\n' +
+      '                            rt.scope[rt.scope.length - 1].variables[name] = s.__statics[name];\n' +
+      '                            continue;\n' +
+      '                        }\n' +
+      '                        if ((init == null)) {\n' +
+      '                            init = isStatic ? rt.cast(type, rt.val(rt.intTypeLiteral, 0)) : rt.defaultValue(type, true);\n' +
+      '                        }\n' +
+      '                        else {\n' +
+      '                            init = yield* interp.visit(interp, init.Expression);\n' +
+      '                        }\n' +
+      '                        rt.defVar(name, type, init);\n' +
+      '                        if (isStatic) {\n' +
+      '                            s.__statics = s.__statics || {};\n' +
+      '                            s.__statics[name] = rt.scope[rt.scope.length - 1].variables[name];\n' +
+      '                        }',
+  },
 ];
 const countOf = (text, part) => text.split(part).length - 1;
 
@@ -115,7 +147,7 @@ await build({
         b.onResolve({ filter: /^(util|stream|fs|readline)$/ }, (a) => ({ path: a.path, namespace: 'shim' }));
         b.onLoad({ filter: /.*/, namespace: 'shim' }, (a) => ({ contents: SHIMS[a.path], loader: 'js' }));
 
-        b.onLoad({ filter: /JSCPP[\\/]lib[\\/]includes[\\/]cstdio\.js$/ }, (a) => {
+        b.onLoad({ filter: /JSCPP[\\/]lib[\\/](includes[\\/]cstdio|interpreter)\.js$/ }, (a) => {
           // The library ships with Windows (CRLF) line endings; normalise so patches match everywhere.
           let text = readFileSync(a.path, 'utf8').replace(/\r\n/g, '\n');
           for (const p of PATCHES.filter((x) => x.file.test(a.path.replace(/\\/g, '/')))) {

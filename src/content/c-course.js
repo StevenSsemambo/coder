@@ -5,11 +5,12 @@
 import { level1 } from './c/level1.js';
 import { level2 } from './c/level2.js';
 import { loopLessons } from './c/loops.js';
+import { functionLessons } from './c/functions.js';
 
 export const cCourse = {
   id: 'c-structured',
   language: 'c',
   title: 'Structured Programming in C',
   subtitle: 'Draft pack for the Structured Programming module',
-  lessons: [...level1, ...level2, ...loopLessons],
+  lessons: [...level1, ...level2, ...loopLessons, ...functionLessons],
 };
