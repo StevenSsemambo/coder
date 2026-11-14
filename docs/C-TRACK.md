@@ -27,8 +27,8 @@ progress is saved under them). Exercise ids start with `c<lesson number>-`.
 - [x] 4. `c-types` Numbers, characters and operators (integer division, `%`, casting, ASCII, constants)
 
 **Level 2: Decisions and loops**
-- [ ] 5. `c-decisions` Making decisions (`if`, `else`, `else if`; exists in the old draft format)
-- [ ] 6. `c-logic` Combining conditions, `switch` and `?:`
+- [x] 5. `c-decisions` Making decisions (`if`, `else`, `else if`, comparisons, `%`)
+- [x] 6. `c-logic` Combining conditions, `switch` and `?:`
 - [ ] 7. `c-loops` Repeating with `for` (exists in the old draft format)
 - [ ] 8. `c-while` `while`, `do while`, `break`, `continue`, sentinel loops
 - [ ] 9. `c-nested` Loops inside loops: patterns and tables

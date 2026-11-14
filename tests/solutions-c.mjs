@@ -18,6 +18,40 @@ export const cSolutions = {
   'c4-sum': C('    int n, i, total = 0;\n    scanf("%d", &n);\n    for (i = 1; i <= n; i++) {\n        total = total + i;\n    }\n    printf("Sum: %d\\n", total);'),
   'c4-table': C('    int n, i;\n    scanf("%d", &n);\n    for (i = 1; i <= 12; i++) {\n        printf("%d x %d = %d\\n", n, i, n * i);\n    }'),
 
+  // Level 2: new exercises
+  'c3-sign': C(String.raw`    int n;
+    scanf("%d", &n);
+    if (n > 0) {
+        printf("Positive\n");
+    } else if (n < 0) {
+        printf("Negative\n");
+    } else {
+        printf("Zero\n");
+    }`),
+  'c6-leap': C(String.raw`    int y;
+    scanf("%d", &y);
+    if ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0) {
+        printf("Leap year\n");
+    } else {
+        printf("Not a leap year\n");
+    }`),
+  'c6-day': C(String.raw`    int day;
+    scanf("%d", &day);
+    switch (day) {
+        case 1: printf("Monday\n"); break;
+        case 2: printf("Tuesday\n"); break;
+        case 3: printf("Wednesday\n"); break;
+        case 4: printf("Thursday\n"); break;
+        case 5: printf("Friday\n"); break;
+        case 6: printf("Saturday\n"); break;
+        case 7: printf("Sunday\n"); break;
+        default: printf("Invalid day\n");
+    }`),
+  'c6-bigger': C(String.raw`    int a, b, big;
+    scanf("%d %d", &a, &b);
+    big = a > b ? a : b;
+    printf("Bigger: %d\n", big);`),
+
   // Level 1: new exercises
   'c0-plan': C(String.raw`    printf("1. Take the order\n");
     printf("2. Work out the total\n");
