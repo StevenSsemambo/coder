@@ -1,0 +1,383 @@
+// Web track, additions for Level 4: timers and keys, everyday interface patterns, promises.
+import { fullPage } from './shared.js';
+
+const L4 = 'Level 4: JavaScript in the page';
+const JSP = (body, css = false, head = '') => fullPage(body, { js: true, css, head });
+
+const MENU = [
+  { id: 1, name: 'Plain rolex', price: 3000 },
+  { id: 2, name: 'Veggie rolex', price: 4000 },
+  { id: 3, name: 'Chicken rolex', price: 7000 },
+];
+const SETTINGS = { deliveryFee: 2000, freeFrom: 20000 };
+
+export const extra3Lessons = [
+  // ------------------------------------------------------------------------------------------------
+  {
+    id: 'w40-timers-and-keys',
+    level: L4,
+    title: 'Time and keys: timers, debounce and the keyboard',
+    summary: 'setTimeout, setInterval, debounce, and reacting to Enter and Escape.',
+    minutes: 26,
+    blocks: [
+      {
+        t: 'story',
+        title: 'The message that disappears',
+        text: 'When a customer taps Save, a little message "Saved!" should appear and **fade away by itself after three seconds**. The search box should not hit the server on every single letter typed. And pressing **Enter** should add a note, just like in WhatsApp.\n\nAll of this is about **time** and the **keyboard**: two things every interactive page needs.',
+      },
+      { t: 'analogy', text: '`setTimeout` is a kitchen timer: "ring once in 3 minutes". `setInterval` is a metronome that ticks again and again until you stop it. **Debounce** is a patient waiter: he does not run to the kitchen after each word you say, he waits until you pause, then takes the whole order once.' },
+      {
+        t: 'list',
+        items: ['`setTimeout(fn, ms)` runs `fn` once after `ms` milliseconds (1000 ms is one second). It returns an id you can cancel with `clearTimeout(id)`.', '`setInterval(fn, ms)` runs `fn` again and again. **Always** keep its id and call `clearInterval(id)` when it should stop, or it runs forever.', 'A timer never interrupts running code. Even `setTimeout(fn, 0)` waits until the current code has finished.', '`element.addEventListener("keydown", (event) => { ... })` and **`event.key`** (`"Enter"`, `"Escape"`, `"ArrowDown"`, `"a"`). Do not use the old `keyCode`.', '`element.focus()` moves the cursor to an element, so the customer can start typing at once.'],
+      },
+      {
+        t: 'web',
+        title: 'Tap Save: the message shows, then hides itself after 1.5 seconds',
+        files: ['js'],
+        starter: {
+          html: JSP('  <button id="save" type="button">Save order</button>\n  <p id="toast" role="status" hidden>Saved!</p>'),
+          js: 'const toast = document.querySelector("#toast");\n\ndocument.querySelector("#save").addEventListener("click", () => {\n  toast.hidden = false;\n  setTimeout(() => {\n    toast.hidden = true;\n  }, 1500);\n});\n',
+        },
+        checks: [{ visible: '#toast', is: false }, { do: 'click', target: '#save' }, { visible: '#toast' }],
+      },
+      {
+        t: 'see',
+        files: { html: JSP('  <p id="out"></p>'), js: 'const out = document.querySelector("#out");\nout.textContent += "A";\nsetTimeout(() => {\n  out.textContent += "B";\n}, 0);\nout.textContent += "C";' },
+        question: 'The timer has a delay of 0. What does the page finally show?',
+        options: ['ACB', 'ABC', 'A', 'CBA'],
+        answer: 0,
+        explain: 'Even with 0 milliseconds the callback must wait until the rest of the script has finished. So A and C are written first, and B arrives last.',
+        proof: [{ do: 'wait', ms: 40 }, { text: '#out', equals: 'ACB' }],
+      },
+      {
+        t: 'web',
+        title: 'A countdown that stops itself with clearInterval',
+        files: ['js'],
+        starter: {
+          html: JSP('  <p>Rolex ready in <span id="count">3</span></p>\n  <p id="msg" role="status"></p>'),
+          js: 'let n = 3;\nconst count = document.querySelector("#count");\nconst timer = setInterval(() => {\n  n -= 1;\n  count.textContent = n;\n  if (n === 0) {\n    clearInterval(timer);\n    document.querySelector("#msg").textContent = "Ready!";\n  }\n}, 500);\n',
+        },
+        checks: [{ text: '#count', equals: '3' }, { do: 'wait', ms: 1700 }, { text: '#msg', equals: 'Ready!' }],
+      },
+      { t: 'h', text: 'Debounce: wait until the typing stops' },
+      {
+        t: 'code',
+        text: 'function debounce(fn, ms) {\n  let timer;\n  return function (...args) {\n    clearTimeout(timer);               // cancel the previous countdown\n    timer = setTimeout(() => fn(...args), ms);\n  };\n}\n\nconst search = debounce((text) => {\n  console.log("Searching for", text);   // runs once, 300 ms after the last key\n}, 300);\ninput.addEventListener("input", (e) => search(e.target.value));',
+      },
+      { t: 'p', text: 'This is a **closure** in action: `timer` is remembered between calls. Every keystroke cancels the old countdown and starts a new one, so the work runs only when the typing pauses. You will use it for search boxes, window resizing and auto-save.' },
+      {
+        t: 'web',
+        title: 'Type a note and press Enter. Escape clears the box.',
+        files: ['js'],
+        starter: {
+          html: JSP('  <label for="note">Note</label>\n  <input id="note" type="text" autocomplete="off">\n  <ul id="notes"></ul>'),
+          js: 'const note = document.querySelector("#note");\nconst notes = document.querySelector("#notes");\n\nnote.addEventListener("keydown", (event) => {\n  if (event.key === "Enter" && note.value.trim() !== "") {\n    const li = document.createElement("li");\n    li.textContent = note.value.trim();\n    notes.append(li);\n    note.value = "";\n  }\n  if (event.key === "Escape") {\n    note.value = "";\n  }\n});\n',
+        },
+        checks: [{ do: 'type', target: '#note', value: 'Call Rose' }, { do: 'key', target: '#note', value: 'Enter' }, { count: '#notes li', equals: 1 }, { field: '#note', equals: '' }],
+      },
+      {
+        t: 'mistakes',
+        items: [
+          { lang: 'dom', wrong: 'setTimeout(hideToast(), 1500);', why: 'The brackets RUN `hideToast` immediately and hand its result to the timer. Pass the function itself, or wrap it: `setTimeout(hideToast, 1500)` or `setTimeout(() => hideToast(), 1500)`.', right: 'setTimeout(hideToast, 1500);' },
+          { lang: 'dom', wrong: 'setInterval(() => {\n  seconds += 1;\n  show(seconds);\n}, 1000);\n// (never stopped)', why: 'An interval that is never cleared keeps running after you need it, wasting battery and data. Keep the id and call `clearInterval` when done.', right: 'const timer = setInterval(() => {\n  seconds += 1;\n  show(seconds);\n  if (seconds === 10) clearInterval(timer);\n}, 1000);' },
+          { lang: 'dom', wrong: 'input.addEventListener("keydown", (e) => {\n  if (e.keyCode === 13) send();\n});', why: '`keyCode` is old and deprecated. Use `event.key` and its readable names.', right: 'input.addEventListener("keydown", (e) => {\n  if (e.key === "Enter") send();\n});' },
+        ],
+      },
+      { t: 'quiz', question: 'What does a debounced search box do?', options: ['Runs the search only after the user has paused typing', 'Runs the search on every key press', 'Blocks the user from typing', 'Searches twice as fast'], answer: 0, explain: 'Each keystroke cancels the previous timer and starts a new one. When the typing pauses long enough, the work runs once.' },
+      {
+        t: 'web',
+        project: true,
+        title: 'A search box that waits for you to finish',
+        text: 'The list filters 300 milliseconds after you stop typing. Escape clears the search.',
+        files: ['js'],
+        starter: {
+          html: JSP('  <label for="q">Search the menu</label>\n  <input id="q" type="search" autocomplete="off">\n  <ul id="list">\n    <li>Plain rolex</li>\n    <li>Veggie rolex</li>\n    <li>Chicken rolex</li>\n  </ul>'),
+          js: 'const q = document.querySelector("#q");\nconst items = [...document.querySelectorAll("#list li")];\n\nfunction debounce(fn, ms) {\n  let timer;\n  return (...args) => {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn(...args), ms);\n  };\n}\n\nfunction filter() {\n  const text = q.value.trim().toLowerCase();\n  for (const li of items) {\n    li.hidden = !li.textContent.toLowerCase().includes(text);\n  }\n}\n\nq.addEventListener("input", debounce(filter, 300));\nq.addEventListener("keydown", (e) => {\n  if (e.key === "Escape") {\n    q.value = "";\n    filter();\n  }\n});\n',
+        },
+        checks: [{ count: '#list li', equals: 3 }, { do: 'type', target: '#q', value: 'chi' }, { do: 'wait', ms: 400 }, { visible: '#list li:nth-child(1)', is: false }, { visible: '#list li:nth-child(3)' }],
+      },
+      { t: 'recap', items: ['`setTimeout` runs once later, `setInterval` repeats. Pass the function itself, not its result.', 'Always `clearInterval` / `clearTimeout` when finished.', 'Timers never interrupt running code: even 0 ms waits.', 'Debounce waits until a burst of events stops. It is a closure around a timer.', '`keydown` with `event.key` ("Enter", "Escape") handles the keyboard. `focus()` moves the cursor.'], memory: 'Function, not result. Clear what you start. Wait for the pause.' },
+    ],
+    exercises: [
+      {
+        id: 'w40-toast',
+        title: 'A message that disappears',
+        prompt: 'Clicking `#save` must show the message `#toast` (it starts with the `hidden` attribute) and then hide it again **50 milliseconds** later. (A real toast would wait 3000 ms; short waits keep the checker quick.)',
+        files: ['js'],
+        starter: { html: JSP('  <button id="save" type="button">Save</button>\n  <p id="toast" role="status" hidden>Saved!</p>'), js: '// Show the toast on click, hide it again after 50 ms\n' },
+        solution: { html: JSP('  <button id="save" type="button">Save</button>\n  <p id="toast" role="status" hidden>Saved!</p>'), js: 'const toast = document.querySelector("#toast");\n\ndocument.querySelector("#save").addEventListener("click", () => {\n  toast.hidden = false;\n  setTimeout(() => {\n    toast.hidden = true;\n  }, 50);\n});\n' },
+        checks: [{ visible: '#toast', is: false, label: 'The toast starts hidden' }, { do: 'click', target: '#save' }, { visible: '#toast', label: 'Clicking shows the toast' }, { do: 'wait', ms: 120 }, { visible: '#toast', is: false, label: 'It hides itself again' }, { uses: 'js', pattern: 'setTimeout\\(', label: 'You used setTimeout' }],
+        hints: ['In the click handler show it first: `toast.hidden = false;`.', 'Then start a timer: `setTimeout(() => { toast.hidden = true; }, 50);`.', '```\ntoast.hidden = false;\nsetTimeout(() => {\n  toast.hidden = true;\n}, 50);\n```'],
+      },
+      {
+        id: 'w40-countdown',
+        title: 'A self-stopping countdown',
+        prompt: 'Make `#count` count down from `3`. Every `100` milliseconds subtract 1 and show it. When it reaches `0` stop the timer with `clearInterval` and put `Ready!` in `#msg`.',
+        files: ['js'],
+        starter: { html: JSP('  <p id="count">3</p>\n  <p id="msg"></p>'), js: 'let n = 3;\n// Use setInterval, and stop it with clearInterval\n' },
+        solution: { html: JSP('  <p id="count">3</p>\n  <p id="msg"></p>'), js: 'let n = 3;\nconst count = document.querySelector("#count");\nconst timer = setInterval(() => {\n  n -= 1;\n  count.textContent = n;\n  if (n === 0) {\n    clearInterval(timer);\n    document.querySelector("#msg").textContent = "Ready!";\n  }\n}, 100);\n' },
+        checks: [{ text: '#count', equals: '3', label: 'It starts at 3' }, { do: 'wait', ms: 500 }, { text: '#count', equals: '0', label: 'It reaches 0' }, { text: '#msg', equals: 'Ready!', label: 'It says Ready!' }, { uses: 'js', pattern: 'setInterval\\(', label: 'You used setInterval' }, { uses: 'js', pattern: 'clearInterval\\(', label: 'You stopped it with clearInterval' }],
+        hints: ['`const timer = setInterval(() => { ... }, 100);` returns the id you need.', 'Inside, subtract 1, show the number, and when `n === 0` call `clearInterval(timer)`.', '```\nconst timer = setInterval(() => {\n  n -= 1;\n  count.textContent = n;\n  if (n === 0) {\n    clearInterval(timer);\n  }\n}, 100);\n```'],
+      },
+      {
+        id: 'w40-enter-key',
+        title: 'Enter adds, Escape clears',
+        prompt: 'In the `#note` box:\n\n- pressing **Enter** with some text adds a `<li>` with that text to `#notes` and clears the box\n- pressing **Escape** clears the box without adding anything\n\nUse the `keydown` event and `event.key`.',
+        files: ['js'],
+        starter: { html: JSP('  <input id="note" type="text" aria-label="Note">\n  <ul id="notes"></ul>'), js: '// Listen for keydown on #note\n' },
+        solution: { html: JSP('  <input id="note" type="text" aria-label="Note">\n  <ul id="notes"></ul>'), js: 'const note = document.querySelector("#note");\nconst notes = document.querySelector("#notes");\n\nnote.addEventListener("keydown", (event) => {\n  if (event.key === "Enter" && note.value.trim() !== "") {\n    const li = document.createElement("li");\n    li.textContent = note.value.trim();\n    notes.append(li);\n    note.value = "";\n  }\n  if (event.key === "Escape") {\n    note.value = "";\n  }\n});\n' },
+        checks: [{ do: 'type', target: '#note', value: 'Call Rose' }, { do: 'key', target: '#note', value: 'Enter' }, { count: '#notes li', equals: 1, label: 'Enter adds one note' }, { text: '#notes li', equals: 'Call Rose' }, { field: '#note', equals: '', label: 'The box is cleared after adding' }, { do: 'key', target: '#note', value: 'Enter' }, { count: '#notes li', equals: 1, label: 'Enter on an empty box adds nothing' }, { do: 'type', target: '#note', value: 'draft' }, { do: 'key', target: '#note', value: 'Escape' }, { field: '#note', equals: '', label: 'Escape clears the box' }, { count: '#notes li', equals: 1, label: 'Escape adds nothing' }, { uses: 'js', pattern: 'event\\.key|e\\.key', label: 'You used event.key' }],
+        hints: ['`note.addEventListener("keydown", (event) => { ... })` and compare `event.key` with `"Enter"` and `"Escape"`.', 'For Enter, check that the trimmed text is not empty before adding.', '```\nif (event.key === "Enter" && note.value.trim() !== "") {\n  ...\n}\nif (event.key === "Escape") {\n  note.value = "";\n}\n```'],
+      },
+      {
+        id: 'w40-debounce',
+        title: 'Write debounce',
+        prompt: 'Write `debounce(fn, ms)`. It returns a new function. When the new function is called, it waits `ms` milliseconds before calling `fn` with the same arguments, and **every new call cancels the waiting one**.\n\nThree quick calls make `fn` run once, with the last arguments.',
+        files: ['js'],
+        starter: { js: '// Write debounce(fn, ms)\n' },
+        solution: { js: 'function debounce(fn, ms) {\n  let timer;\n  return function (...args) {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn(...args), ms);\n  };\n}\n' },
+        checks: [{ js: '(async () => { let n = 0; const d = debounce(() => { n += 1; }, 30); d(); d(); d(); await new Promise((r) => setTimeout(r, 90)); return n; })()', equals: 1, label: 'Three quick calls run fn once' }, { js: '(async () => { let n = 0; const d = debounce(() => { n += 1; }, 20); d(); await new Promise((r) => setTimeout(r, 60)); d(); await new Promise((r) => setTimeout(r, 60)); return n; })()', equals: 2, label: 'Calls far apart each run' }, { js: '(async () => { let got; const d = debounce((x) => { got = x; }, 20); d("a"); d("b"); await new Promise((r) => setTimeout(r, 60)); return got; })()', equals: 'b', label: 'The last arguments win' }, { uses: 'js', pattern: 'clearTimeout', label: 'You cancel the previous timer with clearTimeout' }],
+        hints: ['Keep the timer id in a variable outside the returned function (a closure).', 'On each call: `clearTimeout(timer)`, then start a new `setTimeout`.', '```\nfunction debounce(fn, ms) {\n  let timer;\n  return function (...args) {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn(...args), ms);\n  };\n}\n```'],
+      },
+    ],
+  },
+
+  // ------------------------------------------------------------------------------------------------
+  {
+    id: 'w41-ui-patterns',
+    level: L4,
+    title: 'Interface patterns: tabs, accordions, modals and live search',
+    summary: 'The four components almost every site needs, built accessibly with plain JavaScript.',
+    minutes: 30,
+    blocks: [
+      {
+        t: 'story',
+        title: 'The components every site has',
+        text: 'Open any website you use: a **search box** that filters as you type, an **FAQ** where answers fold open, a **popup** asking "Are you sure?", **tabs** that switch between Menu and Info. They look different, but under the hood they all do the same three things: **listen** to a click or key, **change an attribute** (`hidden`, `aria-expanded`, a class), and **move focus** sensibly.\n\nLearn these four once and you can build 80 percent of the interface of any small business site.',
+      },
+      { t: 'analogy', text: 'Each component is a light switch wired to a lamp. The switch is the button, the lamp is the panel, and the wire is one attribute. Click the switch and the attribute flips: `hidden` turns the lamp off or on, `aria-expanded` tells a screen reader which state the switch is in. Doing both is what makes it accessible.' },
+      {
+        t: 'list',
+        items: ['**Keep the state in the page:** use `hidden` to hide and `aria-expanded` / `aria-selected` to say what is open. Screen readers read these.', '**Real elements:** use `<button>` for anything clickable, not `<div>`.', '**Focus:** when a modal opens, move focus inside it; when it closes, return focus to the button that opened it. Escape must close it.', '**Filter by hiding:** for a search, loop over items and set `li.hidden = !match`.'],
+      },
+      {
+        t: 'web',
+        title: 'Tabs: click Info, then Menu',
+        files: ['js'],
+        starter: {
+          html: JSP('  <div role="tablist" aria-label="Rose">\n    <button role="tab" id="tab-menu" aria-selected="true" aria-controls="panel-menu">Menu</button>\n    <button role="tab" id="tab-info" aria-selected="false" aria-controls="panel-info">Info</button>\n  </div>\n  <div role="tabpanel" id="panel-menu">Plain, Veggie, Chicken</div>\n  <div role="tabpanel" id="panel-info" hidden>Open 7am to 10pm. Wandegeya.</div>'),
+          js: 'const tabs = document.querySelectorAll("[role=tab]");\nconst panels = document.querySelectorAll("[role=tabpanel]");\n\ntabs.forEach((tab) => {\n  tab.addEventListener("click", () => {\n    tabs.forEach((t) => t.setAttribute("aria-selected", t === tab));\n    panels.forEach((p) => {\n      p.hidden = p.id !== tab.getAttribute("aria-controls");\n    });\n  });\n});\n',
+        },
+        checks: [{ do: 'click', target: '#tab-info' }, { visible: '#panel-info' }, { visible: '#panel-menu', is: false }, { attr: '#tab-info', name: 'aria-selected', equals: 'true' }],
+      },
+      {
+        t: 'web',
+        title: 'Accordion: each question folds its answer open and closed',
+        files: ['js'],
+        starter: {
+          html: JSP('  <div class="item">\n    <button class="q" aria-expanded="false" aria-controls="a1">Do you deliver?</button>\n    <p id="a1" hidden>Yes, within Wandegeya.</p>\n  </div>\n  <div class="item">\n    <button class="q" aria-expanded="false" aria-controls="a2">Do you take Mobile Money?</button>\n    <p id="a2" hidden>Yes, MTN and Airtel.</p>\n  </div>'),
+          js: 'document.querySelectorAll(".q").forEach((button) => {\n  button.addEventListener("click", () => {\n    const panel = document.getElementById(button.getAttribute("aria-controls"));\n    const open = button.getAttribute("aria-expanded") === "true";\n    button.setAttribute("aria-expanded", String(!open));\n    panel.hidden = open;\n  });\n});\n',
+        },
+        checks: [{ do: 'click', target: '.item:nth-child(1) .q' }, { visible: '#a1' }, { attr: '.item:nth-child(1) .q', name: 'aria-expanded', equals: 'true' }, { do: 'click', target: '.item:nth-child(1) .q' }, { visible: '#a1', is: false }],
+      },
+      {
+        t: 'web',
+        title: 'Modal: open it, press Escape, and notice where the focus goes',
+        files: ['js'],
+        starter: {
+          html: JSP('  <button id="open" type="button">Clear my order</button>\n  <div id="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle" hidden>\n    <h2 id="mtitle">Clear your order?</h2>\n    <button id="close" type="button">Keep my order</button>\n  </div>'),
+          js: 'const modal = document.querySelector("#modal");\nconst open = document.querySelector("#open");\nconst close = document.querySelector("#close");\n\nfunction openModal() {\n  modal.hidden = false;\n  close.focus();\n}\nfunction closeModal() {\n  modal.hidden = true;\n  open.focus();\n}\n\nopen.addEventListener("click", openModal);\nclose.addEventListener("click", closeModal);\ndocument.addEventListener("keydown", (e) => {\n  if (e.key === "Escape" && !modal.hidden) closeModal();\n});\n',
+        },
+        checks: [{ do: 'click', target: '#open' }, { visible: '#modal' }, { js: 'document.activeElement.id', equals: 'close' }, { do: 'key', target: 'body', value: 'Escape' }, { visible: '#modal', is: false }, { js: 'document.activeElement.id', equals: 'open' }],
+      },
+      {
+        t: 'see',
+        files: { html: JSP('  <button id="b" aria-expanded="false" aria-controls="p">More</button>\n  <p id="p" hidden>Details</p>'), js: 'const b = document.querySelector("#b");\nb.addEventListener("click", () => {\n  const open = b.getAttribute("aria-expanded") === "true";\n  b.setAttribute("aria-expanded", String(!open));\n  document.querySelector("#p").hidden = open;\n});' },
+        question: 'The button is tapped once. What changes?',
+        options: ['The paragraph becomes visible and aria-expanded becomes "true"', 'Nothing, because hidden cannot be changed by JavaScript', 'The button disappears', 'The page reloads'],
+        answer: 0,
+        explain: 'The first click reads `aria-expanded` as "false", so `open` is false: it sets the attribute to "true" and sets `hidden` to false (visible). The next click reverses it.',
+        proof: [{ do: 'click', target: '#b' }, { visible: '#p' }, { attr: '#b', name: 'aria-expanded', equals: 'true' }],
+      },
+      { t: 'tip', text: 'Modern browsers also have a built-in `<dialog>` element with `showModal()` that handles focus and Escape for you. It is a good choice when your visitors\' browsers support it. Building the pattern by hand first, as here, teaches you what a dialog really does, and works everywhere.' },
+      {
+        t: 'mistakes',
+        items: [
+          { lang: 'dom', wrong: 'panel.style.display = "none";', why: 'Hiding with an inline style works for the eyes but screen readers and other code cannot easily tell. The `hidden` attribute (or a class) is the standard, readable way.', right: 'panel.hidden = true;' },
+          { lang: 'dom', wrong: 'button.setAttribute("aria-expanded", true);\n// (but the panel is never shown)', why: 'The attribute only DESCRIBES the state for assistive technology. You must also actually show or hide the panel yourself.', right: 'button.setAttribute("aria-expanded", "true");\npanel.hidden = false;' },
+          { lang: 'dom', wrong: 'function openModal() {\n  modal.hidden = false;\n}\n// (focus stays on the button behind)', why: 'Keyboard and screen reader users stay "behind" the modal. Move focus into it on open and return it on close.', right: 'function openModal() {\n  modal.hidden = false;\n  closeButton.focus();\n}' },
+        ],
+      },
+      { t: 'quiz', question: 'When a modal closes, where should keyboard focus go?', options: ['Back to the button that opened it', 'To the top of the page', 'Nowhere: it disappears', 'To the last link on the page'], answer: 0, explain: 'Returning focus puts the person back exactly where they were, so they can carry on without searching.' },
+      {
+        t: 'web',
+        project: true,
+        title: 'A live-filtered menu',
+        text: 'The filter hides non-matching items as you type, ignoring capital letters, and shows how many are left.',
+        files: ['js'],
+        starter: {
+          html: JSP('  <label for="q">Search the menu</label>\n  <input id="q" type="search" autocomplete="off">\n  <p id="count" role="status"></p>\n  <ul id="list">\n    <li>Plain rolex</li>\n    <li>Veggie rolex</li>\n    <li>Double egg rolex</li>\n    <li>Chicken rolex</li>\n  </ul>'),
+          js: 'const q = document.querySelector("#q");\nconst items = [...document.querySelectorAll("#list li")];\nconst count = document.querySelector("#count");\n\nfunction update() {\n  const text = q.value.trim().toLowerCase();\n  let shown = 0;\n  for (const li of items) {\n    const match = li.textContent.toLowerCase().includes(text);\n    li.hidden = !match;\n    if (match) shown += 1;\n  }\n  count.textContent = `${shown} of ${items.length} items`;\n}\n\nq.addEventListener("input", update);\nupdate();\n',
+        },
+        checks: [{ text: '#count', equals: '4 of 4 items' }, { do: 'type', target: '#q', value: 'EGG' }, { text: '#count', equals: '2 of 4 items' }],
+      },
+      { t: 'recap', items: ['Components are switches: listen, change an attribute, move focus.', 'Use real `<button>`s, the `hidden` attribute, and keep `aria-expanded` / `aria-selected` in step with what is shown.', 'A modal moves focus in on open, returns it on close, and closes with Escape.', 'A live search loops over the items and sets `li.hidden = !match`.', 'The built-in `<dialog>` element is a good modern alternative.'], memory: 'Listen, flip the attribute, mind the focus.' },
+    ],
+    exercises: [
+      {
+        id: 'w41-live-filter',
+        title: 'Filter the menu as you type',
+        prompt: 'The menu list has four items. As the visitor types in `#q`, **hide** the items that do not contain the typed text (ignore capital letters) and show the rest. An empty box shows everything.',
+        files: ['js'],
+        starter: { html: JSP('  <input id="q" type="search" aria-label="Search the menu">\n  <ul id="list">\n    <li>Plain rolex</li>\n    <li>Veggie rolex</li>\n    <li>Double egg rolex</li>\n    <li>Chicken rolex</li>\n  </ul>'), js: '// Filter the list on the input event\n' },
+        solution: { html: JSP('  <input id="q" type="search" aria-label="Search the menu">\n  <ul id="list">\n    <li>Plain rolex</li>\n    <li>Veggie rolex</li>\n    <li>Double egg rolex</li>\n    <li>Chicken rolex</li>\n  </ul>'), js: 'const q = document.querySelector("#q");\nconst items = document.querySelectorAll("#list li");\n\nq.addEventListener("input", () => {\n  const text = q.value.trim().toLowerCase();\n  items.forEach((li) => {\n    li.hidden = !li.textContent.toLowerCase().includes(text);\n  });\n});\n' },
+        checks: [{ visible: '#list li:nth-child(1)', label: 'All items show at first' }, { do: 'type', target: '#q', value: 'chi' }, { visible: '#list li:nth-child(4)', label: '"chi" keeps Chicken rolex' }, { visible: '#list li:nth-child(1)', is: false, label: '"chi" hides Plain rolex' }, { visible: '#list li:nth-child(3)', is: false }, { do: 'type', target: '#q', value: 'EGG' }, { visible: '#list li:nth-child(3)', label: 'Capital letters are ignored' }, { visible: '#list li:nth-child(4)', is: false }, { do: 'type', target: '#q', value: '' }, { visible: '#list li:nth-child(1)', label: 'An empty box shows everything again' }, { visible: '#list li:nth-child(4)' }, { uses: 'js', pattern: 'toLowerCase', label: 'You ignored capital letters' }],
+        hints: ['Listen to the `input` event on `#q` and loop over the `li` items.', 'For each item: `li.hidden = !li.textContent.toLowerCase().includes(text);`', '```\nq.addEventListener("input", () => {\n  const text = q.value.trim().toLowerCase();\n  items.forEach((li) => {\n    li.hidden = !li.textContent.toLowerCase().includes(text);\n  });\n});\n```'],
+      },
+      {
+        id: 'w41-accordion',
+        title: 'The FAQ accordion',
+        prompt: 'Make each question button open and close **its own** answer. Each button has `aria-controls` naming its panel. On click: toggle the panel\'s `hidden` AND keep the button\'s `aria-expanded` as `"true"` or `"false"` to match. The two items work independently.',
+        files: ['js'],
+        starter: { html: JSP('  <div class="item">\n    <button class="q" aria-expanded="false" aria-controls="a1">Do you deliver?</button>\n    <p id="a1" hidden>Yes, within Wandegeya.</p>\n  </div>\n  <div class="item">\n    <button class="q" aria-expanded="false" aria-controls="a2">Do you take Mobile Money?</button>\n    <p id="a2" hidden>Yes, MTN and Airtel.</p>\n  </div>'), js: '// Toggle each answer\n' },
+        solution: { html: JSP('  <div class="item">\n    <button class="q" aria-expanded="false" aria-controls="a1">Do you deliver?</button>\n    <p id="a1" hidden>Yes, within Wandegeya.</p>\n  </div>\n  <div class="item">\n    <button class="q" aria-expanded="false" aria-controls="a2">Do you take Mobile Money?</button>\n    <p id="a2" hidden>Yes, MTN and Airtel.</p>\n  </div>'), js: 'document.querySelectorAll(".q").forEach((button) => {\n  button.addEventListener("click", () => {\n    const panel = document.getElementById(button.getAttribute("aria-controls"));\n    const open = button.getAttribute("aria-expanded") === "true";\n    button.setAttribute("aria-expanded", String(!open));\n    panel.hidden = open;\n  });\n});\n' },
+        checks: [{ visible: '#a1', is: false, label: 'Answers start hidden' }, { do: 'click', target: '.item:nth-child(1) .q' }, { visible: '#a1', label: 'Clicking opens the first answer' }, { attr: '.item:nth-child(1) .q', name: 'aria-expanded', equals: 'true', label: 'aria-expanded becomes "true"' }, { visible: '#a2', is: false, label: 'The second answer stays closed' }, { do: 'click', target: '.item:nth-child(1) .q' }, { visible: '#a1', is: false, label: 'Clicking again closes it' }, { attr: '.item:nth-child(1) .q', name: 'aria-expanded', equals: 'false' }, { do: 'click', target: '.item:nth-child(2) .q' }, { visible: '#a2', label: 'The second one works too' }],
+        hints: ['Loop over all `.q` buttons and give each a click listener.', 'Find the panel with `document.getElementById(button.getAttribute("aria-controls"))`.', '```\nconst open = button.getAttribute("aria-expanded") === "true";\nbutton.setAttribute("aria-expanded", String(!open));\npanel.hidden = open;\n```'],
+      },
+      {
+        id: 'w41-modal',
+        title: 'The "Are you sure?" modal',
+        prompt: 'Build the confirm modal:\n\n- `#open` shows `#modal` (it starts `hidden`) and moves focus to `#close`\n- `#close` hides it and returns focus to `#open`\n- pressing **Escape** also closes it (only while it is open)',
+        files: ['js'],
+        starter: { html: JSP('  <button id="open" type="button">Clear my order</button>\n  <div id="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle" hidden>\n    <h2 id="mtitle">Clear your order?</h2>\n    <button id="close" type="button">Keep my order</button>\n  </div>'), js: '// Open, close, Escape and focus\n' },
+        solution: { html: JSP('  <button id="open" type="button">Clear my order</button>\n  <div id="modal" role="dialog" aria-modal="true" aria-labelledby="mtitle" hidden>\n    <h2 id="mtitle">Clear your order?</h2>\n    <button id="close" type="button">Keep my order</button>\n  </div>'), js: 'const modal = document.querySelector("#modal");\nconst open = document.querySelector("#open");\nconst close = document.querySelector("#close");\n\nfunction openModal() {\n  modal.hidden = false;\n  close.focus();\n}\nfunction closeModal() {\n  modal.hidden = true;\n  open.focus();\n}\n\nopen.addEventListener("click", openModal);\nclose.addEventListener("click", closeModal);\ndocument.addEventListener("keydown", (event) => {\n  if (event.key === "Escape" && !modal.hidden) {\n    closeModal();\n  }\n});\n' },
+        checks: [{ visible: '#modal', is: false, label: 'The modal starts hidden' }, { do: 'click', target: '#open' }, { visible: '#modal', label: 'Clicking Open shows it' }, { js: 'document.activeElement.id', equals: 'close', label: 'Focus moves to the Close button' }, { do: 'click', target: '#close' }, { visible: '#modal', is: false, label: 'Close hides it' }, { js: 'document.activeElement.id', equals: 'open', label: 'Focus returns to the Open button' }, { do: 'click', target: '#open' }, { do: 'key', target: 'body', value: 'Escape' }, { visible: '#modal', is: false, label: 'Escape closes it too' }],
+        hints: ['Write two small functions, `openModal` and `closeModal`, and call them from the button clicks.', '`element.focus()` moves the focus. Listen for Escape on `document`.', '```\ndocument.addEventListener("keydown", (event) => {\n  if (event.key === "Escape" && !modal.hidden) {\n    closeModal();\n  }\n});\n```'],
+      },
+      {
+        id: 'w41-tabs',
+        title: 'Tabs',
+        prompt: 'Make the two tabs switch panels. Clicking a tab must:\n\n- set `aria-selected="true"` on it and `"false"` on the others\n- show the panel named by its `aria-controls` and hide the other panels',
+        files: ['js'],
+        starter: { html: JSP('  <div role="tablist" aria-label="Rose">\n    <button role="tab" id="tab-menu" aria-selected="true" aria-controls="panel-menu">Menu</button>\n    <button role="tab" id="tab-info" aria-selected="false" aria-controls="panel-info">Info</button>\n  </div>\n  <div role="tabpanel" id="panel-menu">Plain, Veggie, Chicken</div>\n  <div role="tabpanel" id="panel-info" hidden>Open 7am to 10pm. Wandegeya.</div>'), js: '// Switch the panels when a tab is clicked\n' },
+        solution: { html: JSP('  <div role="tablist" aria-label="Rose">\n    <button role="tab" id="tab-menu" aria-selected="true" aria-controls="panel-menu">Menu</button>\n    <button role="tab" id="tab-info" aria-selected="false" aria-controls="panel-info">Info</button>\n  </div>\n  <div role="tabpanel" id="panel-menu">Plain, Veggie, Chicken</div>\n  <div role="tabpanel" id="panel-info" hidden>Open 7am to 10pm. Wandegeya.</div>'), js: 'const tabs = document.querySelectorAll("[role=tab]");\nconst panels = document.querySelectorAll("[role=tabpanel]");\n\ntabs.forEach((tab) => {\n  tab.addEventListener("click", () => {\n    tabs.forEach((t) => t.setAttribute("aria-selected", String(t === tab)));\n    panels.forEach((p) => {\n      p.hidden = p.id !== tab.getAttribute("aria-controls");\n    });\n  });\n});\n' },
+        checks: [{ visible: '#panel-menu', label: 'The Menu panel starts visible' }, { visible: '#panel-info', is: false }, { do: 'click', target: '#tab-info' }, { visible: '#panel-info', label: 'Clicking Info shows the Info panel' }, { visible: '#panel-menu', is: false, label: 'The Menu panel hides' }, { attr: '#tab-info', name: 'aria-selected', equals: 'true' }, { attr: '#tab-menu', name: 'aria-selected', equals: 'false' }, { do: 'click', target: '#tab-menu' }, { visible: '#panel-menu', label: 'Clicking Menu goes back' }, { visible: '#panel-info', is: false }, { attr: '#tab-menu', name: 'aria-selected', equals: 'true' }],
+        hints: ['Loop over the tabs. On click, update every tab\'s `aria-selected` and every panel\'s `hidden`.', 'A panel is visible only when its `id` equals the clicked tab\'s `aria-controls`.', '```\npanels.forEach((p) => {\n  p.hidden = p.id !== tab.getAttribute("aria-controls");\n});\n```'],
+      },
+    ],
+  },
+
+  // ------------------------------------------------------------------------------------------------
+  {
+    id: 'w42-promises-patterns',
+    level: L4,
+    title: 'Promises in depth: parallel, chained and retried',
+    summary: 'then/catch/finally, Promise.all, writing your own promises, and retrying a failed request.',
+    minutes: 28,
+    blocks: [
+      {
+        t: 'story',
+        title: 'Two requests, one slow phone',
+        text: 'The order page needs the **menu** and the **delivery settings**, both from the server. If you ask for the menu, wait, and then ask for the settings, the customer waits twice as long. On a weak connection that is the difference between an order and a closed tab.\n\nUnderstanding **promises** properly lets you ask for both at once, handle failures, and try again when the signal drops.',
+      },
+      { t: 'analogy', text: 'A promise is a receipt for something that is not ready yet. It is **pending** while the kitchen cooks, **fulfilled** when the food arrives, or **rejected** when they run out of rice. `await` is standing at the counter. `Promise.all` is sending two waiters to two kitchens at the same time and waiting until both return with their plates.' },
+      {
+        t: 'list',
+        items: ['A promise has three states: **pending**, **fulfilled** (with a value) or **rejected** (with an error). Once settled it never changes.', '`promise.then(onSuccess).catch(onError).finally(always)` is the chain style. `async/await` is the same thing written like normal code.', '`Promise.all([a, b])` waits for **all** and gives the results in order. If any one fails, the whole thing fails. `Promise.allSettled` waits for all and reports each result. `Promise.race` takes the first to finish (handy for timeouts).', '`new Promise((resolve, reject) => { ... })` wraps older callback code. Call `resolve(value)` or `reject(error)` once.'],
+      },
+      {
+        t: 'web',
+        title: 'Two requests at the same time with Promise.all',
+        files: ['js'],
+        api: { '/api/menu': MENU, '/api/settings': SETTINGS },
+        starter: {
+          html: JSP('  <p id="info">Loading...</p>'),
+          js: 'async function load() {\n  const [menuResponse, settingsResponse] = await Promise.all([\n    fetch("/api/menu"),\n    fetch("/api/settings"),\n  ]);\n  const menu = await menuResponse.json();\n  const settings = await settingsResponse.json();\n  document.querySelector("#info").textContent =\n    `${menu.length} items, delivery UGX ${settings.deliveryFee.toLocaleString("en-US")}`;\n}\n\nload();\n',
+        },
+        checks: [{ do: 'wait', ms: 60 }, { text: '#info', equals: '3 items, delivery UGX 2,000' }],
+      },
+      {
+        t: 'see',
+        files: { html: JSP('  <p id="out"></p>'), js: 'const out = document.querySelector("#out");\nPromise.resolve("A")\n  .then((v) => v + "B")\n  .then((v) => v + "C")\n  .finally(() => {\n    out.textContent += "!";\n  })\n  .then(() => {\n    out.textContent = "done";\n  });' },
+        question: 'The chain runs to the end. What does the page show?',
+        options: ['done', 'ABC!', 'ABC', 'A'],
+        answer: 0,
+        explain: 'Each `.then` passes its result to the next. `finally` runs when the chain settles, and the last `.then` runs after it and replaces the text with "done".',
+        proof: [{ do: 'wait', ms: 40 }, { text: '#out', equals: 'done' }],
+      },
+      { t: 'h', text: 'Your own promises: sleep and retry' },
+      {
+        t: 'code',
+        text: 'const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\n\nasync function retry(task, times) {\n  for (let attempt = 1; attempt <= times; attempt++) {\n    try {\n      return await task();          // success: stop here\n    } catch (error) {\n      if (attempt === times) throw error; // out of tries\n      await sleep(200 * attempt);         // wait a little longer each time\n    }\n  }\n}',
+      },
+      { t: 'tip', text: 'Do not `await` inside a loop when the requests do not depend on each other: `for (...) await fetch(...)` runs them one after another. Start them all first and then `await Promise.all(promises)`. And always handle rejections (`catch`), because an unhandled rejection becomes a silent bug on a customer\'s phone.' },
+      {
+        t: 'mistakes',
+        items: [
+          { lang: 'dom', wrong: 'const menu = await (await fetch("/api/menu")).json();\nconst settings = await (await fetch("/api/settings")).json();', why: 'These two requests do not depend on each other, but the second waits for the first. On a slow connection you pay for both delays one after the other.', right: 'const [menu, settings] = await Promise.all([\n  fetch("/api/menu").then((r) => r.json()),\n  fetch("/api/settings").then((r) => r.json()),\n]);' },
+          { lang: 'dom', wrong: 'fetch("/api/menu")\n  .then((r) => { r.json(); })\n  .then((items) => show(items));', why: 'The first `.then` has braces but no `return`, so the next step receives `undefined`. Return the promise, or drop the braces.', right: 'fetch("/api/menu")\n  .then((r) => r.json())\n  .then((items) => show(items));' },
+          { lang: 'dom', wrong: 'Promise.all([a(), b()])\n  .then(show);\n// (no catch)', why: 'If either request fails, the page does nothing and the error disappears quietly. Add `.catch(...)` and show the customer a message.', right: 'Promise.all([a(), b()])\n  .then(show)\n  .catch(() => showError("Could not load. Try again."));' },
+        ],
+      },
+      { t: 'quiz', question: 'You need the menu and the settings, and they do not depend on each other. What is the fastest correct approach?', options: ['Start both and wait with Promise.all', 'Await the menu, then await the settings', 'Fetch the menu twice', 'Use setTimeout between them'], answer: 0, explain: 'Both requests travel at the same time, so the total wait is about the slower one, not the sum of both.' },
+      {
+        t: 'web',
+        project: true,
+        title: 'A loading screen that always ends',
+        text: 'Loads both pieces in parallel, shows a loading message first, handles failure, and always removes the spinner in `finally`.',
+        files: ['js'],
+        api: { '/api/menu': MENU, '/api/settings': SETTINGS },
+        starter: {
+          html: JSP('  <p id="status" role="status">Loading...</p>\n  <ul id="menu"></ul>\n  <p id="delivery"></p>'),
+          js: 'const status = document.querySelector("#status");\n\nPromise.all([\n  fetch("/api/menu").then((r) => r.json()),\n  fetch("/api/settings").then((r) => r.json()),\n])\n  .then(([menu, settings]) => {\n    for (const item of menu) {\n      const li = document.createElement("li");\n      li.textContent = item.name;\n      document.querySelector("#menu").append(li);\n    }\n    document.querySelector("#delivery").textContent =\n      `Free delivery from UGX ${settings.freeFrom.toLocaleString("en-US")}`;\n  })\n  .catch(() => {\n    status.textContent = "Could not load. Please try again.";\n  })\n  .finally(() => {\n    if (status.textContent === "Loading...") status.textContent = "";\n  });\n',
+        },
+        checks: [{ do: 'wait', ms: 60 }, { count: '#menu li', equals: 3 }, { text: '#delivery', contains: '20,000' }, { text: '#status', equals: '' }],
+      },
+      { t: 'recap', items: ['A promise is pending, then fulfilled or rejected. `then`, `catch` and `finally` chain; `async/await` is the same in a friendlier shape.', '`Promise.all` runs requests in parallel and fails if any fails. `allSettled` reports each result; `race` takes the first.', 'Make your own with `new Promise((resolve, reject) => ...)`, for example `sleep`.', 'A retry loop with growing waits makes weak connections bearable.', 'Always handle rejections and always end the loading state.'], memory: 'Start together, wait together, always catch, always finish.' },
+    ],
+    exercises: [
+      {
+        id: 'w42-all',
+        title: 'Load both at once',
+        api: { '/api/menu': MENU, '/api/settings': SETTINGS },
+        prompt: 'Use `Promise.all` to fetch `/api/menu` **and** `/api/settings` at the same time. Then put this in `#info`:\n\n`3 items, delivery UGX 2,000, free from UGX 20,000`\n\n(the settings hold `deliveryFee` and `freeFrom`; format the money with `toLocaleString("en-US")`).',
+        files: ['js'],
+        starter: { html: JSP('  <p id="info">Loading...</p>'), js: '// Fetch /api/menu and /api/settings in parallel\n' },
+        solution: { html: JSP('  <p id="info">Loading...</p>'), js: 'async function load() {\n  const [menu, settings] = await Promise.all([\n    fetch("/api/menu").then((r) => r.json()),\n    fetch("/api/settings").then((r) => r.json()),\n  ]);\n  document.querySelector("#info").textContent =\n    `${menu.length} items, delivery UGX ${settings.deliveryFee.toLocaleString("en-US")}, free from UGX ${settings.freeFrom.toLocaleString("en-US")}`;\n}\n\nload();\n' },
+        checks: [{ do: 'wait', ms: 60 }, { text: '#info', equals: '3 items, delivery UGX 2,000, free from UGX 20,000', label: 'The info line is correct' }, { uses: 'js', pattern: 'Promise\\.all', label: 'You used Promise.all' }, { uses: 'js', pattern: '/api/menu', label: 'You fetched /api/menu' }, { uses: 'js', pattern: '/api/settings', label: 'You fetched /api/settings' }],
+        hints: ['Put both `fetch(...)` calls inside the array you give to `Promise.all([...])`.', 'Each one still needs `.json()`: `fetch("/api/menu").then((r) => r.json())`.', '```\nconst [menu, settings] = await Promise.all([\n  fetch("/api/menu").then((r) => r.json()),\n  fetch("/api/settings").then((r) => r.json()),\n]);\n```'],
+      },
+      {
+        id: 'w42-then-chain',
+        title: 'Rewrite as a promise chain',
+        api: { '/api/menu': MENU, '/api/settings': SETTINGS },
+        prompt: 'This code uses `async/await`. Rewrite it with a **`.then()` chain** (no `await`, no `async`) so it does the same job: show the number of menu items in `#count`.',
+        files: ['js'],
+        starter: { html: JSP('  <p>Items: <span id="count">...</span></p>'), js: 'async function load() {\n  const response = await fetch("/api/menu");\n  const items = await response.json();\n  document.querySelector("#count").textContent = items.length;\n}\n\nload();\n' },
+        solution: { html: JSP('  <p>Items: <span id="count">...</span></p>'), js: 'fetch("/api/menu")\n  .then((response) => response.json())\n  .then((items) => {\n    document.querySelector("#count").textContent = items.length;\n  });\n' },
+        checks: [{ do: 'wait', ms: 60 }, { text: '#count', equals: '3', label: 'The count is shown' }, { uses: 'js', pattern: '\\.then\\(', label: 'You used .then()' }, { uses: 'js', pattern: '^(?![\\s\\S]*\\bawait\\b)', label: 'No await is left' }, { uses: 'js', pattern: '^(?![\\s\\S]*\\basync\\b)', label: 'No async is left' }],
+        hints: ['`fetch(...)` returns a promise, so you can chain `.then(...)` straight onto it.', 'The first `.then` turns the response into data with `response.json()` and **returns** it. The second receives the items.', '```\nfetch("/api/menu")\n  .then((response) => response.json())\n  .then((items) => {\n    ...\n  });\n```'],
+      },
+      {
+        id: 'w42-sleep',
+        title: 'Write sleep',
+        prompt: 'Write `sleep(ms)`. It returns a **promise** that resolves (with no value) after `ms` milliseconds, so you can write `await sleep(200)`.',
+        files: ['js'],
+        starter: { js: '// Write sleep(ms)\n' },
+        solution: { js: 'function sleep(ms) {\n  return new Promise((resolve) => setTimeout(resolve, ms));\n}\n' },
+        checks: [{ js: 'sleep(10) instanceof Promise', equals: true, label: 'sleep returns a promise' }, { js: '(async () => { const t = Date.now(); await sleep(60); return Date.now() - t >= 50; })()', equals: true, label: 'await sleep(60) really waits' }, { js: '(async () => { const r = await sleep(5); return r === undefined; })()', equals: true, label: 'It resolves with no value' }, { uses: 'js', pattern: 'new\\s+Promise', label: 'You used new Promise' }, { uses: 'js', pattern: 'setTimeout', label: 'You used setTimeout' }],
+        hints: ['Return `new Promise((resolve) => ...)`.', 'Inside, start a timer that calls `resolve` after `ms`.', '```\nfunction sleep(ms) {\n  return new Promise((resolve) => setTimeout(resolve, ms));\n}\n```'],
+      },
+      {
+        id: 'w42-retry',
+        title: 'Try again',
+        prompt: 'Write `retry(task, times)`. `task` is a function returning a promise. Call it, and if it **rejects**, try again, up to `times` calls in total. When one succeeds, return its value. If all fail, throw the **last** error.',
+        files: ['js'],
+        starter: { js: '// Write retry(task, times)\n' },
+        solution: { js: 'async function retry(task, times) {\n  let lastError;\n  for (let attempt = 1; attempt <= times; attempt++) {\n    try {\n      return await task();\n    } catch (error) {\n      lastError = error;\n    }\n  }\n  throw lastError;\n}\n' },
+        checks: [{ js: '(async () => { let calls = 0; const flaky = () => { calls += 1; return calls < 3 ? Promise.reject(new Error("x")) : Promise.resolve("ok"); }; const r = await retry(flaky, 5); return r + calls; })()', equals: 'ok3', label: 'A task that fails twice then works returns ok after 3 calls' }, { js: '(async () => { try { await retry(() => Promise.reject(new Error("no")), 2); return "resolved"; } catch (e) { return e.message; } })()', equals: 'no', label: 'When every try fails, the last error is thrown' }, { js: '(async () => { let calls = 0; try { await retry(() => { calls += 1; return Promise.reject(new Error("e")); }, 3); } catch (e) {} return calls; })()', equals: 3, label: 'It tries exactly `times` times' }, { js: '(async () => { let calls = 0; await retry(() => { calls += 1; return Promise.resolve(1); }, 5); return calls; })()', equals: 1, label: 'A success stops the loop at once' }, { uses: 'js', pattern: 'async', label: 'You used async' }, { uses: 'js', pattern: 'try\\s*\\{', label: 'You used try' }],
+        hints: ['Loop from 1 to `times`. Inside, `try { return await task(); }`.', 'In `catch`, remember the error. After the loop, `throw` the remembered error.', '```\nfor (let attempt = 1; attempt <= times; attempt++) {\n  try {\n    return await task();\n  } catch (error) {\n    lastError = error;\n  }\n}\nthrow lastError;\n```'],
+      },
+    ],
+  },
+];

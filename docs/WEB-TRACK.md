@@ -3,26 +3,25 @@
 Course id `web-start`, language `web`. One running project: a website for **Mama Rose Rolex**, Wandegeya, Kampala.
 Goal: a learner finishes able to build, deploy and sell a small business website or web app.
 
-## What exists now: 36 lessons, about 100 auto-checked exercises
+## What exists now: 45 lessons, 136 auto-checked exercises, about 18 hours
 
 | Level | Lessons |
 |---|---|
-| 1. Your first web page (HTML) | First page / Text, lists, links (tel:, WhatsApp) / Pictures, skeleton, semantic tags / **Forms** (inputs, labels, radio, select, validation attributes) / **Tables, figure, details, the head** (title, description, Open Graph, icon) |
-| 2. Make it beautiful (CSS) | Colour and text, linking the stylesheet / Box model, classes / Flexbox / Responsive: media queries, fluid images, grid / **Selectors, specificity, inheritance** / **Units, display, position, overflow, aspect-ratio** / **Type, gradients, shadows, buttons** / **Transitions, transforms, keyframes, reduced motion** / **Variables, dark mode, reset, naming** / **Grid in depth** (areas, span) |
-| 3. JavaScript, make the page think | Variables, text, sums / **Decisions** / **Loops** / **Functions, scope** / **Arrays** / **Objects, destructuring, spread, JSON** / **map, filter, reduce, sort** / **Strings, numbers, Math, dates** / **try/catch, throw, debugging method** / **Classes, inheritance, modules** |
-| 4. JavaScript in the page | The DOM and events / **Rendering lists, event delegation, XSS** / **Forms and validation (submit, input events, regex)** / **localStorage and JSON** / **fetch, promises, async/await, loading and error states** / **Project: Order App** (menu from API, cart, saved, checkout) |
-| 5. Go professional | **Accessibility** / **Speed, SEO (JSON-LD), security** / **Git and GitHub Pages, paths and case bugs** / **Capstone: a client website from a brief** / **Going to market: finding clients, pricing, deposits, Mobile Money, WhatsApp order links** |
+| 1. Your first web page (HTML) | First page / Text, lists, links (tel:, WhatsApp) / Pictures, skeleton, semantic tags / **Forms** (inputs, labels, radio, select, validation attributes) / **Tables, figure, details, the head** (title, description, Open Graph, icon) / **Video, audio, iframes, srcset, date/range/datalist inputs, tfoot and colspan** |
+| 2. Make it beautiful (CSS) | Colour and text, linking the stylesheet / Box model, classes / Flexbox / Responsive: media queries, fluid images, grid / **Selectors, specificity, inheritance** / **Units, display, position, overflow, aspect-ratio** / **Type, gradients, shadows, buttons** / **Transitions, transforms, keyframes, reduced motion** / **Variables, dark mode, reset, naming** / **Grid in depth** (areas, span) / **Modern CSS**: `calc`, `min`, `max`, `clamp`, fixed floating button, `::before`/`::after`, smooth scroll, `@font-face` |
+| 3. JavaScript, make the page think | Variables, text, sums / **Decisions** / **Loops** / **Functions, scope** / **Arrays** / **Objects, destructuring, spread, JSON** / **map, filter, reduce, sort** / **Strings, numbers, Math, dates** / **try/catch, throw, debugging method** / **Classes, inheritance, modules** / **Patterns in every codebase**: `switch`, `??`, `Object.entries`, rest/spread, `Set`/`Map`, closures / **Regular expressions** |
+| 4. JavaScript in the page | The DOM and events / **Rendering lists, event delegation, XSS** / **Forms and validation (submit, input events, regex)** / **Timers, debounce, keyboard events** / **Tabs, accordion, modal, live search** (accessible) / **localStorage and JSON** / **fetch, promises, async/await, loading and error states** / **Promises in depth**: `Promise.all`, chains, `sleep`, `retry` / **Project: Order App** (menu from API, cart, saved, checkout) |
+| 5. Go professional | **Accessibility** / **Speed, SEO (JSON-LD), security** / **Git and GitHub Pages, paths and case bugs** / **Installable and offline: PWA manifest, service worker, caching strategies** / **Tools of the trade**: DevTools, npm, Vite, Prettier/ESLint, TypeScript, frameworks, a six-month plan / **Capstone: a client website from a brief** / **Going to market: finding clients, pricing, deposits, Mobile Money, WhatsApp order links** |
 
 ## Coverage audit: is anything left out?
 
 Covered: the full HTML element set a business site needs, the whole CSS toolbox used in production (selectors and specificity, box model, units, display, position, flexbox, grid, responsive design, typography, backgrounds, transitions and animations, variables, dark mode, naming), core JavaScript (types, operators, control flow, functions, arrays, objects, classes, modules, errors, async), the DOM (events, delegation, forms), browser storage, networking with `fetch`, accessibility, SEO, performance, web security basics, version control and deployment, and the business side (clients, quotes, deposits).
 
-Deliberately **not** in this track (each needs its own runtime or is a separate career step; suggested as later tracks):
-- **A real backend and database** (Node + Express, SQL, authentication, real Mobile Money integration). The track teaches the front end and the *contract* with a server (`fetch`, JSON, POST) using a pretend server.
-- **A framework** (React or Vue) and **build tools** (Vite, npm). The module lesson explains `import/export`, but the preview runs one `script.js`.
-- **TypeScript and automated testing** frameworks.
-- **Progressive Web Apps and service workers** (installable, offline sites): an excellent next lesson for Ugandan users, because it needs a real origin.
-- **Newer CSS** (`:has()`, container queries, nesting, `@layer`), **SVG and canvas**, and **browser APIs** (geolocation, camera, clipboard, share, IntersectionObserver).
+Deliberately **not** practised in this track (each needs its own runtime or is a separate career step; suggested as later tracks):
+- **A real backend and database** (Node + Express, SQL, authentication, real Mobile Money integration). The track teaches the front end and the *contract* with a server (`fetch`, JSON, POST) using a pretend server, and explains the next steps in the tools lesson.
+- **A framework** (React or Vue), **TypeScript** and **automated testing frameworks**. They are explained and a six-month path is given, but the preview runs one `script.js`, so they cannot be practised inside this app. A "React from zero" track is the natural next course.
+- **Service workers cannot run in the preview** (they need a real HTTPS origin). The PWA lesson teaches the manifest, caching strategies and the worker code, and the exercises check the manifest, head tags and strategy logic.
+- **Newer CSS** (container queries, nesting, `@layer`, `:has()` in depth), **SVG and canvas**, and **browser APIs** (geolocation, camera, clipboard, share, `IntersectionObserver`, `FormData`, hash routing). Good candidates for an "Extras" level.
 
 ## How the track works
 
