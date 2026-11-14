@@ -18,6 +18,82 @@ export const cSolutions = {
   'c4-sum': C('    int n, i, total = 0;\n    scanf("%d", &n);\n    for (i = 1; i <= n; i++) {\n        total = total + i;\n    }\n    printf("Sum: %d\\n", total);'),
   'c4-table': C('    int n, i;\n    scanf("%d", &n);\n    for (i = 1; i <= 12; i++) {\n        printf("%d x %d = %d\\n", n, i, n * i);\n    }'),
 
+  // Level 2: loops (lessons 7 to 10)
+  'c7-evens': C(String.raw`    int n, i;
+    scanf("%d", &n);
+    for (i = 2; i <= n; i += 2) {
+        printf("%d\n", i);
+    }`),
+  'c7-total': C(String.raw`    int n, i, mark, total = 0;
+    scanf("%d", &n);
+    for (i = 1; i <= n; i++) {
+        scanf("%d", &mark);
+        total = total + mark;
+    }
+    printf("Total: %d\n", total);`),
+  'c8-sum0': C(String.raw`    int x, total = 0;
+    scanf("%d", &x);
+    while (x != 0) {
+        total = total + x;
+        scanf("%d", &x);
+    }
+    printf("Total: %d\n", total);`),
+  'c8-digits': C(String.raw`    int n, count = 0;
+    scanf("%d", &n);
+    while (n > 0) {
+        n = n / 10;
+        count++;
+    }
+    printf("Digits: %d\n", count);`),
+  'c8-save': C(String.raw`    int goal, weekly, saved = 0, weeks = 0;
+    scanf("%d %d", &goal, &weekly);
+    while (saved < goal) {
+        saved = saved + weekly;
+        weeks++;
+    }
+    printf("Weeks: %d\n", weeks);`),
+  'c9-square': C(String.raw`    int n, row, col;
+    scanf("%d", &n);
+    for (row = 1; row <= n; row++) {
+        for (col = 1; col <= n; col++) {
+            printf("#");
+        }
+        printf("\n");
+    }`),
+  'c9-stairs': C(String.raw`    int n, i, j;
+    scanf("%d", &n);
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= i; j++) {
+            printf("%d", i);
+        }
+        printf("\n");
+    }`),
+  'c9-grid': C(String.raw`    int n, i, j;
+    scanf("%d", &n);
+    for (i = 1; i <= n; i++) {
+        for (j = 1; j <= n; j++) {
+            printf("%d", i * j);
+            if (j < n) {
+                printf(" ");
+            }
+        }
+        printf("\n");
+    }`),
+  'c10-till': C(String.raw`    int price, items = 0, total = 0, discount = 0;
+    scanf("%d", &price);
+    while (price != 0) {
+        items++;
+        total = total + price;
+        scanf("%d", &price);
+    }
+    if (total >= 10000) {
+        discount = total / 10;
+    }
+    printf("Items: %d\n", items);
+    printf("Total: %d\n", total);
+    printf("Discount: %d\n", discount);
+    printf("Pay: %d\n", total - discount);`),
+
   // Level 2: new exercises
   'c3-sign': C(String.raw`    int n;
     scanf("%d", &n);

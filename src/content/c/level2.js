@@ -1,4 +1,4 @@
-// C, Level 2: Decisions and loops. Lessons 5 and 6 (decisions, logic). Loops are still in legacy.js.
+// C, Level 2: Decisions and loops. Lessons 5 and 6 (decisions, logic). Lessons 7 to 10 are in loops.js.
 // Prose uses single-quoted strings. C code uses String.raw so that \n stays a backslash-n.
 import { prog } from './shared.js';
 

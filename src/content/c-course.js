@@ -4,12 +4,12 @@
 // module outline before this pack is used for assessed work.
 import { level1 } from './c/level1.js';
 import { level2 } from './c/level2.js';
-import { legacyLessons } from './c/legacy.js';
+import { loopLessons } from './c/loops.js';
 
 export const cCourse = {
   id: 'c-structured',
   language: 'c',
   title: 'Structured Programming in C',
   subtitle: 'Draft pack for the Structured Programming module',
-  lessons: [...level1, ...level2, ...legacyLessons],
+  lessons: [...level1, ...level2, ...loopLessons],
 };
