@@ -57,6 +57,44 @@ const PATCHES = [
     find: 'replace = _regslashs(pre) + replace;',
     replace: String.raw`replace = (pre && /^\s+$/.test(pre) ? '\\s*' : _regslashs(pre)) + replace;`,
   },
+  {
+    // `&a[i]` reaches scanf as an array-style pointer with a position. The library only knew how to fill a
+    // whole char buffer (for %s), so scanf("%d", &a[i]) failed with "Memory overflow". Reading into array
+    // elements is how every arrays lesson reads its data. Three small patches work together:
+    //   1. %c hands its character over marked as a character, so it can be told apart from %s
+    //   2. scanf unwraps that mark
+    //   3. a pointer to ONE array element (a numeric array, a %c, or any position after the first) stores one value
+    file: /JSCPP\/lib\/includes\/cstdio\.js$/,
+    why: 'scanf("%c", ...) must mark its value as a single character',
+    find: 'case "%c":\n                    ret = _get_char(pre, next);',
+    replace: 'case "%c":\n                    ret = { __ch: _get_char(pre, next) };',
+  },
+  {
+    file: /JSCPP\/lib\/includes\/cstdio\.js$/,
+    why: 'scanf must unwrap a value that was marked as a single character',
+    find: 'const _set_pointer_value = function (pointer, value) {\n            try {',
+    replace:
+      'const _set_pointer_value = function (pointer, value) {\n' +
+      '            let isChar = false;\n' +
+      '            if (value !== null && typeof value === "object" && "__ch" in value) {\n' +
+      '                isChar = true;\n' +
+      '                value = value.__ch;\n' +
+      '            }\n' +
+      '            try {',
+  },
+  {
+    file: /JSCPP\/lib\/includes\/cstdio\.js$/,
+    why: 'scanf("%d", &a[i]) and scanf(" %c", &s[i]) must store the value into that one array element',
+    find: 'else if (rt.isArrayType(pointer)) {\n                    const src_array = rt.makeCharArrayFromString(value);',
+    replace:
+      'else if (rt.isArrayType(pointer) && (isChar || pointer.v.position > 0 || typeof value !== "string" || !rt.isCharType(pointer.t.eleType))) {\n' +
+      '                    const slot = pointer.v.target[pointer.v.position];\n' +
+      '                    const stored = rt.val(pointer.t.eleType, typeof value === "string" ? value.charCodeAt(0) : value, true);\n' +
+      '                    return slot.v = stored.v;\n' +
+      '                }\n' +
+      '                else if (rt.isArrayType(pointer)) {\n' +
+      '                    const src_array = rt.makeCharArrayFromString(value);',
+  },
 ];
 const countOf = (text, part) => text.split(part).length - 1;
 
