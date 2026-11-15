@@ -6,6 +6,8 @@
 /** The include lines that most programs need. */
 export const IO = '#include <iostream>';
 export const IO_FMT = '#include <iostream>\n#include <iomanip>';
+/** For text lessons: C-style strings and character tests. */
+export const IO_STR = '#include <iostream>\n#include <cstring>\n#include <cctype>';
 
 /** A complete program: `body` goes inside main. `inc` is the list of #include lines. */
 export const prog = (body, inc = IO) => `${inc}\nusing namespace std;\n\nint main() {\n${body}\n    return 0;\n}\n`;

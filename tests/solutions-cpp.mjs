@@ -1,9 +1,10 @@
 // Reference solutions for the C++ course (see docs/CPP-TRACK.md). Every C++ exercise must have one here,
 // it must pass all its tests, and the starter must NOT pass.
-import { prog, progFn, IO_FMT } from '../src/content/cpp/shared.js';
+import { prog, progFn, IO_FMT, IO_STR } from '../src/content/cpp/shared.js';
 
 const P = (body) => prog(body);
 const PF = (body) => prog(body, IO_FMT);
+const PS = (body) => prog(body, IO_STR);
 
 export const cppSolutions = {
   // Lesson 1: your first program
@@ -268,4 +269,180 @@ void showBalance(int balance) {
     }
     cout << "Goodbye" << endl;
     cout << "Transactions: " << transactions << endl;`),
+
+  // Lesson 14: arrays
+  'cpp14-total': PF(String.raw`    const int N = 5;
+    int sales[N];
+    int total = 0;
+    for (int i = 0; i < N; i++) {
+        cin >> sales[i];
+        total += sales[i];
+    }
+    cout << "Total: " << total << endl;
+    cout << fixed << setprecision(2);
+    cout << "Average: " << (double)total / N << endl;`),
+  'cpp14-reverse': P(String.raw`    int n;
+    int a[10];
+    cin >> n;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    for (int i = n - 1; i >= 0; i--) {
+        cout << a[i] << " ";
+    }
+    cout << endl;`),
+  'cpp14-above': P(String.raw`    int a[5];
+    int total = 0;
+    for (int i = 0; i < 5; i++) {
+        cin >> a[i];
+        total += a[i];
+    }
+    double average = total / 5.0;
+    int count = 0;
+    for (int i = 0; i < 5; i++) {
+        if (a[i] > average) {
+            count++;
+        }
+    }
+    cout << "Above average: " << count << endl;`),
+
+  // Lesson 15: arrays and functions
+  'cpp15-maxmin': P(String.raw`    int n;
+    int a[10];
+    cin >> n;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    int max = a[0], min = a[0], pos = 0;
+    for (int i = 1; i < n; i++) {
+        if (a[i] > max) {
+            max = a[i];
+            pos = i;
+        }
+        if (a[i] < min) {
+            min = a[i];
+        }
+    }
+    cout << "Max: " << max << endl;
+    cout << "Min: " << min << endl;
+    cout << "Best position: " << pos + 1 << endl;`),
+  'cpp15-search': P(String.raw`    int n, target;
+    int a[10];
+    cin >> n;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    cin >> target;
+    bool found = false;
+    for (int i = 0; i < n; i++) {
+        if (a[i] == target) {
+            cout << "Found at position " << i + 1 << endl;
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        cout << "Not found" << endl;
+    }`),
+  'cpp15-sort': progFn(String.raw`void bubbleSort(int a[], int n) {
+    for (int pass = 0; pass < n - 1; pass++) {
+        for (int i = 0; i < n - 1 - pass; i++) {
+            if (a[i] > a[i + 1]) {
+                int temp = a[i];
+                a[i] = a[i + 1];
+                a[i + 1] = temp;
+            }
+        }
+    }
+}`, String.raw`    int n;
+    int a[10];
+    cin >> n;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    bubbleSort(a, n);
+    for (int i = 0; i < n; i++) {
+        cout << a[i] << " ";
+    }
+    cout << endl;`),
+
+  // Lesson 16: tables
+  'cpp16-stalls': P(String.raw`    int t[3][4];
+    for (int r = 0; r < 3; r++) {
+        for (int c = 0; c < 4; c++) {
+            cin >> t[r][c];
+        }
+    }
+    int grand = 0;
+    for (int r = 0; r < 3; r++) {
+        int total = 0;
+        for (int c = 0; c < 4; c++) {
+            total += t[r][c];
+        }
+        cout << "Stall " << r + 1 << ": " << total << endl;
+        grand += total;
+    }
+    cout << "All stalls: " << grand << endl;`),
+  'cpp16-diagonal': P(String.raw`    int t[3][3];
+    for (int r = 0; r < 3; r++) {
+        for (int c = 0; c < 3; c++) {
+            cin >> t[r][c];
+        }
+    }
+    int total = 0;
+    for (int i = 0; i < 3; i++) {
+        total += t[i][i];
+    }
+    cout << "Diagonal: " << total << endl;`),
+  'cpp16-transpose': P(String.raw`    int t[2][3];
+    for (int r = 0; r < 2; r++) {
+        for (int c = 0; c < 3; c++) {
+            cin >> t[r][c];
+        }
+    }
+    for (int c = 0; c < 3; c++) {
+        for (int r = 0; r < 2; r++) {
+            cout << t[r][c] << " ";
+        }
+        cout << endl;
+    }`),
+
+  // Lesson 17: text as char arrays
+  'cpp17-vowels': PS(String.raw`    char w[30];
+    cin >> w;
+    int vowels = 0;
+    for (int i = 0; w[i] != '\0'; i++) {
+        char c = tolower(w[i]);
+        if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u') {
+            vowels++;
+        }
+    }
+    cout << "Vowels: " << vowels << endl;`),
+  'cpp17-upper': PS(String.raw`    char s[100];
+    cin.getline(s, 100);
+    for (int i = 0; s[i] != '\0'; i++) {
+        cout << (char)toupper(s[i]);
+    }
+    cout << endl;`),
+  'cpp17-palindrome': PS(String.raw`    char w[30];
+    cin >> w;
+    int n = strlen(w);
+    bool same = true;
+    for (int i = 0; i < n / 2; i++) {
+        if (w[i] != w[n - 1 - i]) {
+            same = false;
+        }
+    }
+    if (same) {
+        cout << "Palindrome" << endl;
+    } else {
+        cout << "Not palindrome" << endl;
+    }`),
+  'cpp17-login': PS(String.raw`    char user[20], pass[20];
+    cin >> user >> pass;
+    if (strcmp(user, "rose") == 0 && strcmp(pass, "karibu") == 0) {
+        cout << "Welcome" << endl;
+    } else {
+        cout << "Access denied" << endl;
+    }`),
 };

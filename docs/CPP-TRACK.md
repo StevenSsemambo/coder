@@ -3,7 +3,7 @@
 Course id `cpp-start`, language id `cpp`. Files: `src/content/cpp/` (lessons), `src/content/cpp-course.js`
 (the course list), `tests/solutions-cpp.mjs` (reference solutions). Owner: the C++ account.
 
-Files by lesson: `level1.js` (1 to 3), `level2.js` (4), `switch.js` (5), `loops.js` (6 to 8), `till.js` (9), `functions.js` (10 to 12), `momo.js` (13).
+Files by lesson: `level1.js` (1 to 3), `level2.js` (4), `switch.js` (5), `loops.js` (6 to 8), `till.js` (9), `functions.js` (10 to 12), `momo.js` (13), `arrays.js` (14 to 16), `text.js` (17).
 
 Running project: **Mama Rose's Rolex Stand**, a rolex (chapati rolled round an omelette) stall beside the
 campus gate. Learners meet it in lesson 1 (the chalkboard menu) and finish Part A by building its till.
@@ -41,10 +41,10 @@ start with `cpp<lesson number>-`.
 - [x] 13. `cpp-momo` Project: a Mobile Money kiosk built from small functions (lesson id is `cpp-momo`)
 
 **Level 4: Arrays and text**
-- [ ] 14. `cpp-arrays` Arrays
-- [ ] 15. `cpp-array-algos` Search, minimum, maximum, bubble sort
-- [ ] 16. `cpp-2d` Two-dimensional arrays
-- [ ] 17. `cpp-cstrings` Text as `char` arrays, `<cstring>`, `<cctype>`
+- [x] 14. `cpp-arrays` Arrays: index from 0, loops, partial initialisation, boundaries
+- [x] 15. `cpp-array-algos` Arrays in functions, maximum, linear search, reverse, bubble sort
+- [x] 16. `cpp-2d` Two-dimensional arrays: row and column totals, tables in functions
+- [x] 17. `cpp-cstrings` Text as `char` arrays, `cin`/`getline`, `<cstring>`, `<cctype>`
 
 **Level 5: Pointers**
 - [ ] 18. `cpp-pointers` Addresses and pointers, pointers and arrays
@@ -93,6 +93,19 @@ Behaviours that differ from real C++ (say so honestly in lessons where they matt
 - A call **before** a function's definition runs here without a prototype, but a real compiler refuses it. Lessons
   say so and always define the function above `main` or write a prototype.
 - A non-`void` function that reaches its end without `return` stops with "you must return a value" (real C++ only warns).
+- **Arrays:** reading or writing outside an array **stops the program** with "index out of bound" (real C++ does
+  not stop; it corrupts memory). An array created with no values prints `NaN`. `sizeof(arr)/sizeof(arr[0])` inside a
+  function that received the array gives the wrong answer, so lessons always pass the size as a parameter.
+- **Array assignment** (`b = a`, or `s = "abc"` for a `char` array) is accepted here but is a compile error in real
+  C++. `char s[3] = "Kampala"` is silently cut to `Kam` here (real C++ refuses). Variable-length arrays
+  (`int a[n]`) work here but are not standard C++. Lessons use a `const` size or a fixed maximum.
+- **A `char` array filled by `cin >>` or `cin.getline` cannot be changed letter by letter** ("is not a left value").
+  Arrays created from quoted text can. So input text is only read, tested and printed. `cin.ignore()` crashes the
+  interpreter, so lessons show the "name first, then number" order instead. An array of strings cannot be started
+  from string literals (`char names[3][10] = {"Amina", ...}`).
+- `isdigit`, `isalpha` and friends print `1` here, but real C++ may print another non-zero number. Lessons use them
+  only inside an `if` and say so.
+- A table parameter without its column size (`int t[][]`) stops with an error here, as in real C++.
 - A `const` **can be changed** here (no error). A real compiler refuses. Lesson 3 says so out loud.
 - Leaving out `using namespace std;` still works here when `<iostream>` is included. A real compiler refuses.
   Lessons always write it.
