@@ -1,0 +1,17 @@
+// Java course: from complete beginner to building market-ready programs.
+// The roadmap, the engine limits and the lesson rules are in docs/JAVA-TRACK.md.
+// Running project: the Village SACCO (savings and loans group).
+import { whatLesson } from './java/what.js';
+import { firstLesson } from './java/first.js';
+import { variablesLesson } from './java/variables.js';
+import { operatorsLesson } from './java/operators.js';
+import { inputLesson } from './java/input.js';
+import { decisionsLesson } from './java/decisions.js';
+
+export const javaCourse = {
+  id: 'java-start',
+  language: 'java',
+  title: 'Java from Zero to Market-Ready',
+  subtitle: 'Learn real Java offline, and build the Village SACCO system step by step',
+  lessons: [whatLesson, firstLesson, variablesLesson, operatorsLesson, inputLesson, decisionsLesson],
+};

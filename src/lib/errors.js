@@ -556,9 +556,34 @@ const RULES = [
     }),
   },
   {
+    id: 'java-quote',
+    languages: ['java'],
+    match: /error: unclosed (string|character) literal/,
+    build: (m) => ({
+      en: {
+        title: m[1] === 'string' ? 'A closing double quote is missing' : 'Single quotes hold only one character',
+        why: m[1] === 'string'
+          ? 'Text in Java starts with a double quote " and must end with another double quote " on the same line. Java did not find the closing one, so it kept reading to the end of the line.'
+          : 'Java saw a single quote \' and expected exactly one character and then another single quote. Text of several characters belongs in double quotes: "like this".',
+        fix: m[1] === 'string'
+          ? 'Add the missing " at the end of the text, before the ) and the ;'
+          : 'Use double quotes for text: System.out.println("Karibu"); Single quotes are only for one character, such as \'A\'.',
+      },
+      sw: {
+        title: m[1] === 'string' ? 'Nukuu ya kufunga inakosekana' : 'Nukuu moja hushika herufi moja tu',
+        why: m[1] === 'string'
+          ? 'Maandishi katika Java huanza na nukuu mbili " na lazima yaishie na nukuu mbili " kwenye mstari huo huo. Java haikupata ya kufunga, kwa hiyo iliendelea kusoma hadi mwisho wa mstari.'
+          : 'Java iliona nukuu moja \' na ilitarajia herufi moja kisha nukuu moja nyingine. Maandishi ya herufi nyingi yanawekwa ndani ya nukuu mbili: "hivi".',
+        fix: m[1] === 'string'
+          ? 'Ongeza " inayokosekana mwishoni mwa maandishi, kabla ya ) na ;'
+          : 'Tumia nukuu mbili kwa maandishi: System.out.println("Karibu"); Nukuu moja ni kwa herufi moja tu, mfano \'A\'.',
+      },
+    }),
+  },
+  {
     id: 'java-syntax',
     languages: ['java'],
-    match: /error: (reached end of file while parsing|illegal start of (?:expression|type)|not a statement|unclosed string literal|class, interface, enum, or record expected|<identifier> expected|illegal character|'else' without 'if'|orphaned \w+)/,
+    match: /error: (reached end of file while parsing|illegal start of (?:expression|type)|not a statement|unclosed (?:string|character) literal|class, interface, enum, or record expected|<identifier> expected|illegal character|'else' without 'if'|orphaned \w+)/,
     build: (m) => ({
       en: {
         title: 'Java cannot read this line',
@@ -586,6 +611,23 @@ const RULES = [
         title: `Java haijui "${m[2]}"`,
         why: `Programu inatumia ${m[1] === 'class' ? 'class' : m[1] === 'method' ? 'method' : 'kigezo'} iitwayo "${m[2]}", lakini Java haiipati. Huenda imekosewa tahajia (herufi kubwa na ndogo zinajali: String, si string), haikuundwa kamwe, iko mahali isipoweza kuonekana, au inahitaji mstari wa import juu.`,
         fix: `Angalia tahajia ya "${m[2]}". ${m[1] === 'variable' ? `Itangaze kabla ya kuitumia, mfano: int ${m[2]} = 0;` : m[1] === 'method' ? 'Hakikisha method ipo, ina jina hilo hasa, na inapokea vigezo unavyoipa.' : 'Angalia jina la class, na ongeza import inayohitajika, mfano: import java.util.Scanner;'}`,
+      },
+    }),
+  },
+  {
+    id: 'java-package',
+    languages: ['java'],
+    match: /error: package ([\w.$]+) does not exist/,
+    build: (m) => ({
+      en: {
+        title: `Java does not know "${m[1]}"`,
+        why: `Java looks for a package called "${m[1]}" and cannot find it. The usual cause is a small letter where a capital is needed: the class is called System (capital S), String (capital S), Math (capital M). Another cause is a missing import line at the top.`,
+        fix: `Check the capital letters (system.out.println should be System.out.println). If the name is right, add the import line it needs, for example: import java.util.Scanner;`,
+      },
+      sw: {
+        title: `Java haijui "${m[1]}"`,
+        why: `Java inatafuta package iitwayo "${m[1]}" na haiipati. Sababu ya kawaida ni herufi ndogo mahali panapohitaji herufi kubwa: class inaitwa System (S kubwa), String (S kubwa), Math (M kubwa). Sababu nyingine ni mstari wa import uliokosekana juu.`,
+        fix: `Angalia herufi kubwa (system.out.println inapaswa kuwa System.out.println). Kama jina ni sahihi, ongeza mstari wa import unaohitajika, mfano: import java.util.Scanner;`,
       },
     }),
   },

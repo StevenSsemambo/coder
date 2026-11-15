@@ -5,7 +5,9 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { courses, flatExercises } from '../src/content/index.js';
+import { courses as allCourses, flatExercises } from '../src/content/index.js';
+// While writing lessons, ONLY_COURSE=java-start node tests/run.mjs runs just that course's lessons and exercises.
+const courses = process.env.ONLY_COURSE ? allCourses.filter((c) => c.id === process.env.ONLY_COURSE) : allCourses;
 import { gradeExercise, normalizeOutput } from '../src/lib/grader.js';
 import { translateError, extractLine } from '../src/lib/errors.js';
 import { normalizeC, prepareSource } from '../src/lib/csource.js';
@@ -124,7 +126,8 @@ for (const ex of all) {
   const bad = await gradeExercise(ex, (input) => runLang(ex.language, ex.starter, input));
   check(`${ex.id}: untouched starter does not pass`, !bad.passed);
 }
-for (const id of Object.keys(solutions)) check(`solution ${id} belongs to a real exercise`, ids.has(id));
+const everyExerciseId = new Set(allCourses.flatMap((c) => flatExercises(c)).map((e) => e.id));
+for (const id of Object.keys(solutions)) check(`solution ${id} belongs to a real exercise`, everyExerciseId.has(id));
 console.log(`  ${all.length} exercises checked`);
 
 // ---- 1b. lessons: every example must run and show what the lesson says -------------------
@@ -267,7 +270,7 @@ section('Lessons (every interactive block is run on the real runtime)');
 section('Grader behaviour');
 const C_WRONG_PRODUCT = '#include <stdio.h>\nint main() { int a, b; scanf("%d %d", &a, &b); printf("Sum: %d\\n", a * b); return 0; }';
 {
-  const ex = all.find((e) => e.id === 'c2-sum');
+  const ex = allCourses.flatMap((c) => flatExercises(c)).find((e) => e.id === 'c2-sum');
   const wrong = await gradeExercise(ex, (input) => runC(C_WRONG_PRODUCT, input));
   check('wrong program fails', !wrong.passed && wrong.passedCount < wrong.total);
   const errored = await gradeExercise(ex, (input) => runC('int main() { int x = ; }', input));
@@ -316,7 +319,10 @@ section('Error translator (real messages from the runtimes)');
     ['python', 'x = = 3', 'py-syntax', 'generic SyntaxError'],
     // ---- Java: real javac messages and real exception reports from the shipped engine
     ['java', 'public class Main { public static void main(String[] a) { int x = 5\n System.out.println(x); } }', 'java-expected', 'Java missing semicolon'],
+    ['java', 'public class Main { public static void main(String[] a) {\n System.out.println("Karibu);\n } }', 'java-quote', 'Java missing closing quote'],
+    ['java', 'public class Main { public static void main(String[] a) {\n System.out.println(\'Karibu\');\n } }', 'java-quote', 'Java single quotes for text'],
     ['java', 'public class Main { public static void main(String[] a) { System.out.println(total); } }', 'java-symbol', 'Java unknown variable'],
+    ['java', 'public class Main { public static void main(String[] a) { system.out.println("hi"); } }', 'java-package', 'Java lowercase system'],
     ['java', 'public class Main { public static void main(String[] a) { int x = "hello"; } }', 'java-types', 'Java wrong type'],
     ['java', 'public class Main { public static void main(String[] a) { int x = 3.5; } }', 'java-lossy', 'Java double into int'],
     ['java', 'public class Main { static int f(int a) { if (a > 0) { return 1; } } public static void main(String[] a) { f(1); } }', 'java-return', 'Java missing return'],

@@ -4,8 +4,8 @@ Course id `java-start` (proposed), language `java`. The Java account owns the le
 `src/content/java-course.js`, `tests/solutions-java.mjs`) **and the Java engine and app code** (see the Java row in
 `docs/TRACKS.md`, decision of the project owner on 2026-11-15).
 
-Last updated: 2026-11-15. Status: **the runtime is built into the app and verified in a real browser. No lessons yet;
-Level 1 is next.**
+Last updated: 2026-11-15. Status: **the runtime is built into the app and verified in a real browser. Level 1 (lessons 1 to 6) is written
+and tested. Level 2 is next.**
 
 ## 1. Verdict
 
@@ -89,6 +89,7 @@ but nothing survives to the next run (the engine has an optional IndexedDB mode,
 | G11 | The class must be called `Main` | **Fixed in the app.** The raw engine hardcodes `Main.java`. The app finds the class that holds `main`, compiles under the public class's name and runs that class. `public class Shop`, a non-public class with `main`, helper classes first, records and enums all work |
 | G12 | Uncaught exceptions print only the message | **Improved in the app.** The worker now writes `Exception in thread "main" java.lang.IllegalStateException: boom` followed by `\tat Main.main(Main.java)` lines for the user's own methods (no line numbers: the engine does not provide them). Traps are named after the Java exception they stand for (`NullPointerException`, `ArrayIndexOutOfBoundsException`, `StackOverflowError`), but they still **cannot be caught** (G1, G2, G4). `e.printStackTrace()` inside a `catch` still prints TeaVM-style lines |
 | G13 | Library exception messages differ | `Integer.parseInt("x1")` says `String contains digits out of radix 10: x1`, real Java says `For input string: "x1"`. `ArrayList.get(3)`, `charAt(9)`, `Optional.get()` and others give `null` as the message, where real Java gives text such as `Index 3 out of bounds for length 0` |
+| G14 | `Math.round` of a negative half rounds the wrong way | `Math.round(-2.5)` gives `-3` here; real Java gives `-2` (it rounds halves up). Positive values (`2.5` gives `3`) match. Lessons never round negative halves |
 
 Also seen, smaller:
 - `"abc".substring(5)` throws `IndexOutOfBoundsException` (real Java: its subclass `StringIndexOutOfBoundsException`), so `catch (StringIndexOutOfBoundsException e)` misses it. `charAt(9)` does throw `StringIndexOutOfBoundsException`.
@@ -111,7 +112,7 @@ Also seen, smaller:
    `NoSuchElementException`, `InputMismatchException`, and **custom exceptions that the program throws itself**
    (the best teaching case anyway: `InsufficientFundsException`). Do not write
    `try { a[5] = 1; } catch (ArrayIndexOutOfBoundsException e)` in a runnable block: it would crash.
-5. **Never print `e.getMessage()` of a library exception** (G13). Print `e.getClass().getSimpleName()` or your own
+5. **Never print `e.getMessage()` of a library exception** (G13), and never round a negative half with `Math.round` (G14). Print `e.getClass().getSimpleName()` or your own
    message. Your own exceptions' messages are always fine.
 6. **Recursion:** show a base case and a missing base case as a crash, never as a `catch` (G4).
 7. **No `System.exit`, no GUI, no `ExecutorService`** (G7, G8, G9). Exit by returning from `main`. Concurrency
@@ -171,7 +172,7 @@ Headless Chromium 153, driving the **built** app (`vite build` then `vite previe
 ## 7. Roadmap
 
 `[x]` written and tested, `[ ]` still to write. Lesson ids never change once published. Exercise ids start with
-`j<lesson number>-`. This order is a proposal for the owner to approve, not a promise. **No lessons are written yet.**
+`j<lesson number>-`. This order is a proposal for the owner to approve, not a promise. **Level 1 is written and tested; the rest is still to write.**
 
 **Running project: the Village SACCO.** A savings and credit group (members, savings accounts, loans,
 interest, a monthly report). It is the most Ugandan example I can think of that also needs everything
@@ -183,12 +184,12 @@ Java course distinct.)
 > send the outline text and the roadmap can be mapped line by line. None is in the repository today.
 
 ### Level 1: Getting started
-- [ ] 1. `j-what` What Java is: source, `javac`, the JVM, where Java is used
-- [ ] 2. `j-first` Your first program: `class`, `main`, `println`, comments, reading a `javac` error
-- [ ] 3. `j-variables` Variables and types: `int`, `double`, `boolean`, `char`, `long`, `String`, `final`
-- [ ] 4. `j-operators` Operators and expressions: integer division, `%`, casting, overflow
-- [ ] 5. `j-input` Reading input with `Scanner`, and the `nextInt` then `nextLine` trap
-- [ ] 6. `j-decisions` Decisions: `if`, `else if`, comparisons, `&&` `||` `!`, `switch`, `?:`
+- [x] 1. `j-what` What Java is: source, `javac`, the JVM, where Java is used
+- [x] 2. `j-first` Your first program: `class`, `main`, `println`, comments, reading a `javac` error
+- [x] 3. `j-variables` Variables and types: `int`, `double`, `boolean`, `char`, `long`, `String`, `final`
+- [x] 4. `j-operators` Operators and expressions: integer division, `%`, casting, overflow
+- [x] 5. `j-input` Reading input with `Scanner`, and the `nextInt` then `nextLine` trap
+- [x] 6. `j-decisions` Decisions: `if`, `else if`, comparisons, `&&` `||` `!`, `switch`, `?:`
 
 ### Level 2: Loops, methods and arrays
 - [ ] 7. `j-loops` Repeating: `for`, `while`, `do while`, `break`, `continue`

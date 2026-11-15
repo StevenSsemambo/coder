@@ -71,6 +71,7 @@ G('ExecutorService / CompletableFuture do not exist', M('java.util.concurrent.Ex
 G('assertions are ON (real Java: off by default)', M('int x=5; assert x>10 : "x too small"; System.out.println("after assert");'), 'the assert fires and stops the program', (r) => !r.ok && /x too small/.test(r.stderr));
 G('main class must be called Main (public class Shop fails)', `public class Shop { public static void main(String[] a){ System.out.println("shop"); } }`, 'compile error: class Shop is public, should be declared in a file named Shop.java', says(/should be declared in a file named/));
 G('uncaught exception shows only its message, no class name or stack', M('throw new IllegalArgumentException("bad input");'), 'stderr is just "bad input"', (r) => !r.ok && r.stderr.trim() === 'bad input');
+G('Math.round of a negative half rounds away from zero', M('System.out.println(Math.round(-2.5));'), 'prints -3; real Java prints -2 (it rounds halves upwards)', (r) => r.ok && r.stdout === '-3\\n');
 G('library exception messages differ from real Java', M('try { Integer.parseInt("x1"); } catch (NumberFormatException e){ System.out.println(e.getMessage()); }'), 'real Java says: For input string: "x1"', (r) => r.ok && !/For input string/.test(r.stdout));
 
 let bad = 0;
