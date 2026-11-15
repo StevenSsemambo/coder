@@ -89,7 +89,7 @@ async function gradeWebNode(ex, files) {
   dom.window.close();
   return shaped;
 }
-const runLang = (language, code, stdin) => (language === 'c' ? runC(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : runPython(code, stdin));
+const runLang = (language, code, stdin) => (language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : runPython(code, stdin));
 
 // ---- 1. every exercise: solution passes, starter fails ----------------------------
 section('Exercises (reference solution must pass, untouched starter must fail)');
@@ -298,6 +298,11 @@ section('Error translator (real messages from the runtimes)');
     ['web', 'console.log((1 + 2);', 'js-syntax-eof', 'JS missing bracket'],
     ['web', 'while (true) { }', 'timeout', 'JS infinite loop (worker time limit)'],
     ['web', 'function f() { f(); }\nf();', 'js-stack', 'JS endless recursion'],
+    ['cpp', 'using namespace std;\nint main(){ cout << "hi"; return 0; }', 'cpp-missing-iostream', 'C++ missing iostream'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ cout << "hi" << endl return 0; }', 'c-parse', 'C++ missing semicolon'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ cout << total; return 0; }', 'c-undeclared', 'C++ undeclared variable'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ int a = 5, b = 0; cout << a / b; return 0; }', 'c-zero-division', 'C++ divide by zero'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ while (true) { } return 0; }', 'timeout', 'C++ infinite loop'],
     ['python', 'print(undefined_name)', 'py-name-error', 'NameError'],
     ['python', 'x = (1 +', 'py-never-closed', 'unclosed bracket'],
     ['python', 'if True\n    print(1)', 'py-missing-colon', 'missing colon'],

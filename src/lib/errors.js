@@ -30,7 +30,7 @@ const RULES = [
   // ---- both languages ------------------------------------------------------
   {
     id: 'timeout',
-    languages: ['python', 'c', 'web'],
+    languages: ['python', 'c', 'cpp', 'web'],
     match: /Time limit exceeded/i,
     build: () => ({
       en: {
@@ -429,6 +429,25 @@ const RULES = [
     }),
   },
 
+  // ---- C++ (runs on the same interpreter as C; the C rules below also apply to it) ---------------
+  {
+    id: 'cpp-missing-iostream',
+    languages: ['cpp'],
+    match: /variable (cout|cin|endl|setw|setprecision|fixed) does not exist/,
+    build: (m) => ({
+      en: {
+        title: `"${m[1]}" is not known yet`,
+        why: `${m[1]} lives in a library. Two things must be at the top of the program: the include line, and using namespace std; so you can write ${m[1]} without std:: in front.`,
+        fix: `Add #include <iostream> as the first line (and #include <iomanip> for setw, setprecision and fixed), then add using namespace std; below the includes.`,
+      },
+      sw: {
+        title: `"${m[1]}" haijulikani bado`,
+        why: `${m[1]} ipo kwenye maktaba. Juu ya programu lazima kuwe na mstari wa include, na using namespace std; ili uandike ${m[1]} bila std:: mbele yake.`,
+        fix: `Ongeza #include <iostream> kama mstari wa kwanza (na #include <iomanip> kwa setw, setprecision na fixed), kisha using namespace std; chini ya mistari ya include.`,
+      },
+    }),
+  },
+
   // ---- C ----------------------------------------------------------------------
   {
     id: 'c-missing-include',
@@ -571,7 +590,8 @@ export function cleanRaw(raw, language) {
 export function translateError(raw, { language, lang = 'en' }) {
   if (!raw) return null;
   for (const rule of RULES) {
-    if (!rule.languages.includes(language)) continue;
+    // C++ runs on the same interpreter as C, so the C rules apply to it too (its own rules come first).
+    if (!rule.languages.includes(language) && !(language === 'cpp' && rule.languages.includes('c'))) continue;
     const m = raw.match(rule.match);
     if (!m) continue;
     if (rule.when && !rule.when(m)) continue;

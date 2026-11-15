@@ -4,7 +4,7 @@ Read this file first, every session. It exists because the project is built by m
 account, and **accounts share no memory**. Whatever is not written in this repository is forgotten.
 Already once, one account wrote lessons that another account had finished the day before.
 
-Last updated: 2026-11-14.
+Last updated: 2026-11-15.
 
 ## The five rules
 
@@ -27,6 +27,7 @@ Last updated: 2026-11-14.
 | Web (HTML, CSS, JavaScript) | `web-start` | `web` | `src/content/web/`, `src/content/web-course.js`, `docs/WEB-TRACK.md` | Written: 36 lessons, 105 exercises. Later ideas in its roadmap. | (unassigned) |
 | Python | `py-start` | `python` | `src/content/py/`, `src/content/python-course.js` | Written: 35 lessons (5 levels), 68 exercises. Depth beyond Level 5 not planned yet. | (unassigned) |
 | C (module TTSD113) | `c-structured` | `c` | `src/content/c/`, `src/content/c-course.js`, `tests/solutions-c.mjs`, `docs/C-TRACK.md` | In progress, see `docs/C-TRACK.md` | C account |
+| C++ (Part A basics; Part B needs a real compiler) | `cpp-start` | `cpp` | `src/content/cpp/`, `src/content/cpp-course.js`, `tests/solutions-cpp.mjs`, `docs/CPP-TRACK.md` | In progress, see `docs/CPP-TRACK.md` | C++ account |
 | Java | not created | not created | would be `src/content/java/` | **Not started.** Needs a runtime first (see below). | (unassigned) |
 | VB.NET | not created | not created | would be `src/content/vb/` | **Not started.** Needs a runtime first (see below). | (unassigned) |
 | Engine and app | | | everything under `src/lib/`, `src/ui/`, `public/`, `scripts/`, `tests/run.mjs`, `tests/render.mjs`, `README.md`, `.github/` | Working. Open items below. | **one account only** |
@@ -142,6 +143,13 @@ account has no GitHub access, upload the latest zip of the repository.
 > the roadmap gives, one group at a time. Every program is run by the JSCPP interpreter, which is a
 > teaching subset of C, so check that each example really runs before you teach it.
 
+**C++:**
+
+> Track: C++ (course id `cpp-start`). Roadmap: `docs/CPP-TRACK.md`. Part A (basics) runs on the JSCPP
+> interpreter: build the lessons in the order the roadmap gives and check that each example really runs.
+> Part B (strings, vectors, classes, templates) needs a real compiler: do not write those lessons until
+> `docs/CPP-TRACK.md` says a browser test on a real phone passed.
+
 **Java:**
 
 > Track: Java. Nothing exists yet. Your first deliverable is `docs/JAVA-TRACK.md`: can Java run
@@ -180,3 +188,4 @@ Add a row at the **bottom** each session. Newest last.
 | 2026-11-14 | Claude, C | C Level 3 written: `c-functions`, `c-params`, `c-recursion`, `c-momo` (project), `c-debug` (lessons 11 to 15, in `src/content/c/functions.js`); 13 new exercises. **Engine files touched (C runtime bugs that blocked lessons):** `scripts/prepare-runtimes.mjs` (new patch: `static` locals keep their value), `src/lib/csource.js` (spaces next to brackets in strings), `tests/run.mjs` (3 new checks). Tests green: 5,262 checks, 0 failed | C Level 4: arrays and strings (lessons 16 to 22) |
 | 2026-11-15 | Claude, C | C Level 4, part 1: `c-arrays`, `c-array-algos`, `c-array-fn`, `c-2d` (lessons 16 to 19, in `src/content/c/arrays.js`); 12 new exercises. **Engine files touched:** `scripts/prepare-runtimes.mjs` (3 new patches: short array lists padded with zeros, `strcmp`, `strncmp`), `tests/run.mjs` (7 new checks). Tests green: 5,508 checks, 0 failed | Strings: lessons 20 to 22 (strings, `string.h` and `ctype.h`, marks processor project) |
 | 2026-11-15 | Claude, C | C Level 4 finished: `c-strings`, `c-stringlib`, `c-marks` (project) (lessons 20 to 22, in `src/content/c/strings.js`); 8 new exercises. **Engine files touched:** `scripts/prepare-runtimes.mjs` (5 more patches: characters from `scanf %s`, `gets` and `strcpy` stay assignable), `tests/run.mjs` (4 checks). Tests green: 5,667 checks, 0 failed | C Level 5: pointers (lessons 23 to 25) |
+| 2026-11-15 | Claude, C++ | New track `cpp-start`: `docs/CPP-TRACK.md` (roadmap, tested interpreter limits, feasibility of a real compiler: `@yowasp/clang` compiles and runs `std::string`, `vector` and classes in Node, about 27 MB gzipped, needs `-fno-exceptions`, **not yet tested in a browser or on a phone**). C++ Level 1 and lesson 4 written: `cpp-first`, `cpp-vars`, `cpp-types`, `cpp-decide` (lessons 1 to 4, 12 exercises). **Engine files touched (additive):** `src/lib/runners.js`, `csource.js`, `editor.js`, `symbols.js`, `errors.js`, `src/ui/views/learn.js`, `tests/run.mjs` (5 checks), `tests/solutions.mjs` (one merge line), `src/content/index.js` (registry line). Tests green: 5,966 checks, 0 failed | Lessons 5 to 9 (switch, loops, till project). Engine owner: browser proof of the C++ compiler on a real phone |

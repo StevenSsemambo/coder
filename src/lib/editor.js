@@ -37,7 +37,7 @@ const theme = EditorView.theme({
 });
 
 const languageExtension = (language) => {
-  if (language === 'c') return cpp();
+  if (language === 'c' || language === 'cpp') return cpp();
   if (language === 'html') return html();
   if (language === 'css') return css();
   if (language === 'js') return javascript();

@@ -3,7 +3,7 @@
 import { prepareSource } from './csource.js';
 import { runConsoleJs } from './webrun.js';
 
-const WORKER_FILES = { python: 'py.worker.js', c: 'c.worker.js' };
+const WORKER_FILES = { python: 'py.worker.js', c: 'c.worker.js', cpp: 'c.worker.js' };
 export const DEFAULT_TIMEOUT_MS = 8000;
 
 const listeners = new Set();
@@ -90,7 +90,7 @@ class LanguageRunner {
         resolve({ stdout, stderr, truncated, error: null, timedOut: false, initFailed: false, ms: Math.round(performance.now() - started), ...extra });
       };
       // The C interpreter enforces its own limit; this timer is the backstop for everything else.
-      const backstop = timeoutMs + (this.language === 'c' ? 1500 : 0);
+      const backstop = timeoutMs + (this.language === 'c' || this.language === 'cpp' ? 1500 : 0);
       const timer = setTimeout(() => {
         this.kill();
         finish({ error: 'Time limit exceeded.', timedOut: true });
@@ -113,7 +113,7 @@ class LanguageRunner {
   }
 }
 
-const runners = { python: new LanguageRunner('python'), c: new LanguageRunner('c') };
+const runners = { python: new LanguageRunner('python'), c: new LanguageRunner('c'), cpp: new LanguageRunner('cpp') };
 
 /** Start loading a runtime early (for example while the student reads the lesson). */
 export function warmUp(language) {

@@ -2,6 +2,7 @@
 // Starter code must NOT pass (otherwise an exercise could be "completed" without doing anything).
 
 import { cSolutions } from './solutions-c.mjs';
+import { cppSolutions } from './solutions-cpp.mjs';
 import { level3Solution as L3 } from '../src/content/py/level3-b.js';
 import { level4Solution as L4 } from '../src/content/py/level4.js';
 import { level5Solution as L5 } from '../src/content/py/level5.js';
@@ -14,6 +15,7 @@ const py25 = () => `import json\n\n${L3.PRODUCT}\n\n${L3.SHOP_BASE}\n\n${L3.SHOP
 
 export const solutions = {
   ...cSolutions,
+  ...cppSolutions,
 
   'py1-hello': 'print("Hello, Uganda!")\n',
   'py1-greet': 'name = input()\nprint("Hello, " + name + "!")\n',

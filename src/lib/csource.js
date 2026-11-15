@@ -73,5 +73,5 @@ export function normalizeC(source) {
 }
 
 export function prepareSource(language, source) {
-  return language === 'c' ? normalizeC(source) : source;
+  return language === 'c' || language === 'cpp' ? normalizeC(source) : source;
 }
