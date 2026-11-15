@@ -1,0 +1,637 @@
+// SQL, Level 1 (continued): lessons 4 to 7 (text patterns and NULL, sorting, calculations, the price-list project).
+// Prose uses double-quoted strings. SQL code uses plain template literals.
+// Expected outputs come from plain JavaScript data (filter, sort, arithmetic), never from the SQL itself.
+import { DUUKA, DUUKA_B, PRODUCTS, PRODUCTS_B, CUSTOMERS, CUSTOMERS_B, tbl, productView, customerView } from './shared.js';
+
+const LEVEL = 'Level 1: Reading data';
+
+// columns of a product row: 0 id, 1 name, 2 category, 3 price, 4 stock, 5 supplier
+const text = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+const lc = (s) => s.toLowerCase();
+const names = (rows) => productView(['name'], rows);
+const np = (rows) => productView(['name', 'price'], rows);
+
+export const level1b = [
+  // ================================================================== 4
+  {
+    id: 'sql-text-null',
+    level: LEVEL,
+    minutes: 22,
+    title: 'Text patterns and missing values',
+    summary: 'Search inside text with LIKE, and find missing values with IS NULL',
+    blocks: [
+      {
+        t: 'story',
+        title: 'Which tin was it?',
+        text: "A customer walks in. “I want that thing with oil in the name. I forget the rest.” Nakato does not need the full name. She scans her stock book for any line that has the word “oil” somewhere inside it.\n\nLater her cousin asks, “Which products have no supplier written down?” Nakato looks for blank boxes in the supplier column. Searching inside text, and finding blanks, are two very common questions. SQL has a tool for each.",
+      },
+      { t: 'p', text: '`=` only finds an exact match. To search for a **pattern**, use `LIKE`. Inside the pattern, the sign `%` means “any number of any letters, even none”.' },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: "SELECT name FROM products WHERE name LIKE '%oil%';\n",
+        output: names(PRODUCTS.filter((r) => lc(r[1]).includes('oil'))),
+      },
+      { t: 'h', text: 'Where does the % go?' },
+      {
+        t: 'list',
+        items: [
+          "`'S%'` starts with S.",
+          "`'%kg'` ends with kg.",
+          "`'%oil%'` has oil anywhere inside.",
+          "`'_a%'` has any ONE letter first, then an a. The sign `_` means exactly one letter.",
+        ],
+      },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: "SELECT name FROM products WHERE name LIKE '%1kg';\n",
+        output: names(PRODUCTS.filter((r) => lc(r[1]).endsWith('1kg'))),
+      },
+      { t: 'tip', text: "`LIKE` ignores capital letters for English letters: `LIKE 's%'` finds “Sugar 1kg” and “Soap bar”. But `=` does not ignore them. So `name = 'sugar 1kg'` finds nothing." },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: "SELECT name FROM products WHERE name LIKE 's%';\n",
+        output: names(PRODUCTS.filter((r) => lc(r[1]).startsWith('s'))),
+      },
+      { t: 'h', text: 'NULL: the empty box' },
+      { t: 'analogy', text: "In Nakato's book some supplier boxes are empty: she never wrote anything. That empty box is called `NULL`. NULL does not mean zero and it does not mean an empty text. It means “we do not know”. And you cannot ask “does this equal ‘we do not know’?”. The only honest question is “is it unknown?”" },
+      { t: 'p', text: 'So NULL has its own test: `IS NULL`, and its opposite `IS NOT NULL`.' },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: 'SELECT name, category FROM products WHERE supplier IS NULL;\n',
+        output: productView(['name', 'category'], PRODUCTS.filter((r) => r[5] === null)),
+      },
+      {
+        t: 'predict',
+        stdin: DUUKA,
+        code: 'SELECT name FROM products WHERE supplier = NULL;\n',
+        question: 'Nakato writes this to find products with no supplier. What does it show?',
+        options: [
+          names([]),
+          names(PRODUCTS.filter((r) => r[5] === null)),
+          names(PRODUCTS.filter((r) => r[5] !== null)),
+          names(PRODUCTS),
+        ],
+        answer: 0,
+        explain: 'Comparing anything with `= NULL` is never true, not even NULL with NULL, because an unknown value is never “equal” to anything. SQL gives no error, it quietly returns nothing. Always use `IS NULL`.',
+      },
+      {
+        t: 'fill',
+        stdin: DUUKA,
+        prompt: 'Fill the gap so the query lists the products that have no supplier.',
+        template: 'SELECT name FROM products WHERE supplier ___ NULL;\n',
+        blanks: [{ options: ['IS', '=', '=='], answer: 'IS' }],
+        output: names(PRODUCTS.filter((r) => r[5] === null)),
+      },
+      {
+        t: 'bug',
+        stdin: DUUKA,
+        code: 'SELECT name FROM products WHERE name LIKE %oil%;\n',
+        question: 'This query fails with a syntax error near %. What is wrong?',
+        options: ['The pattern is text, so it must be in single quotes', 'LIKE cannot use the % sign', 'The pattern must be in capital letters', 'WHERE must be replaced with FIND'],
+        answer: 0,
+        explain: 'A pattern is ordinary text, so it goes inside single quotes, the percent signs included: `\'%oil%\'`.',
+        fixed: "SELECT name FROM products WHERE name LIKE '%oil%';\n",
+      },
+      {
+        t: 'quiz',
+        question: 'Which pattern finds every product whose name STARTS with the letter M?',
+        options: ["LIKE 'M%'", "LIKE '%M'", "LIKE '%M%'", "LIKE '_M'"],
+        answer: 0,
+        explain: 'The % goes AFTER the M, because anything may follow it. `\'%M\'` would find names that END with M.',
+      },
+      {
+        t: 'mistakes',
+        items: [
+          { wrong: 'SELECT name FROM products WHERE name LIKE %oil%;', why: 'The pattern is text, so it needs single quotes.', right: "SELECT name FROM products WHERE name LIKE '%oil%';", stdin: DUUKA },
+          { wrong: 'SELECT name FROM products WHERE supplier = NULL;', why: 'Nothing is ever equal to NULL, so you get no rows and no error.', right: 'SELECT name FROM products WHERE supplier IS NULL;', logic: true, stdin: DUUKA },
+          { wrong: "SELECT name FROM products WHERE name LIKE 'oil';", why: 'Without a % the pattern must match the WHOLE name, so “oil” finds nothing. No error, just no rows.', right: "SELECT name FROM products WHERE name LIKE '%oil%';", logic: true, stdin: DUUKA },
+          { wrong: 'SELECT name FROM products WHERE supplier IS NUL;', why: 'NULL is spelled with two L letters. SQL takes NUL for a column name.', right: 'SELECT name FROM products WHERE supplier IS NULL;', stdin: DUUKA },
+        ],
+      },
+      {
+        t: 'recap',
+        items: [
+          '`LIKE` searches for a pattern. `%` is any number of letters, `_` is exactly one letter.',
+          'Patterns are text: single quotes. Without `%`, the pattern must match the whole value.',
+          '`LIKE` ignores capitals, `=` does not.',
+          '`NULL` means unknown. Test it with `IS NULL` or `IS NOT NULL`, never with `=`.',
+        ],
+        memory: 'LIKE with % to search inside. IS NULL to find the blanks.',
+      },
+    ],
+    exercises: [
+      {
+        id: 'sql4-contains',
+        title: 'Find the book',
+        prompt: 'Show the `name` of every product whose name contains the word `book` anywhere inside it.',
+        starter: '-- Names that contain the word book\nSELECT name FROM products;\n',
+        usesInput: true,
+        sampleInput: DUUKA,
+        tests: [
+          { input: DUUKA, expected: names(PRODUCTS.filter((r) => lc(r[1]).includes('book'))) },
+          { input: DUUKA_B, expected: names(PRODUCTS_B.filter((r) => lc(r[1]).includes('book'))), hidden: true, name: 'A different shop' },
+        ],
+        hints: [
+          'Use LIKE in a WHERE part. The word can be anywhere, so something must come before it and after it.',
+          "`WHERE name LIKE '%book%'`",
+          "A similar example: `WHERE name LIKE '%kg%'` finds every product with kg anywhere in the name. Yours looks for book.",
+        ],
+      },
+      {
+        id: 'sql4-nosupplier',
+        title: 'Missing suppliers',
+        prompt: 'Show the `name` and `category` of every product that has NO supplier recorded.',
+        starter: '-- Products with no supplier\nSELECT name, category FROM products;\n',
+        usesInput: true,
+        sampleInput: DUUKA,
+        tests: [
+          { input: DUUKA, expected: productView(['name', 'category'], PRODUCTS.filter((r) => r[5] === null)) },
+          { input: DUUKA_B, expected: productView(['name', 'category'], PRODUCTS_B.filter((r) => r[5] === null)), hidden: true, name: 'A different shop' },
+        ],
+        hints: [
+          'A missing value is NULL, and NULL has its own special test word.',
+          '`WHERE supplier IS NULL`',
+          'A similar example: `WHERE stock IS NOT NULL` keeps the rows that DO have a stock value. Yours keeps the rows where supplier is missing.',
+        ],
+      },
+      {
+        id: 'sql4-second-letter',
+        title: 'The second letter',
+        prompt: 'Show the `name` and `town` of every customer whose name has the letter `a` as its SECOND letter (for example “Hassan”).',
+        starter: '-- Customers whose name has a as the second letter\nSELECT name, town FROM customers;\n',
+        usesInput: true,
+        sampleInput: DUUKA,
+        tests: [
+          { input: DUUKA, expected: customerView(['name', 'town'], CUSTOMERS.filter((r) => lc(r[1])[1] === 'a')) },
+          { input: DUUKA_B, expected: customerView(['name', 'town'], CUSTOMERS_B.filter((r) => lc(r[1])[1] === 'a')), hidden: true, name: 'A different shop' },
+        ],
+        hints: [
+          'The pattern needs exactly one unknown letter first, then an a, then anything. Two special signs are needed.',
+          "`WHERE name LIKE '_a%'`",
+          "A similar example: `WHERE name LIKE '__r%'` finds names whose THIRD letter is r. Yours puts the a in second place.",
+        ],
+      },
+    ],
+  },
+
+  // ================================================================== 5
+  {
+    id: 'sql-sort',
+    level: LEVEL,
+    minutes: 22,
+    title: 'Sorting and paging',
+    summary: 'Put rows in order with ORDER BY, flip with DESC, and take a few with LIMIT and OFFSET',
+    blocks: [
+      {
+        t: 'story',
+        title: 'Cheapest first',
+        text: "A student with only 3,000 shillings asks Nakato, “What is the cheapest thing you have?” She does not want to read the whole list. She wants it put in order, cheapest at the top, and she will only look at the first few lines.\n\nUp to now the rows came out in whatever order the table kept them. SQL does not promise any order unless you ask for one. The asking is `ORDER BY`.",
+      },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: 'SELECT name, price FROM products ORDER BY price;\n',
+        output: np([...PRODUCTS].sort((a, b) => a[3] - b[3])),
+      },
+      { t: 'p', text: 'The default is from smallest to biggest (and A to Z for text). Add `DESC` to flip it: biggest first, or Z to A.' },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: 'SELECT name, price FROM products ORDER BY price DESC;\n',
+        output: np([...PRODUCTS].sort((a, b) => b[3] - a[3])),
+      },
+      { t: 'h', text: 'Sorting by two things' },
+      { t: 'p', text: 'When two rows tie on the first column, the second column decides. Each column gets its own `DESC` if you want it.' },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: 'SELECT category, name, price FROM products ORDER BY category, price DESC;\n',
+        output: tbl(['category', 'name', 'price'], [...PRODUCTS].sort((a, b) => text(a[2], b[2]) || b[3] - a[3]).map((r) => [r[2], r[1], r[3]])),
+      },
+      { t: 'h', text: 'Taking only a few: LIMIT and OFFSET' },
+      { t: 'analogy', text: "`LIMIT` is “just the first few, please”, like looking at only the top of the pile. `OFFSET` is “skip this many first”, like turning to page 2 of the notebook. Phone apps use these two to show a list a few items at a time." },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: 'SELECT name, price FROM products ORDER BY price DESC LIMIT 3;\n',
+        output: np([...PRODUCTS].sort((a, b) => b[3] - a[3]).slice(0, 3)),
+      },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: 'SELECT name, price FROM products ORDER BY price DESC LIMIT 3 OFFSET 3;\n',
+        output: np([...PRODUCTS].sort((a, b) => b[3] - a[3]).slice(3, 6)),
+      },
+      { t: 'tip', text: 'The parts of a query always come in this order: `SELECT`, `FROM`, `WHERE`, `ORDER BY`, `LIMIT`. Mixing them up gives a syntax error.' },
+      {
+        t: 'predict',
+        stdin: DUUKA,
+        code: 'SELECT name FROM products ORDER BY stock LIMIT 2;\n',
+        question: 'Which two products does this show?',
+        options: [
+          names([PRODUCTS[8], PRODUCTS[4]]),
+          names([PRODUCTS[7], PRODUCTS[6]]),
+          names([PRODUCTS[0], PRODUCTS[1]]),
+          names([PRODUCTS[7], PRODUCTS[5]]),
+        ],
+        answer: 0,
+        explain: 'Sorted by stock from smallest, the first two are Milk (0 left) and Matooke (6 left). Without DESC the SMALLEST values come first.',
+      },
+      {
+        t: 'fill',
+        stdin: DUUKA,
+        prompt: 'Fill the gap so the query shows the single most expensive product.',
+        template: 'SELECT name, price FROM products ORDER BY price ___ LIMIT 1;\n',
+        blanks: [{ options: ['DESC', 'DOWN', 'REVERSE'], answer: 'DESC' }],
+        output: np([...PRODUCTS].sort((a, b) => b[3] - a[3]).slice(0, 1)),
+      },
+      {
+        t: 'bug',
+        stdin: DUUKA,
+        code: 'SELECT name FROM products ORDER BY price LIMIT 3 WHERE price > 1000;\n',
+        question: 'This query fails with a syntax error near WHERE. What is wrong?',
+        options: ['WHERE must come before ORDER BY', 'LIMIT cannot be used with ORDER BY', 'price cannot be compared with 1000', 'ORDER BY must come first in the query'],
+        answer: 0,
+        explain: 'The parts have a fixed order. First pick the rows with WHERE, then sort them with ORDER BY, then cut with LIMIT.',
+        fixed: 'SELECT name FROM products WHERE price > 1000 ORDER BY price LIMIT 3;\n',
+      },
+      {
+        t: 'quiz',
+        question: 'Which query shows the 3 CHEAPEST products?',
+        options: ['ORDER BY price LIMIT 3', 'ORDER BY price DESC LIMIT 3', 'LIMIT 3 ORDER BY price', 'ORDER BY LIMIT 3 price'],
+        answer: 0,
+        explain: 'Smallest first is the default, so the first three are the cheapest. With DESC you would get the three most expensive.',
+      },
+      {
+        t: 'mistakes',
+        items: [
+          { wrong: 'SELECT name FROM products ORDER BY price LIMIT 3 WHERE price > 1000;', why: 'WHERE must come before ORDER BY and LIMIT.', right: 'SELECT name FROM products WHERE price > 1000 ORDER BY price LIMIT 3;', stdin: DUUKA },
+          { wrong: 'SELECT name FROM products ORDER BY prize;', why: 'There is no column called prize. Check the spelling of the column name.', right: 'SELECT name FROM products ORDER BY price;', stdin: DUUKA },
+          { wrong: 'SELECT name, price FROM products ORDER BY price LIMIT 3;', why: 'You wanted the three MOST expensive. Without DESC you get the three cheapest. No error, just the wrong answer.', right: 'SELECT name, price FROM products ORDER BY price DESC LIMIT 3;', logic: true, stdin: DUUKA },
+          { wrong: 'SELECT name FROM products ORDER BY name LIMIT 3 OFFSET 4;', why: 'You wanted items 4 to 6. OFFSET counts how many rows to SKIP, so skipping 4 starts at item 5. Skip 3.', right: 'SELECT name FROM products ORDER BY name LIMIT 3 OFFSET 3;', logic: true, stdin: DUUKA },
+        ],
+      },
+      {
+        t: 'recap',
+        items: [
+          '`ORDER BY column` sorts smallest to biggest (A to Z). `DESC` flips it. Without ORDER BY there is no promised order.',
+          'Several sort columns: `ORDER BY category, price DESC`. The first one decides, the next only breaks ties.',
+          '`LIMIT n` keeps the first n rows. `OFFSET k` skips k rows first.',
+          'The order of the parts: SELECT, FROM, WHERE, ORDER BY, LIMIT.',
+        ],
+        memory: 'Choose rows (WHERE), put them in order (ORDER BY), keep a few (LIMIT).',
+      },
+    ],
+    exercises: [
+      {
+        id: 'sql5-cheapest',
+        title: 'The three cheapest',
+        prompt: 'Show the `name` and `price` of the 3 cheapest products, cheapest first.',
+        starter: '-- The 3 cheapest products\nSELECT name, price FROM products;\n',
+        usesInput: true,
+        sampleInput: DUUKA,
+        tests: [
+          { input: DUUKA, expected: np([...PRODUCTS].sort((a, b) => a[3] - b[3]).slice(0, 3)) },
+          { input: DUUKA_B, expected: np([...PRODUCTS_B].sort((a, b) => a[3] - b[3]).slice(0, 3)), hidden: true, name: 'A different shop' },
+        ],
+        hints: [
+          'Sort by price, then keep only the first few rows.',
+          '`ORDER BY price LIMIT 3`, after FROM and before the semicolon.',
+          'A similar example: `ORDER BY stock DESC LIMIT 5` shows the 5 products with the most stock. Yours sorts by price and keeps 3.',
+        ],
+      },
+      {
+        id: 'sql5-by-category',
+        title: 'The shelf order',
+        prompt: 'Show `category`, `name` and `price` of every product. Order them by category (A to Z), and inside each category by price, highest first.',
+        starter: '-- Order by category, then by price (highest first)\nSELECT category, name, price FROM products;\n',
+        usesInput: true,
+        sampleInput: DUUKA,
+        tests: [
+          { input: DUUKA, expected: tbl(['category', 'name', 'price'], [...PRODUCTS].sort((a, b) => text(a[2], b[2]) || b[3] - a[3]).map((r) => [r[2], r[1], r[3]])) },
+          { input: DUUKA_B, expected: tbl(['category', 'name', 'price'], [...PRODUCTS_B].sort((a, b) => text(a[2], b[2]) || b[3] - a[3]).map((r) => [r[2], r[1], r[3]])), hidden: true, name: 'A different shop' },
+        ],
+        hints: [
+          'ORDER BY accepts two columns separated by a comma. Each can have its own DESC.',
+          '`ORDER BY category, price DESC`',
+          'A similar example: `ORDER BY town, name` sorts customers by town and then by name. Yours sorts by category and then by price, highest first.',
+        ],
+      },
+      {
+        id: 'sql5-page2',
+        title: 'Page 2 of the list',
+        prompt: 'The price list shows 4 products per page, sorted by `name` from A to Z. Show page 2: only the `name`, of the products on that page.',
+        starter: '-- Page 2: products 5 to 8 when sorted by name\nSELECT name FROM products;\n',
+        usesInput: true,
+        sampleInput: DUUKA,
+        tests: [
+          { input: DUUKA, expected: names([...PRODUCTS].sort((a, b) => text(a[1], b[1])).slice(4, 8)) },
+          { input: DUUKA_B, expected: names([...PRODUCTS_B].sort((a, b) => text(a[1], b[1])).slice(4, 8)), hidden: true, name: 'A different shop' },
+        ],
+        hints: [
+          'Sort by name first. Then take 4 rows, but skip the 4 that belong to page 1.',
+          '`ORDER BY name LIMIT 4 OFFSET 4`',
+          'A similar example: with 3 products per page, page 3 is `LIMIT 3 OFFSET 6` (skip two pages of 3). Yours has pages of 4 and wants page 2.',
+        ],
+      },
+    ],
+  },
+
+  // ================================================================== 6
+  {
+    id: 'sql-calc',
+    level: LEVEL,
+    minutes: 26,
+    title: 'Calculations and functions',
+    summary: 'Do arithmetic, join text, and use ROUND, UPPER, LENGTH, CASE and COALESCE',
+    blocks: [
+      {
+        t: 'story',
+        title: 'The value on the shelf',
+        text: "The landlord asks Nakato, “How much money is sitting on your shelves?” Nakato takes each product, multiplies its price by how many she has, and adds them up. Nobody wrote “stock value” in her book. She works it out.\n\nSQL can work things out too, right inside the query. The database does the arithmetic for every row, in one go.",
+      },
+      { t: 'p', text: 'Use `+ - * /` and brackets on columns, and give the result a name with `AS`. The table itself does not change.' },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: 'SELECT name, price, stock, price * stock AS stock_value FROM products;\n',
+        output: tbl(['name', 'price', 'stock', 'stock_value'], PRODUCTS.map((r) => [r[1], r[3], r[4], r[3] * r[4]])),
+      },
+      { t: 'p', text: 'A 10% discount week on Food. Multiply by 90 and divide by 100:' },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: "SELECT name, price, price * 90 / 100 AS sale_price FROM products WHERE category = 'Food';\n",
+        output: tbl(['name', 'price', 'sale_price'], PRODUCTS.filter((r) => r[2] === 'Food').map((r) => [r[1], r[3], (r[3] * 90) / 100])),
+      },
+      { t: 'h', text: 'A trap: whole-number division' },
+      { t: 'p', text: 'When both numbers are whole, SQLite gives a whole answer and throws away the rest. Make one of them a decimal to keep it. `%` gives the leftover.' },
+      {
+        t: 'try',
+        code: 'SELECT 7 / 2 AS whole, 7 / 2.0 AS exact, 7 % 2 AS leftover;\n',
+        output: tbl(['whole', 'exact', 'leftover'], [[3, 3.5, 1]]),
+      },
+      { t: 'h', text: 'Functions: small tools that change a value' },
+      {
+        t: 'list',
+        items: [
+          '`UPPER(text)` and `LOWER(text)` change the capitals.',
+          '`LENGTH(text)` counts the letters.',
+          '`ROUND(number, places)` rounds to that many decimal places.',
+          '`a || b` joins two pieces of text. It works in every database. Careful: if either piece is NULL, the whole result is NULL.',
+        ],
+      },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: "SELECT UPPER(name) AS shout, LENGTH(name) AS letters FROM products WHERE category = 'School';\n",
+        output: tbl(['shout', 'letters'], PRODUCTS.filter((r) => r[2] === 'School').map((r) => [r[1].toUpperCase(), r[1].length])),
+      },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: "SELECT name || ' (' || category || ')' AS label FROM products WHERE price < 1500;\n",
+        output: tbl(['label'], PRODUCTS.filter((r) => r[3] < 1500).map((r) => [`${r[1]} (${r[2]})`])),
+      },
+      { t: 'h', text: 'CASE: choosing a word for each row' },
+      { t: 'analogy', text: "`CASE` is Nakato's rule of thumb written down: “if none left, write OUT. If under 20, write LOW. Otherwise write OK.” SQL checks the rules from the top and uses the first one that is true." },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: "SELECT name, stock,\n  CASE WHEN stock = 0 THEN 'Out'\n       WHEN stock < 20 THEN 'Low'\n       ELSE 'OK' END AS status\nFROM products;\n",
+        output: tbl(['name', 'stock', 'status'], PRODUCTS.map((r) => [r[1], r[4], r[4] === 0 ? 'Out' : r[4] < 20 ? 'Low' : 'OK'])),
+      },
+      { t: 'h', text: 'COALESCE: a word for the blanks' },
+      { t: 'p', text: '`COALESCE(a, b)` gives `a`, unless `a` is NULL, and then it gives `b`. It is how you put a friendly word where a box is empty.' },
+      {
+        t: 'try',
+        stdin: DUUKA,
+        code: "SELECT name, COALESCE(supplier, 'Unknown') AS supplier FROM products WHERE category = 'Food';\n",
+        output: tbl(['name', 'supplier'], PRODUCTS.filter((r) => r[2] === 'Food').map((r) => [r[1], r[5] === null ? 'Unknown' : r[5]])),
+      },
+      {
+        t: 'predict',
+        code: 'SELECT 10 / 4 AS a, 10 / 4.0 AS b;\n',
+        question: 'What does this query show?',
+        options: [tbl(['a', 'b'], [[2, 2.5]]), tbl(['a', 'b'], [[2.5, 2.5]]), tbl(['a', 'b'], [[2, 2]]), tbl(['a', 'b'], [[3, 2.5]])],
+        answer: 0,
+        explain: 'Both 10 and 4 are whole numbers, so `10 / 4` is a whole-number division: 2, and the leftover is dropped. `4.0` is a decimal, so `10 / 4.0` keeps the rest: 2.5.',
+      },
+      {
+        t: 'fill',
+        stdin: DUUKA,
+        prompt: 'Fill the gap so each product is called Expensive when it costs 5000 or more, and Cheap otherwise.',
+        template: "SELECT name, CASE WHEN price >= 5000 THEN 'Expensive' ___ 'Cheap' END AS band FROM products WHERE id IN (1, 6);\n",
+        blanks: [{ options: ['ELSE', 'OR', 'THEN'], answer: 'ELSE' }],
+        output: tbl(['name', 'band'], [['Sugar 1kg', 'Cheap'], ['Airtime card 5000', 'Expensive']]),
+      },
+      {
+        t: 'bug',
+        stdin: DUUKA,
+        code: 'SELECT UPPER(name FROM products;\n',
+        question: 'This query fails with a syntax error near FROM. What is wrong?',
+        options: ['The bracket after UPPER( is never closed', 'UPPER cannot be used on names', 'FROM must come before UPPER', 'UPPER needs two values'],
+        answer: 0,
+        explain: 'Every opening bracket needs a closing one. SQL reads `name FROM products` as part of the function and gets lost at FROM. Write `UPPER(name)`.',
+        fixed: 'SELECT UPPER(name) FROM products;\n',
+      },
+      {
+        t: 'quiz',
+        question: 'What does `SELECT 7 / 2;` show in SQLite?',
+        options: ['3', '3.5', '4', '2'],
+        answer: 0,
+        explain: 'Whole number divided by whole number gives a whole number and the rest is dropped. Write `7 / 2.0` to get 3.5.',
+      },
+      {
+        t: 'mistakes',
+        items: [
+          { wrong: 'SELECT UPPER(name FROM products;', why: 'The bracket after UPPER( is never closed.', right: 'SELECT UPPER(name) FROM products;', stdin: DUUKA },
+          { wrong: 'SELECT name, price / 1000 AS thousands FROM products;', why: 'Whole divided by whole drops the decimals: 1500 becomes 1. No error, just a wrong answer.', right: 'SELECT name, price / 1000.0 AS thousands FROM products;', logic: true, stdin: DUUKA },
+          { wrong: 'SELECT name, COALESCE(supplier, Unknown) FROM products;', why: 'Unknown is text, so it needs single quotes. Without them it is read as a column name.', right: "SELECT name, COALESCE(supplier, 'Unknown') FROM products;", stdin: DUUKA },
+          { wrong: "SELECT name, CASE WHEN stock = 0 THEN 'Out' ELSE 'In' FROM products;", why: 'Every CASE must be closed with END.', right: "SELECT name, CASE WHEN stock = 0 THEN 'Out' ELSE 'In' END FROM products;", stdin: DUUKA },
+        ],
+      },
+      {
+        t: 'recap',
+        items: [
+          'Do arithmetic with `+ - * /` and brackets, and name the result with `AS`.',
+          'Whole number divided by whole number drops the decimals. Use `.0` to keep them. `%` is the leftover.',
+          '`UPPER`, `LOWER`, `LENGTH`, `ROUND` change values. `||` joins text.',
+          '`CASE WHEN ... THEN ... ELSE ... END` picks a word per row. `COALESCE(x, y)` replaces NULL.',
+        ],
+        memory: 'SQL can work things out for every row at once.',
+      },
+    ],
+    exercises: [
+      {
+        id: 'sql6-value',
+        title: 'Money on the shelf',
+        prompt: 'For products with MORE than 30 in stock, show the `name` and the value of the stock (price multiplied by stock) headed `stock_value`.',
+        starter: '-- name and stock_value (price * stock) for products with more than 30 in stock\nSELECT name FROM products;\n',
+        usesInput: true,
+        sampleInput: DUUKA,
+        tests: [
+          { input: DUUKA, expected: tbl(['name', 'stock_value'], PRODUCTS.filter((r) => r[4] > 30).map((r) => [r[1], r[3] * r[4]])) },
+          { input: DUUKA_B, expected: tbl(['name', 'stock_value'], PRODUCTS_B.filter((r) => r[4] > 30).map((r) => [r[1], r[3] * r[4]])), hidden: true, name: 'A different shop' },
+        ],
+        hints: [
+          'Multiply two columns in the SELECT part and give the result a name with AS. Filter with WHERE.',
+          '`SELECT name, price * stock AS stock_value FROM products WHERE stock > 30;`',
+          'A similar example: `SELECT name, price - 500 AS after_coupon FROM products;` works out a new column from an old one. Yours multiplies price and stock.',
+        ],
+      },
+      {
+        id: 'sql6-label',
+        title: 'Shelf labels',
+        prompt: 'Show one column headed `label` for every product, written like `FOOD - Sugar 1kg`: the category in CAPITAL letters, then space, dash, space, then the name.',
+        starter: '-- One column called label, like: FOOD - Sugar 1kg\nSELECT name FROM products;\n',
+        usesInput: true,
+        sampleInput: DUUKA,
+        tests: [
+          { input: DUUKA, expected: tbl(['label'], PRODUCTS.map((r) => [`${r[2].toUpperCase()} - ${r[1]}`])) },
+          { input: DUUKA_B, expected: tbl(['label'], PRODUCTS_B.map((r) => [`${r[2].toUpperCase()} - ${r[1]}`])), hidden: true, name: 'A different shop' },
+        ],
+        hints: [
+          'Join pieces of text with ||. One piece changes capitals, one piece is a fixed text in quotes.',
+          "`UPPER(category) || ' - ' || name AS label`",
+          "A similar example: `LOWER(name) || '!' AS shout` makes small letters and adds an exclamation mark. Yours joins three pieces.",
+        ],
+      },
+      {
+        id: 'sql6-status',
+        title: 'Stock status',
+        prompt: "Show the `name` of every product and a column `status`: `Out` when stock is 0, `Low` when stock is less than 20, otherwise `OK`. Use CASE.",
+        starter: '-- name and status (Out, Low or OK)\nSELECT name FROM products;\n',
+        usesInput: true,
+        sampleInput: DUUKA,
+        tests: [
+          { input: DUUKA, expected: tbl(['name', 'status'], PRODUCTS.map((r) => [r[1], r[4] === 0 ? 'Out' : r[4] < 20 ? 'Low' : 'OK'])) },
+          { input: DUUKA_B, expected: tbl(['name', 'status'], PRODUCTS_B.map((r) => [r[1], r[4] === 0 ? 'Out' : r[4] < 20 ? 'Low' : 'OK'])), hidden: true, name: 'A different shop' },
+        ],
+        hints: [
+          'CASE checks the rules from the top and uses the first true one. Put the strictest rule (stock = 0) first.',
+          "`CASE WHEN stock = 0 THEN 'Out' WHEN stock < 20 THEN 'Low' ELSE 'OK' END AS status`",
+          "A similar example: `CASE WHEN price >= 5000 THEN 'High' ELSE 'Normal' END AS band` gives a word per row. Yours has three words.",
+        ],
+      },
+    ],
+  },
+
+  // ================================================================== 7
+  {
+    id: 'sql-pricelist',
+    level: LEVEL,
+    minutes: 28,
+    title: "Project: Nakato's price list and restock report",
+    summary: 'Combine WHERE, ORDER BY, LIMIT, calculations and CASE into three real reports',
+    blocks: [
+      {
+        t: 'story',
+        title: 'Monday morning',
+        text: "Every Monday Nakato does three jobs with her stock book. She writes a clean price list for the shelf. She checks what is running low so she can phone her suppliers. And she picks out the products with the most money sitting on them.\n\nYou now know enough SQL to answer all three, in three queries. This lesson puts everything from Level 1 to work.",
+      },
+      { t: 'h', text: 'Report 1: the shelf price list' },
+      { t: 'p', text: 'Only products she has in stock, sorted by name, with the price written like `UGX 4500`.' },
+      {
+        t: 'project',
+        title: 'Shelf price list',
+        stdin: DUUKA,
+        code: "SELECT name, 'UGX ' || price AS price\nFROM products\nWHERE stock > 0\nORDER BY name;\n",
+        output: tbl(['name', 'price'], [...PRODUCTS].filter((r) => r[4] > 0).sort((a, b) => text(a[1], b[1])).map((r) => [r[1], `UGX ${r[3]}`])),
+      },
+      { t: 'h', text: 'Report 2: the restock list' },
+      { t: 'p', text: 'Products with fewer than 20 left, the emptiest first, with the supplier to phone. When there is no supplier on record, write `ask around`.' },
+      {
+        t: 'project',
+        title: 'Restock list',
+        stdin: DUUKA,
+        code: "SELECT name, stock, COALESCE(supplier, 'ask around') AS supplier\nFROM products\nWHERE stock < 20\nORDER BY stock;\n",
+        output: tbl(['name', 'stock', 'supplier'], PRODUCTS.filter((r) => r[4] < 20).sort((a, b) => a[4] - b[4]).map((r) => [r[1], r[4], r[5] === null ? 'ask around' : r[5]])),
+      },
+      { t: 'h', text: 'Report 3: where the money sits' },
+      { t: 'p', text: 'The two products with the most money on the shelf (price multiplied by stock), biggest first.' },
+      {
+        t: 'project',
+        title: 'Most valuable stock',
+        stdin: DUUKA,
+        code: 'SELECT name, price * stock AS stock_value\nFROM products\nORDER BY stock_value DESC\nLIMIT 2;\n',
+        output: tbl(['name', 'stock_value'], [...PRODUCTS].sort((a, b) => b[3] * b[4] - a[3] * a[4]).slice(0, 2).map((r) => [r[1], r[3] * r[4]])),
+      },
+      { t: 'tip', text: 'You can sort by a nickname you made with AS. That is why `ORDER BY stock_value` works above. (You cannot use a nickname in WHERE: that comes in Level 2.)' },
+      {
+        t: 'quiz',
+        question: 'Report 2 sorts with `ORDER BY stock`. What would change if you wrote `ORDER BY stock DESC`?',
+        options: ['The products with the MOST stock would come first, so the emptiest would be last', 'Nothing changes', 'The query would fail', 'Only 20 rows would show'],
+        answer: 0,
+        explain: 'DESC reverses the order. For a restock list you want the emptiest first, so the plain ORDER BY is the right choice.',
+      },
+      {
+        t: 'recap',
+        items: [
+          'A real report is a small recipe: choose rows (`WHERE`), work things out (`price * stock`), order them (`ORDER BY`), keep a few (`LIMIT`).',
+          'Give worked-out columns a good name with `AS`: a report is read by people.',
+          '`COALESCE` turns blanks into friendly words.',
+          'Level 1 is done: you can read any single table. Next: totals and groups.',
+        ],
+        memory: 'SELECT, FROM, WHERE, ORDER BY, LIMIT: the order of every question.',
+      },
+    ],
+    exercises: [
+      {
+        id: 'sql7-pricelist',
+        title: 'Print the shelf list',
+        prompt: "Show each product's `name` and its price written like `UGX 4500`, headed `price`. Only products with MORE than 0 in stock, sorted by name from A to Z.",
+        starter: "-- name and price (like UGX 4500), in-stock products only, sorted by name\nSELECT name FROM products;\n",
+        usesInput: true,
+        sampleInput: DUUKA,
+        tests: [
+          { input: DUUKA, expected: tbl(['name', 'price'], [...PRODUCTS].filter((r) => r[4] > 0).sort((a, b) => text(a[1], b[1])).map((r) => [r[1], `UGX ${r[3]}`])) },
+          { input: DUUKA_B, expected: tbl(['name', 'price'], [...PRODUCTS_B].filter((r) => r[4] > 0).sort((a, b) => text(a[1], b[1])).map((r) => [r[1], `UGX ${r[3]}`])), hidden: true, name: 'A different shop' },
+        ],
+        hints: [
+          'Join the text `UGX ` and the price with ||, then filter, then sort.',
+          "`SELECT name, 'UGX ' || price AS price FROM products WHERE stock > 0 ORDER BY name;`",
+          "A similar example: `SELECT name, price || ' shillings' AS cost FROM products;` joins a number and text. Yours puts UGX in front.",
+        ],
+      },
+      {
+        id: 'sql7-restock',
+        title: 'Call the suppliers',
+        prompt: 'Show `name`, `stock` and `supplier` of every product with fewer than 20 in stock, emptiest first. Where the supplier is missing, show `ask around`.',
+        starter: "-- Low-stock products, emptiest first, supplier or 'ask around'\nSELECT name, stock, supplier FROM products;\n",
+        usesInput: true,
+        sampleInput: DUUKA,
+        tests: [
+          { input: DUUKA, expected: tbl(['name', 'stock', 'supplier'], PRODUCTS.filter((r) => r[4] < 20).sort((a, b) => a[4] - b[4]).map((r) => [r[1], r[4], r[5] === null ? 'ask around' : r[5]])) },
+          { input: DUUKA_B, expected: tbl(['name', 'stock', 'supplier'], PRODUCTS_B.filter((r) => r[4] < 20).sort((a, b) => a[4] - b[4]).map((r) => [r[1], r[4], r[5] === null ? 'ask around' : r[5]])), hidden: true, name: 'A different shop' },
+        ],
+        hints: [
+          'Three tools: WHERE to keep the low stock, ORDER BY to put the emptiest first, COALESCE for the blanks.',
+          "`COALESCE(supplier, 'ask around') AS supplier` replaces the third column, then add `WHERE stock < 20 ORDER BY stock`.",
+          "A similar example: `COALESCE(phone, 'no phone') AS phone` fills missing phone numbers. Yours fills missing suppliers.",
+        ],
+      },
+      {
+        id: 'sql7-top',
+        title: 'Where the money sits',
+        prompt: 'Show the `name` and `stock_value` (price multiplied by stock) of the 2 products with the biggest stock value, biggest first.',
+        starter: '-- The 2 products with the biggest stock_value (price * stock)\nSELECT name, price * stock AS stock_value FROM products;\n',
+        usesInput: true,
+        sampleInput: DUUKA,
+        tests: [
+          { input: DUUKA, expected: tbl(['name', 'stock_value'], [...PRODUCTS].sort((a, b) => b[3] * b[4] - a[3] * a[4]).slice(0, 2).map((r) => [r[1], r[3] * r[4]])) },
+          { input: DUUKA_B, expected: tbl(['name', 'stock_value'], [...PRODUCTS_B].sort((a, b) => b[3] * b[4] - a[3] * a[4]).slice(0, 2).map((r) => [r[1], r[3] * r[4]])), hidden: true, name: 'A different shop' },
+        ],
+        hints: [
+          'The starter already works out the value. Now sort by it, biggest first, and keep two rows.',
+          '`ORDER BY stock_value DESC LIMIT 2`',
+          'A similar example: `ORDER BY stock DESC LIMIT 5` keeps the 5 products with the most stock. Yours sorts by the value and keeps 2.',
+        ],
+      },
+    ],
+  },
+];

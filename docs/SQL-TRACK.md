@@ -17,10 +17,10 @@ progress is saved under them). Exercise ids start with `sql<lesson number>-`.
 - [x] 1. `sql-tables` Tables and your first query (`SELECT * FROM`, rows, columns, several queries)
 - [x] 2. `sql-columns` Choosing columns (`AS`, `DISTINCT`)
 - [x] 3. `sql-where` Filtering rows (`=`, `<>`, `<`, `AND`, `OR`, `NOT`, `IN`, `BETWEEN`)
-- [ ] 4. `sql-text-null` Text patterns and missing values (`LIKE`, `%`, `_`, `IS NULL`, why `= NULL` fails)
-- [ ] 5. `sql-sort` Sorting and paging (`ORDER BY`, `DESC`, `LIMIT`, `OFFSET`)
-- [ ] 6. `sql-calc` Calculations and functions (`+ - * /`, integer division, `ROUND`, `UPPER`, `LENGTH`, `||`, `CASE`, `COALESCE`)
-- [ ] 7. `sql-pricelist` Project: Nakato's price list and low-stock report
+- [x] 4. `sql-text-null` Text patterns and missing values (`LIKE`, `%`, `_`, `IS NULL`, why `= NULL` fails)
+- [x] 5. `sql-sort` Sorting and paging (`ORDER BY`, `DESC`, `LIMIT`, `OFFSET`)
+- [x] 6. `sql-calc` Calculations and functions (`+ - * /`, integer division, `ROUND`, `UPPER`, `LENGTH`, `||`, `CASE`, `COALESCE`)
+- [x] 7. `sql-pricelist` Project: Nakato's price list and low-stock report
 
 **Level 2: Summaries**
 - [ ] 8. `sql-aggregates` `COUNT`, `SUM`, `AVG`, `MIN`, `MAX` (and `COUNT(*)` vs `COUNT(column)`)
@@ -102,8 +102,9 @@ that same file, so what the tests prove is what ships. Rules:
 - `7 / 2` is `3` (integer division); `7 / 2.0` is `3.5`.
 - SQLite types are flexible (a type name is a hint, not a rule). Teach the common types, say so once.
 - No `TOP` (use `LIMIT`), no `AUTO_INCREMENT` (an `INTEGER PRIMARY KEY` numbers itself), no stored
-  procedures, no users or `GRANT`. String join is `||`, not `CONCAT`. Say when something works
-  differently in MySQL or PostgreSQL, because learners will meet those next.
+  procedures, no users or `GRANT`. Teach `||` for joining text (it works in every database; with a NULL
+  piece the result is NULL). This SQLite also has `CONCAT()`, which treats NULL as empty. Say when something
+  works differently in MySQL or PostgreSQL, because learners will meet those next.
 - Not available: FTS5 full-text search (`no such module: fts5`). Do not teach it.
 
 ## Data
