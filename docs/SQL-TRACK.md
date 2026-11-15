@@ -47,10 +47,10 @@ progress is saved under them). Exercise ids start with `sql<lesson number>-`.
 - [x] 25. `sql-statement` Project: a customer statement
 
 **Level 5: Market-ready SQL**
-- [ ] 26. `sql-design` Designing a schema: normalisation in plain words, avoiding repeated data
-- [ ] 27. `sql-indexes` Indexes and `EXPLAIN QUERY PLAN`
-- [ ] 28. `sql-views` Views
-- [ ] 29. `sql-transactions` Transactions (`BEGIN`, `COMMIT`, `ROLLBACK`) with a Mobile Money transfer
+- [x] 26. `sql-design` Designing a schema: normalisation in plain words, avoiding repeated data
+- [x] 27. `sql-indexes` Indexes and `EXPLAIN QUERY PLAN`
+- [x] 28. `sql-views` Views
+- [x] 29. `sql-transactions` Transactions (`BEGIN`, `COMMIT`, `ROLLBACK`) with a Mobile Money transfer
 - [ ] 30. `sql-cte-window` `WITH` (CTEs), window functions (`ROW_NUMBER`, running totals)
 - [ ] 31. `sql-triggers-upsert` Triggers, `INSERT ... ON CONFLICT`, `RETURNING`
 - [ ] 32. `sql-from-apps` Using SQL from an app (SQL injection and parameters, in plain words; no runtime needed)
@@ -78,6 +78,10 @@ that same file, so what the tests prove is what ships. Rules:
 - **Expected outputs are built from JavaScript data with `tbl()`** (`src/content/sql/shared.js`), never
   by running the SQL. The test "lesson table helper matches the app's table format" keeps `tbl()` and
   the engine in step.
+- `EXPLAIN QUERY PLAN` prints ONE column headed `plan` (the readable text, for example `SEARCH products USING INDEX
+  idx_products_category (category=?)`). SQLite's own id, parent and `notused` columns are internal and change between
+  versions, so `sqlcore.js` drops them. Plans were checked on this SQLite: a column with no usable index says `SCAN`,
+  a primary key lookup says `SEARCH ... USING INTEGER PRIMARY KEY (rowid=?)`, `LIKE '%x%'` always scans.
 - Lessons that change data show the change by running a `SELECT` in the same run, because every run starts from a
   fresh database. Exercises that build tables need no input at all (leave `usesInput` off); hidden tests can still
   pass a setup script to prove the answer does not depend on an empty database. `PRAGMA table_info(t)` prints the

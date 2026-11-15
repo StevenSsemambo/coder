@@ -5,6 +5,8 @@
  * runs first, silently, on a fresh in-memory database. Then the learner's SQL runs, and its output is:
  *   - a text table for every statement that returns rows (SELECT, PRAGMA, ...),
  *   - "(0 rows)" under the header when a SELECT finds nothing,
+ *   - EXPLAIN QUERY PLAN prints just one column, "plan" (the readable text), because SQLite's own id, parent and
+ *     "notused" columns are internal numbers that change between versions and teach nothing,
  *   - "(N rows changed)" after INSERT, UPDATE, DELETE.
  * Every learner gets a brand new database on every run, so nothing is ever left broken.
  */
@@ -64,6 +66,11 @@
         if (cols.length) {
           var rows = [];
           while (stmt.step()) rows.push(stmt.get());
+          var detail = cols.indexOf('detail');
+          if (/^\s*explain\s+query\s+plan\b/i.test(sqlText) && detail >= 0) {
+            rows = rows.map(function (r) { return [r[detail]]; });
+            cols = ['plan'];
+          }
           blocks.push(formatTable(cols, rows));
         } else {
           stmt.step();

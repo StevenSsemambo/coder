@@ -5,11 +5,12 @@ import { level2 } from './sql/level2.js';
 import { level3 } from './sql/level3.js';
 import { level4a } from './sql/level4a.js';
 import { level4b } from './sql/level4b.js';
+import { level5a } from './sql/level5a.js';
 
 export const sqlCourse = {
   id: 'sql-start',
   language: 'sql',
   title: 'SQL from Zero',
   subtitle: 'Ask databases questions, then design your own. Runs offline on SQLite.',
-  lessons: [...level1, ...level1b, ...level2, ...level3, ...level4a, ...level4b],
+  lessons: [...level1, ...level1b, ...level2, ...level3, ...level4a, ...level4b, ...level5a],
 };

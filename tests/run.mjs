@@ -346,6 +346,11 @@ section('Error translator (real messages from the runtimes)');
     ['sql', 'ALTER TABLE t ADD COLUMN level INTEGER NOT NULL;', 'sql-add-notnull', 'SQL new NOT NULL column without default'],
     ['sql', 'PRAGMA foreign_keys = ON; CREATE TABLE ch (p INTEGER REFERENCES t(id)); INSERT INTO ch VALUES (99);', 'sql-foreign-key', 'SQL foreign key broken'],
     ['sql', 'SELECT * FROM t WHERE id IN (SELECT id, name FROM t);', 'sql-subquery-columns', 'SQL inner query returns two columns'],
+    ['sql', 'CREATE VIEW vv AS SELECT id FROM t; INSERT INTO vv VALUES (5);', 'sql-view-modify', 'SQL change rows of a view'],
+    ['sql', 'COMMIT;', 'sql-transaction', 'SQL commit without BEGIN'],
+    ['sql', 'BEGIN; BEGIN;', 'sql-transaction', 'SQL BEGIN inside a transaction'],
+    ['sql', 'SELECT id FROM t WHERE ROW_NUMBER() OVER (ORDER BY id) = 1;', 'sql-window-misuse', 'SQL window function in WHERE'],
+    ['sql', 'CREATE INDEX ix ON t(id); CREATE INDEX ix ON t(name);', 'sql-table-exists', 'SQL index already exists'],
     ['python', 'print(undefined_name)', 'py-name-error', 'NameError'],
     ['python', 'x = (1 +', 'py-never-closed', 'unclosed bracket'],
     ['python', 'if True\n    print(1)', 'py-missing-colon', 'missing colon'],
@@ -594,6 +599,9 @@ section('SQL engine (SQLite via sql.js: the same core file the worker uses)');
   check('a broken practice database is reported as such', /practice database could not be built/.test(bad.error || ''), bad.error);
   check('an error keeps the output that came before it', runSql('SELECT 1 AS a; SELECT * FROM nope;', '').stdout === 'a\n-\n1\n' && /no such table/.test(runSql('SELECT 1 AS a; SELECT * FROM nope;', '').error));
   const many = runSql('WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c WHERE x < 500) SELECT x FROM c;', '');
+  const plan = runSql("CREATE INDEX ix ON t(name); EXPLAIN QUERY PLAN SELECT * FROM t WHERE name = 'x';", db).stdout;
+  check('EXPLAIN QUERY PLAN prints only a plan column of readable text', plan.startsWith('plan\n') && plan.includes('SEARCH t USING') && !/notused|parent/.test(plan), JSON.stringify(plan));
+  check('a plan of a full scan says SCAN', runSql('EXPLAIN QUERY PLAN SELECT * FROM t WHERE name = \'x\';', db).stdout.includes('SCAN t'));
   check('very long results are cut and say so', many.stdout.includes('... 300 more rows not shown') && many.stdout.split('\n').length < 210, many.stdout.split('\n').slice(-3).join(' | '));
 }
 

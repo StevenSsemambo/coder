@@ -79,5 +79,18 @@ export const sqlSolutions = {
   'sql25-statement': 'SELECT o.order_date, p.name, i.qty, i.qty * p.price AS line_total FROM orders o JOIN order_items i ON i.order_id = o.id JOIN products p ON p.id = i.product_id WHERE o.customer_id = 3 ORDER BY o.order_date, i.id;',
   'sql25-summary': 'SELECT c.name, COUNT(DISTINCT o.id) AS orders, COALESCE(SUM(i.qty * p.price), 0) AS spent FROM customers c LEFT JOIN orders o ON o.customer_id = c.id LEFT JOIN order_items i ON i.order_id = o.id LEFT JOIN products p ON p.id = i.product_id GROUP BY c.id ORDER BY spent DESC, c.name;',
   'sql25-best-seller': 'SELECT p.name, SUM(i.qty) AS units FROM products p JOIN order_items i ON i.product_id = p.id GROUP BY p.id ORDER BY units DESC LIMIT 1;',
+  // Level 5: Market-ready SQL
+  'sql26-customers': 'CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, phone TEXT);\nINSERT INTO customers (name, phone) SELECT DISTINCT customer, phone FROM messy_sales ORDER BY customer;\nSELECT * FROM customers ORDER BY id;',
+  'sql26-products': 'CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL UNIQUE, price INTEGER NOT NULL);\nINSERT INTO products (name, price) SELECT DISTINCT product, price FROM messy_sales ORDER BY product;\nSELECT * FROM products ORDER BY id;',
+  'sql26-sales': 'CREATE TABLE sales (id INTEGER PRIMARY KEY, customer_id INTEGER NOT NULL, product_id INTEGER NOT NULL, qty INTEGER NOT NULL);\nINSERT INTO sales (id, customer_id, product_id, qty) SELECT m.id, c.id, p.id, m.qty FROM messy_sales m JOIN customers c ON c.name = m.customer JOIN products p ON p.name = m.product;\nSELECT c.name AS customer, p.name AS product, s.qty FROM sales s JOIN customers c ON c.id = s.customer_id JOIN products p ON p.id = s.product_id ORDER BY s.id;',
+  'sql27-category-index': "CREATE INDEX idx_products_category ON products(category);\nEXPLAIN QUERY PLAN SELECT * FROM products WHERE category = 'Food';",
+  'sql27-fk-index': 'CREATE INDEX idx_items_order ON order_items(order_id);\nEXPLAIN QUERY PLAN SELECT * FROM order_items WHERE order_id = 7;',
+  'sql27-unique-phone': "CREATE UNIQUE INDEX idx_customers_phone ON customers(phone);\nSELECT name FROM sqlite_master WHERE type = 'index' ORDER BY name;",
+  'sql28-customer-spend': 'CREATE VIEW customer_spend AS SELECT c.name AS name, SUM(i.qty * p.price) AS spent FROM customers c JOIN orders o ON o.customer_id = c.id JOIN order_items i ON i.order_id = o.id JOIN products p ON p.id = i.product_id GROUP BY c.id;\nSELECT * FROM customer_spend ORDER BY spent DESC;',
+  'sql28-low-stock': 'CREATE VIEW low_stock AS SELECT name, stock FROM products WHERE stock < 20;\nSELECT * FROM low_stock ORDER BY stock, name;',
+  'sql28-use-view': 'SELECT ROUND(AVG(total)) AS avg_order FROM order_totals;',
+  'sql29-transfer': 'BEGIN;\nUPDATE accounts SET balance = balance - 15000 WHERE id = 1;\nUPDATE accounts SET balance = balance + 15000 WHERE id = 2;\nCOMMIT;\nSELECT owner, balance FROM accounts ORDER BY id;',
+  'sql29-undo': 'BEGIN;\nUPDATE accounts SET balance = balance - 8000 WHERE id = 1;\nUPDATE accounts SET balance = balance + 8000 WHERE id = 2;\nSELECT owner, balance FROM accounts ORDER BY id;\nROLLBACK;\nSELECT owner, balance FROM accounts ORDER BY id;',
+  'sql29-total': 'BEGIN;\nUPDATE accounts SET balance = balance - 5000 WHERE id = 1;\nUPDATE accounts SET balance = balance + 5000 WHERE id = 2;\nCOMMIT;\nSELECT SUM(balance) AS total FROM accounts;',
   'sql12-good-days': 'SELECT sale_date, SUM(amount) AS takings FROM sales GROUP BY sale_date HAVING SUM(amount) >= 15000 ORDER BY sale_date;',
 };

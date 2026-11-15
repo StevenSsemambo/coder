@@ -805,17 +805,17 @@ const RULES = [
   {
     id: 'sql-table-exists',
     languages: ['sql'],
-    match: /table (\S+) already exists/,
+    match: /(table|index|view|trigger) (\S+) already exists/,
     build: (m) => ({
       en: {
-        title: `The table "${m[1]}" already exists`,
-        why: `You tried to create a table with a name that is already taken in this database.`,
-        fix: `Choose a different name, or write CREATE TABLE IF NOT EXISTS ${m[1]} (...) so SQL skips it when it is already there.`,
+        title: `The ${m[1]} "${m[2]}" already exists`,
+        why: `You tried to create a ${m[1]} with a name that is already taken in this database.`,
+        fix: `Choose a different name, or write CREATE ${m[1].toUpperCase()} IF NOT EXISTS ${m[2]} ... so SQL skips it when it is already there.`,
       },
       sw: {
-        title: `Jedwali "${m[1]}" tayari lipo`,
-        why: 'Ulijaribu kuunda jedwali kwa jina ambalo tayari limetumika kwenye hifadhidata hii.',
-        fix: `Chagua jina tofauti, au andika CREATE TABLE IF NOT EXISTS ${m[1]} (...) ili SQL liruke kama tayari lipo.`,
+        title: `"${m[2]}" (${m[1]}) tayari ipo`,
+        why: `Ulijaribu kuunda ${m[1]} kwa jina ambalo tayari limetumika kwenye hifadhidata hii.`,
+        fix: `Chagua jina tofauti, au andika CREATE ${m[1].toUpperCase()} IF NOT EXISTS ${m[2]} ... ili SQL iruke kama tayari ipo.`,
       },
     }),
   },
@@ -1142,6 +1142,57 @@ const RULES = [
         title: `${m[1]} imesimamisha programu`,
         why: `Kitu kimekwenda vibaya (${m[2]}) na hakuna sehemu ya programu iliyokishika, kwa hiyo PHP imesimama.`,
         fix: 'Soma ujumbe baada ya neno "Error" au "Exception": unasema kilichotokea. Kukishughulikia mwenyewe, weka msimbo hatari ndani ya try { ... } catch (Exception $e) { ... }.',
+      },
+    }),
+  },
+  {
+    id: 'sql-view-modify',
+    languages: ['sql'],
+    match: /cannot modify (\S+) because it is a view/,
+    build: (m) => ({
+      en: {
+        title: `${m[1]} is a view, so you cannot change rows in it`,
+        why: `A view is a saved question, not a table that holds rows. There is nothing in ${m[1]} to add to, change or delete.`,
+        fix: 'Run your INSERT, UPDATE or DELETE on the real table that the view reads from.',
+      },
+      sw: {
+        title: `${m[1]} ni mwonekano (view), kwa hiyo huwezi kubadilisha mistari ndani yake`,
+        why: `Mwonekano ni swali lililohifadhiwa, si jedwali lenye mistari. Hakuna kitu ndani ya ${m[1]} cha kuongeza, kubadilisha au kufuta.`,
+        fix: 'Endesha INSERT, UPDATE au DELETE yako kwenye jedwali halisi ambalo mwonekano unalisoma.',
+      },
+    }),
+  },
+  {
+    id: 'sql-transaction',
+    languages: ['sql'],
+    match: /cannot (commit|rollback) - no transaction is active|cannot start a transaction within a transaction/,
+    build: (m) => ({
+      en: {
+        title: m[1] ? `There is nothing to ${m[1]}: no transaction was started` : 'A transaction is already open',
+        why: m[1] ? `${m[1].toUpperCase()} ends a transaction, but BEGIN was never run (or the transaction already ended).` : 'You ran BEGIN while another transaction was still open. A transaction cannot start inside another.',
+        fix: m[1] ? 'Start with BEGIN; do the changes; then finish with COMMIT; (keep them) or ROLLBACK; (undo them).' : 'Finish the open one first with COMMIT; or ROLLBACK;, and only then BEGIN a new one.',
+      },
+      sw: {
+        title: m[1] ? `Hakuna cha ${m[1] === 'commit' ? 'kuthibitisha' : 'kurudisha nyuma'}: hakuna muamala ulioanzishwa` : 'Muamala tayari umefunguliwa',
+        why: m[1] ? `${m[1].toUpperCase()} humaliza muamala, lakini BEGIN haikuendeshwa (au muamala ulishaisha).` : 'Uliendesha BEGIN wakati muamala mwingine bado uko wazi. Muamala hauwezi kuanza ndani ya mwingine.',
+        fix: m[1] ? 'Anza na BEGIN; fanya mabadiliko; kisha malizia na COMMIT; (yabaki) au ROLLBACK; (yaondolewe).' : 'Maliza ule ulio wazi kwanza kwa COMMIT; au ROLLBACK;, kisha ndipo uanze BEGIN mpya.',
+      },
+    }),
+  },
+  {
+    id: 'sql-window-misuse',
+    languages: ['sql'],
+    match: /misuse of (aliased )?window function/,
+    build: () => ({
+      en: {
+        title: 'A window function cannot be used in WHERE',
+        why: 'WHERE runs before window functions such as ROW_NUMBER, RANK or SUM(...) OVER are worked out, so it cannot see their results.',
+        fix: 'Work the window function out inside a WITH (or a subquery), then filter on its result in the outer query.',
+      },
+      sw: {
+        title: 'Kitendakazi cha dirisha hakiwezi kutumika kwenye WHERE',
+        why: 'WHERE huendeshwa kabla vitendakazi vya dirisha kama ROW_NUMBER, RANK au SUM(...) OVER havijahesabiwa, kwa hiyo haviwezi kuona matokeo yake.',
+        fix: 'Hesabu kitendakazi cha dirisha ndani ya WITH (au hoja ya ndani), kisha chuja kwa matokeo yake kwenye hoja ya nje.',
       },
     }),
   },
