@@ -3,6 +3,8 @@
 Course id `cpp-start`, language id `cpp`. Files: `src/content/cpp/` (lessons), `src/content/cpp-course.js`
 (the course list), `tests/solutions-cpp.mjs` (reference solutions). Owner: the C++ account.
 
+Files by lesson: `level1.js` (1 to 3), `level2.js` (4), `switch.js` (5), `loops.js` (6 to 8), `till.js` (9).
+
 Running project: **Mama Rose's Rolex Stand**, a rolex (chapati rolled round an omelette) stall beside the
 campus gate. Learners meet it in lesson 1 (the chalkboard menu) and finish Part A by building its till.
 
@@ -26,11 +28,11 @@ start with `cpp<lesson number>-`.
 
 **Level 2: Decisions and loops**
 - [x] 4. `cpp-decide` Making decisions (`if`, `else if`, `&&` `||` `!`, `? :`)
-- [ ] 5. `cpp-switch` `switch`, nested decisions, `bool`
-- [ ] 6. `cpp-loops` Repeating with `for`
-- [ ] 7. `cpp-while` `while`, `do while`, `break`, `continue`
-- [ ] 8. `cpp-nested` Loops inside loops: patterns and tables
-- [ ] 9. `cpp-rolex` Project: Mama Rose's till
+- [x] 5. `cpp-switch` `switch`, nested decisions, `bool`
+- [x] 6. `cpp-loops` Repeating with `for`
+- [x] 7. `cpp-while` `while`, `do while`, `break`, `continue`
+- [x] 8. `cpp-nested` Loops inside loops: patterns and tables (with `setw`)
+- [x] 9. `cpp-rolex` Project: Mama Rose's till (sentinel loop, `switch`, `bool`, receipt with `setw`)
 
 **Level 3: Functions**
 - [ ] 10. `cpp-functions` Functions: define, call, return, prototypes
@@ -80,6 +82,10 @@ Behaviours that differ from real C++ (say so honestly in lessons where they matt
 - An `int` that overflows (about 2 billion) **stops with an error**. Real C++ silently wraps.
 - Dividing an integer by zero **stops with an error**. In real C++ it is undefined behaviour.
 - Reading a variable that was never given a value prints `NaN`. Real C++ prints a random number.
+- Two **identical `case` labels** in one `switch` are accepted here (a real compiler refuses). `continue` inside a
+  `switch` that is not inside a loop misbehaves. Lessons never rely on either.
+- A variable **declared after `main` closes** still counts as a global here, so a "put these lines in order"
+  puzzle that has a declaration line can be solved in a wrong order. Keep declarations in the fixed first block.
 - A `const` **can be changed** here (no error). A real compiler refuses. Lesson 3 says so out loud.
 - Leaving out `using namespace std;` still works here when `<iostream>` is included. A real compiler refuses.
   Lessons always write it.
