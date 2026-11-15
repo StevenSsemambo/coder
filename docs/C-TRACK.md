@@ -46,9 +46,9 @@ progress is saved under them). Exercise ids start with `c<lesson number>-`.
 - [x] 17. `c-array-algos` Array algorithms: search, minimum, maximum, bubble sort
 - [x] 18. `c-array-fn` Arrays and functions
 - [x] 19. `c-2d` Two-dimensional arrays
-- [ ] 20. Strings as character arrays
-- [ ] 21. `string.h` and `ctype.h`
-- [ ] 22. Project: class marks processor
+- [x] 20. `c-strings` Strings as character arrays
+- [x] 21. `c-stringlib` `string.h` and `ctype.h`
+- [x] 22. `c-marks` Project: class marks processor
 
 **Level 5: Pointers**
 - [ ] 23. Addresses and pointers
@@ -96,7 +96,8 @@ Behaviours that differ from real C (say so honestly in lessons where they matter
 
 - **Short array lists** (`int a[5] = {10, 20};`) left the missing boxes without a value, and `{5}` became `-1, 0, 0`. A new patch pads with zeros as C does, and cuts a flat list for a 2D array into rows. `{0}` now works for 2D arrays too.
 - **`strcmp` and `strncmp`** never stopped at the end of the text, so comparing two **equal** strings crashed, and `strncmp` ignored its length. Both are patched in `scripts/prepare-runtimes.mjs` (tests in `tests/run.mjs`).
-- Still not working: `strchr` (result cannot be printed), `strstr`, `fgets`. Reading or writing outside an array **stops with an error** here; real C carries on silently.
+- **Characters stored by `scanf("%s")`, `gets` and `strcpy`** could not be changed afterwards (`s[0] = toupper(s[0]);` stopped with "not a left value"). Patched, with tests.
+- Still not working: `strchr` (result cannot be printed), `strstr`, `fgets`. Reading or writing outside an array **stops with an error** here; real C carries on silently. `s = "abc";` on a char array is accepted here but is an error in real C. `strcat` past the end of the array silently cuts the text here. `scanf("%[^\n]")` and `%*s` are not supported; use `gets` for a line (real compilers removed it).
 
 ### The `scanf` patch
 

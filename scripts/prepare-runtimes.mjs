@@ -194,6 +194,46 @@ const PATCHES = [
       '                }\n' +
       '                return rt.val(rt.intTypeLiteral, (j < destarr.length ? destarr[j].v : 0) - (i < srcarr.length ? srcarr[i].v : 0));',
   },
+  {
+    // strcpy stored plain values in the destination, which cannot be assigned to later:
+    //   strcpy(b, a); b[0] = 'X';   stopped with "'a'(char) is not a left value".
+    file: /JSCPP\/lib\/includes\/shared\/cstring_strcpy\.js$/,
+    why: 'characters copied by strcpy must stay assignable',
+    find: '            destarr[j] = rt.clone(srcarr[i]);',
+    replace: '            destarr[j] = rt.val(srcarr[i].t, srcarr[i].v, true);',
+  },
+  {
+    file: /JSCPP\/lib\/includes\/shared\/cstring_strcpy\.js$/,
+    why: 'the closing zero written by strcpy must stay assignable too (strcat adds to it)',
+    find: '            destarr[j] = rt.val(rt.charTypeLiteral, 0);',
+    replace: '            destarr[j] = rt.val(rt.charTypeLiteral, 0, true);',
+  },
+  {
+    file: /JSCPP\/lib\/includes\/cstring\.js$/,
+    why: 'characters copied by strncpy (and strncat) must stay assignable',
+    find: '                    destarr[j] = rt.clone(srcarr[i]);',
+    replace: '                    destarr[j] = rt.val(srcarr[i].t, srcarr[i].v, true);',
+  },
+  {
+    // Words read with scanf("%s", s) were stored as plain values, so a later  s[0] = toupper(s[0]);  stopped with
+    // "'u'(char) is not a left value". Store each character as a box that can be assigned to.
+    file: /JSCPP\/lib\/includes\/cstdio\.js$/,
+    why: 'characters read into a char array by scanf must stay assignable',
+    find: '                                return pointer.v.target[i] = src_array.v.target[i];',
+    replace: '                                return pointer.v.target[i] = src_array.v.target[i] === undefined ? undefined : rt.val(src_array.v.target[i].t, src_array.v.target[i].v, true);',
+  },
+  {
+    file: /JSCPP\/lib\/includes\/cstdio\.js$/,
+    why: 'characters read by gets must stay assignable',
+    find: '                    destArray[i] = rt.val(rt.charTypeLiteral, return_value.charCodeAt(i));',
+    replace: '                    destArray[i] = rt.val(rt.charTypeLiteral, return_value.charCodeAt(i), true);',
+  },
+  {
+    file: /JSCPP\/lib\/includes\/cstdio\.js$/,
+    why: 'the closing zero written by gets must stay assignable',
+    find: '            destArray[return_value.length] = rt.val(rt.charTypeLiteral, 0);',
+    replace: '            destArray[return_value.length] = rt.val(rt.charTypeLiteral, 0, true);',
+  },
 ];
 const countOf = (text, part) => text.split(part).length - 1;
 
@@ -214,7 +254,7 @@ await build({
         b.onResolve({ filter: /^(util|stream|fs|readline)$/ }, (a) => ({ path: a.path, namespace: 'shim' }));
         b.onLoad({ filter: /.*/, namespace: 'shim' }, (a) => ({ contents: SHIMS[a.path], loader: 'js' }));
 
-        b.onLoad({ filter: /JSCPP[\\/]lib[\\/](includes[\\/]cstdio|includes[\\/]cstring|interpreter)\.js$/ }, (a) => {
+        b.onLoad({ filter: /JSCPP[\\/]lib[\\/](includes[\\/]cstdio|includes[\\/]cstring|includes[\\/]shared[\\/]cstring_strcpy|interpreter)\.js$/ }, (a) => {
           // The library ships with Windows (CRLF) line endings; normalise so patches match everywhere.
           let text = readFileSync(a.path, 'utf8').replace(/\r\n/g, '\n');
           for (const p of PATCHES.filter((x) => x.file.test(a.path.replace(/\\/g, '/')))) {

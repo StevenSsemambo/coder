@@ -19,6 +19,111 @@ export const cSolutions = {
   'c4-sum': C('    int n, i, total = 0;\n    scanf("%d", &n);\n    for (i = 1; i <= n; i++) {\n        total = total + i;\n    }\n    printf("Sum: %d\\n", total);'),
   'c4-table': C('    int n, i;\n    scanf("%d", &n);\n    for (i = 1; i <= 12; i++) {\n        printf("%d x %d = %d\\n", n, i, n * i);\n    }'),
 
+  // Level 4: strings (lessons 20 to 22)
+  'c20-length': C(String.raw`    char s[50];
+    int i = 0;
+    scanf("%s", s);
+    while (s[i] != '\0') {
+        i++;
+    }
+    printf("Length: %d\n", i);`),
+  'c20-vowels': C(String.raw`    char s[50];
+    int i = 0, count = 0;
+    char c;
+    scanf("%s", s);
+    while (s[i] != '\0') {
+        c = s[i];
+        if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u' || c == 'A' || c == 'E' || c == 'I' || c == 'O' || c == 'U') {
+            count++;
+        }
+        i++;
+    }
+    printf("Vowels: %d\n", count);`),
+  'c20-reverse': C(String.raw`    char s[50];
+    int i, length = 0;
+    scanf("%s", s);
+    while (s[length] != '\0') {
+        length++;
+    }
+    for (i = length - 1; i >= 0; i--) {
+        printf("%c", s[i]);
+    }
+    printf("\n");`),
+  'c21-login': prog(String.raw`    char user[30], pin[30];
+    scanf("%s %s", user, pin);
+    if (strcmp(user, "admin") == 0 && strcmp(pin, "1234") == 0) {
+        printf("Welcome\n");
+    } else {
+        printf("Access denied\n");
+    }`, '#include <stdio.h>\n#include <string.h>'),
+  'c21-upper': prog(String.raw`    char s[50];
+    int i;
+    scanf("%s", s);
+    for (i = 0; s[i] != '\0'; i++) {
+        s[i] = toupper(s[i]);
+    }
+    printf("%s\n", s);`, '#include <stdio.h>\n#include <ctype.h>'),
+  'c21-palindrome': prog(String.raw`    char s[50];
+    int i, n, ok = 1;
+    scanf("%s", s);
+    n = strlen(s);
+    for (i = 0; i < n / 2; i++) {
+        if (s[i] != s[n - 1 - i]) {
+            ok = 0;
+        }
+    }
+    if (ok == 1) {
+        printf("Palindrome\n");
+    } else {
+        printf("Not palindrome\n");
+    }`, '#include <stdio.h>\n#include <string.h>'),
+  'c22-stats': C(String.raw`    int marks[50];
+    int n, i, total = 0, passed = 0, highest, lowest;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &marks[i]);
+    }
+    highest = marks[0];
+    lowest = marks[0];
+    for (i = 0; i < n; i++) {
+        total = total + marks[i];
+        if (marks[i] > highest) {
+            highest = marks[i];
+        }
+        if (marks[i] < lowest) {
+            lowest = marks[i];
+        }
+        if (marks[i] >= 50) {
+            passed++;
+        }
+    }
+    printf("Highest: %d\n", highest);
+    printf("Lowest: %d\n", lowest);
+    printf("Average: %.2f\n", total / (float)n);
+    printf("Passed: %d\n", passed);`),
+  'c22-grades': C(String.raw`    int n, i, mark;
+    int a = 0, b = 0, c = 0, d = 0, f = 0;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &mark);
+        if (mark >= 80) {
+            a++;
+        } else if (mark >= 70) {
+            b++;
+        } else if (mark >= 60) {
+            c++;
+        } else if (mark >= 50) {
+            d++;
+        } else {
+            f++;
+        }
+    }
+    printf("A: %d\n", a);
+    printf("B: %d\n", b);
+    printf("C: %d\n", c);
+    printf("D: %d\n", d);
+    printf("F: %d\n", f);`),
+
   // Level 4: arrays (lessons 16 to 19)
   'c16-reverse': C(String.raw`    int a[50];
     int n, i;
