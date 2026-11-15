@@ -30,7 +30,7 @@ const RULES = [
   // ---- both languages ------------------------------------------------------
   {
     id: 'timeout',
-    languages: ['python', 'c', 'cpp', 'web', 'sql'],
+    languages: ['python', 'c', 'cpp', 'web', 'sql', 'php'],
     match: /Time limit exceeded/i,
     build: () => ({
       en: {
@@ -904,6 +904,247 @@ const RULES = [
       },
     }),
   },
+
+  // ---- PHP (8.3) -------------------------------------------------------------------------------
+  // Only fatal and parse errors reach these rules. Warnings and notices stay in the program output, as in real PHP.
+  {
+    id: 'php-missing-semicolon',
+    languages: ['php'],
+    match: /Parse error: syntax error, unexpected (?:token|identifier|variable) "?([^"\n]+?)"?,? expecting (?:"[,.]" or )?";"/,
+    build: (m) => ({
+      en: {
+        title: 'A semicolon ; is missing',
+        why: `PHP reached ${m[1]} and found that the line before it was not finished. Every PHP statement ends with a semicolon.`,
+        fix: 'Look at the end of the line just above the line number shown. Add ; there.',
+      },
+      sw: {
+        title: 'Alama ya nukta-mkato ; haipo',
+        why: `PHP ilifika ${m[1]} na kuona kuwa mstari uliotangulia haukukamilika. Kila amri ya PHP inaisha kwa nukta-mkato.`,
+        fix: 'Angalia mwisho wa mstari juu ya nambari ya mstari iliyoonyeshwa. Weka ; hapo.',
+      },
+    }),
+  },
+  {
+    id: 'php-parse',
+    languages: ['php'],
+    match: /Parse error: (?:syntax error, )?(unexpected [^\n]*?) in /,
+    build: (m) => ({
+      en: {
+        title: 'PHP could not read this line',
+        why: `PHP stopped at something it did not expect (${m[1]}). Usually a bracket, quote or semicolon is missing or in the wrong place, on this line or the line above.`,
+        fix: 'Check that every ( has a ), every { has a }, and every opening quote has a closing quote. Then check the line above for a missing ;.',
+      },
+      sw: {
+        title: 'PHP haikuweza kusoma mstari huu',
+        why: `PHP ilisimama mahali ambapo haikutarajia kitu (${m[1]}). Mara nyingi mabano, nukuu au nukta-mkato imekosekana au imewekwa vibaya, kwenye mstari huu au ule wa juu.`,
+        fix: 'Hakikisha kila ( ina ), kila { ina }, na kila nukuu ya kufungua ina ya kufunga. Kisha angalia mstari wa juu kama ; imekosekana.',
+      },
+    }),
+  },
+  {
+    id: 'php-undefined-function',
+    languages: ['php'],
+    match: /Call to undefined function ([A-Za-z0-9_\\]+)\(\)/,
+    build: (m) => ({
+      en: {
+        title: `There is no function called ${m[1]}()`,
+        why: 'The name may be misspelled, or the function has not been written yet. PHP function names must be typed exactly (capital letters do not matter for functions, but spelling does).',
+        fix: `Check the spelling of ${m[1]}. If it is your own function, define it with "function ${m[1]}() { ... }".`,
+      },
+      sw: {
+        title: `Hakuna kazi (function) inayoitwa ${m[1]}()`,
+        why: 'Jina linaweza kuwa limekosewa tahajia, au kazi hiyo haijaandikwa bado.',
+        fix: `Angalia tahajia ya ${m[1]}. Kama ni kazi yako mwenyewe, ifafanue kwa "function ${m[1]}() { ... }".`,
+      },
+    }),
+  },
+  {
+    id: 'php-undefined-method',
+    languages: ['php'],
+    match: /Call to (?:undefined|private|protected) method ([A-Za-z0-9_\\]+)::([A-Za-z0-9_]+)\(\)/,
+    build: (m) => ({
+      en: {
+        title: `${m[1]} has no method you can call named ${m[2]}()`,
+        why: `Either ${m[2]} is not written inside class ${m[1]}, its name is misspelled, or it is private or protected, so code outside the class may not call it.`,
+        fix: `Check the spelling inside class ${m[1]}. If it is private, make it public or call it from inside the class.`,
+      },
+      sw: {
+        title: `${m[1]} haina njia (method) inayoitwa ${m[2]}() unayoweza kuiita`,
+        why: `Huenda ${m[2]} haijaandikwa ndani ya class ${m[1]}, jina limekosewa, au ni private/protected kwa hiyo nje ya class haiwezi kuitwa.`,
+        fix: `Angalia tahajia ndani ya class ${m[1]}. Kama ni private, ifanye public au iite kutoka ndani ya class.`,
+      },
+    }),
+  },
+  {
+    id: 'php-null-member',
+    languages: ['php'],
+    match: /Call to a member function ([A-Za-z0-9_]+)\(\) on (null|string|int|array|bool|float)/,
+    build: (m) => ({
+      en: {
+        title: `You called ${m[1]}() on ${m[2]}, not on an object`,
+        why: `The variable before the arrow -> holds ${m[2]}, so it has no methods. Often an object was never created with "new", or a function that should return an object returned nothing.`,
+        fix: 'Print the variable with var_dump($variable) just before this line to see what it really holds.',
+      },
+      sw: {
+        title: `Uliita ${m[1]}() kwenye ${m[2]}, si kitu (object)`,
+        why: `Kigezo kabla ya mshale -> kina ${m[2]}, kwa hiyo hakina methods. Mara nyingi object haikuundwa kwa "new", au kazi iliyotakiwa kurudisha object haikurudisha kitu.`,
+        fix: 'Chapisha kigezo kwa var_dump($kigezo) kabla ya mstari huu uone kina nini hasa.',
+      },
+    }),
+  },
+  {
+    id: 'php-type-error',
+    languages: ['php'],
+    match: /TypeError: ([A-Za-z0-9_\\:]+)\(\): Argument #(\d+) \(\$(\w+)\) must be of type ([^,\n]+), ([^\s]+) given/,
+    build: (m) => ({
+      en: {
+        title: `${m[1]}() wanted ${m[4]} but got ${m[5]}`,
+        why: `Argument number ${m[2]} (${'$'}${m[3]}) has to be ${m[4]}. The value you passed is ${m[5]}. PHP checks types when a function declares them.`,
+        fix: `Pass a ${m[4]} value. If the value comes from text, convert it first, for example (int)"50" or (float)"2.5".`,
+      },
+      sw: {
+        title: `${m[1]}() ilitaka ${m[4]} lakini ikapata ${m[5]}`,
+        why: `Kigezo namba ${m[2]} (${'$'}${m[3]}) lazima kiwe ${m[4]}. Thamani uliyotoa ni ${m[5]}.`,
+        fix: `Toa thamani ya aina ${m[4]}. Kama inatoka kwenye maandishi, ibadilishe kwanza, mfano (int)"50".`,
+      },
+    }),
+  },
+  {
+    id: 'php-arg-count',
+    languages: ['php'],
+    match: /ArgumentCountError: Too few arguments to function ([A-Za-z0-9_\\:]+)\(\), (\d+) passed .*? and (?:exactly|at least) (\d+) expected/,
+    build: (m) => ({
+      en: {
+        title: `${m[1]}() needs ${m[3]} value(s) but got ${m[2]}`,
+        why: 'When you call a function you must give one value for each parameter that has no default value.',
+        fix: `Call ${m[1]}() with ${m[3]} value(s) inside the brackets, or give the missing parameters default values.`,
+      },
+      sw: {
+        title: `${m[1]}() inahitaji thamani ${m[3]} lakini ilipewa ${m[2]}`,
+        why: 'Unapoita kazi lazima utoe thamani moja kwa kila kigezo ambacho hakina thamani ya msingi.',
+        fix: `Ita ${m[1]}() ukiwa na thamani ${m[3]} ndani ya mabano, au weka thamani za msingi kwa vigezo vinavyokosekana.`,
+      },
+    }),
+  },
+  {
+    id: 'php-division-zero',
+    languages: ['php'],
+    match: /DivisionByZeroError: (Division|Modulo) by zero/,
+    build: () => ({
+      en: {
+        title: 'You divided by zero',
+        why: 'Dividing by 0 has no answer, so PHP stops. This often happens when the number you divide by comes from input or from a count that turned out to be 0.',
+        fix: 'Check the value before dividing: if ($count > 0) { ... }.',
+      },
+      sw: {
+        title: 'Umegawanya kwa sifuri',
+        why: 'Kugawanya kwa 0 hakuna jibu, kwa hiyo PHP inasimama. Hii hutokea mara nyingi namba unayogawanyia inatoka kwenye pembejeo au hesabu iliyokuwa 0.',
+        fix: 'Angalia thamani kabla ya kugawanya: if ($idadi > 0) { ... }.',
+      },
+    }),
+  },
+  {
+    id: 'php-undefined-constant',
+    languages: ['php'],
+    match: /Undefined constant "([^"]+)"/,
+    build: (m) => ({
+      en: {
+        title: `PHP does not know "${m[1]}"`,
+        why: `PHP read ${m[1]} as a constant (a fixed name), not as text or as a variable. Text needs quotes, and variables start with $.`,
+        fix: `If you meant text, write "${m[1]}" with quotes. If you meant a variable, write ${'$'}${m[1]}.`,
+      },
+      sw: {
+        title: `PHP haijui "${m[1]}"`,
+        why: `PHP ilisoma ${m[1]} kama constant (jina lisilobadilika), si maandishi wala kigezo. Maandishi yanahitaji nukuu, na vigezo vinaanza na $.`,
+        fix: `Kama ulimaanisha maandishi, andika "${m[1]}" kwa nukuu. Kama ulimaanisha kigezo, andika ${'$'}${m[1]}.`,
+      },
+    }),
+  },
+  {
+    id: 'php-class-not-found',
+    languages: ['php'],
+    match: /Class "([^"]+)" not found/,
+    build: (m) => ({
+      en: {
+        title: `There is no class called ${m[1]}`,
+        why: 'The class name may be misspelled, or the class is written further down in a file that PHP has not loaded, or it was never written.',
+        fix: `Check the spelling of ${m[1]} (it must match exactly) and make sure "class ${m[1]} { ... }" exists in your program.`,
+      },
+      sw: {
+        title: `Hakuna class inayoitwa ${m[1]}`,
+        why: 'Jina la class linaweza kuwa limekosewa tahajia, au class haijaandikwa kabisa.',
+        fix: `Angalia tahajia ya ${m[1]} (lazima ilingane kabisa) na hakikisha "class ${m[1]} { ... }" ipo kwenye programu yako.`,
+      },
+    }),
+  },
+  {
+    id: 'php-unsupported-operand',
+    languages: ['php'],
+    match: /Unsupported operand types: ([a-z]+) ([-+*\/%.]+|\*\*) ([a-z]+)/,
+    build: (m) => ({
+      en: {
+        title: `You cannot use ${m[2]} between ${m[1]} and ${m[3]}`,
+        why: `PHP can do arithmetic on numbers, but one side here is not a number (${m[1]} ${m[2]} ${m[3]}). An array or null cannot be added or multiplied like a number.`,
+        fix: 'Check both sides of the operator. To add up the numbers inside an array, use array_sum($array).',
+      },
+      sw: {
+        title: `Huwezi kutumia ${m[2]} kati ya ${m[1]} na ${m[3]}`,
+        why: `PHP inaweza kufanya hesabu kwa namba, lakini upande mmoja si namba (${m[1]} ${m[2]} ${m[3]}).`,
+        fix: 'Angalia pande zote mbili za alama. Kujumlisha namba ndani ya array tumia array_sum($array).',
+      },
+    }),
+  },
+  {
+    id: 'php-redeclare',
+    languages: ['php'],
+    match: /Cannot redeclare ([A-Za-z0-9_\\]+)\(\)/,
+    build: (m) => ({
+      en: {
+        title: `${m[1]}() is defined twice`,
+        why: 'Two functions in the same program have the same name. PHP does not allow that.',
+        fix: `Rename one of them, or delete the duplicate definition of ${m[1]}().`,
+      },
+      sw: {
+        title: `${m[1]}() imefafanuliwa mara mbili`,
+        why: 'Kazi mbili kwenye programu moja zina jina lilelile. PHP hairuhusu.',
+        fix: `Badilisha jina la moja, au futa ufafanuzi unaojirudia wa ${m[1]}().`,
+      },
+    }),
+  },
+  {
+    id: 'php-memory',
+    languages: ['php'],
+    match: /Allowed memory size of \d+ bytes exhausted/,
+    build: () => ({
+      en: {
+        title: 'The program used too much memory',
+        why: 'Something keeps growing without stopping, for example a loop that keeps adding to an array forever, or a function that calls itself with no end.',
+        fix: 'Check that your loop has a way to finish, and that a recursive function has a stopping case.',
+      },
+      sw: {
+        title: 'Programu imetumia kumbukumbu nyingi mno',
+        why: 'Kuna kitu kinachoendelea kukua bila kusimama, mfano mzunguko unaoongeza kwenye array milele, au kazi inayojiita bila mwisho.',
+        fix: 'Hakikisha mzunguko wako una namna ya kuisha, na kazi inayojiita ina sharti la kusimama.',
+      },
+    }),
+  },
+  {
+    id: 'php-uncaught',
+    languages: ['php'],
+    match: /Fatal error: Uncaught ([A-Za-z\\]*(?:Exception|Error)): ([^\n]*)/,
+    build: (m) => ({
+      en: {
+        title: `An ${m[1]} stopped the program`,
+        why: `Something went wrong (${m[2]}) and nothing in the program caught it, so PHP stopped.`,
+        fix: 'Read the message after the word "Error" or "Exception": it says what happened. To handle it yourself, put the risky code in try { ... } catch (Exception $e) { ... }.',
+      },
+      sw: {
+        title: `${m[1]} imesimamisha programu`,
+        why: `Kitu kimekwenda vibaya (${m[2]}) na hakuna sehemu ya programu iliyokishika, kwa hiyo PHP imesimama.`,
+        fix: 'Soma ujumbe baada ya neno "Error" au "Exception": unasema kilichotokea. Kukishughulikia mwenyewe, weka msimbo hatari ndani ya try { ... } catch (Exception $e) { ... }.',
+      },
+    }),
+  },
 ];
 
 /** Line number mentioned by the raw error, if any. */
@@ -912,6 +1153,11 @@ export function extractLine(raw, language) {
   if (language === 'web') {
     const w = raw.match(/script\.js:(\d+)/);
     return w ? Number(w[1]) : null;
+  }
+  if (language === 'php') {
+    // "Uncaught Error: ... in main.php:7" (where it happened), or "... in main.php on line 7"
+    const p = raw.match(/main\.php:(\d+)/) || raw.match(/main\.php on line (\d+)/);
+    return p ? Number(p[1]) : null;
   }
   if (language === 'python') {
     const all = [...raw.matchAll(/File "<exec>", line (\d+)/g)];

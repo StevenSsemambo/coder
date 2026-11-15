@@ -29,6 +29,11 @@ const sqlSandbox = vm.createContext({ self: {} });
 vm.runInContext(readFileSync(join(root, 'public/workers/sqlcore.js'), 'utf8'), sqlSandbox);
 const SQLCore = sqlSandbox.self.SQLCore;
 const { loadPyodide } = await import(join(root, 'node_modules/pyodide/pyodide.mjs'));
+// PHP: the shared core (src/lib/phpcore.mjs) that the browser worker also uses, on PHP 8.3 compiled to WebAssembly (@php-wasm).
+const { PHP } = await import('@php-wasm/universal');
+const { loadNodeRuntime } = await import('@php-wasm/node');
+const { createPhp, runPhp: runPhpCore } = await import(join(root, 'src/lib/phpcore.mjs'));
+const phpInstance = await createPhp({ PHP, loadRuntime: () => loadNodeRuntime('8.3', { emscriptenOptions: { processId: 1 } }) });
 
 let passed = 0;
 const failures = [];
@@ -101,7 +106,12 @@ async function gradeWebNode(ex, files) {
   dom.window.close();
   return shaped;
 }
-const runLang = (language, code, stdin) => (language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'sql' ? runSql(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : runPython(code, stdin));
+// PHP warnings and notices stay inside stdout (as in real PHP); only a fatal or parse error is reported as `error`.
+async function runPhpTest(code, stdin = '') {
+  const r = await runPhpCore(phpInstance, code, stdin);
+  return { stdout: r.stdout, error: r.error, timedOut: false };
+}
+const runLang = (language, code, stdin) => (language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'sql' ? runSql(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : language === 'php' ? runPhpTest(code, stdin) : runPython(code, stdin));
 
 // ---- 1. every exercise: solution passes, starter fails ----------------------------
 section('Exercises (reference solution must pass, untouched starter must fail)');
@@ -350,6 +360,19 @@ section('Error translator (real messages from the runtimes)');
     ['python', 'input()', 'py-eof', 'EOFError (no input)'],
     ['python', 'x = 5\nx.append(1)', 'py-attribute', 'AttributeError'],
     ['python', 'x = = 3', 'py-syntax', 'generic SyntaxError'],
+    ['php', '<?php\necho "a"\necho "b";', 'php-missing-semicolon', 'PHP missing semicolon'],
+    ['php', '<?php\nif (true {\n}', 'php-parse', 'PHP generic parse error'],
+    ['php', '<?php\ntotl(1);', 'php-undefined-function', 'PHP undefined function'],
+    ['php', '<?php\nclass A {}\n(new A)->go();', 'php-undefined-method', 'PHP undefined method'],
+    ['php', '<?php\n$x = null;\n$x->go();', 'php-null-member', 'PHP method call on null'],
+    ['php', '<?php\nfunction f(int $x) { return $x; }\nf("abc");', 'php-type-error', 'PHP argument of the wrong type'],
+    ['php', '<?php\nfunction f($a, $b) { return $a; }\nf(1);', 'php-arg-count', 'PHP too few arguments'],
+    ['php', '<?php\necho 1 / 0;', 'php-division-zero', 'PHP division by zero'],
+    ['php', '<?php\necho ugx;', 'php-undefined-constant', 'PHP undefined constant'],
+    ['php', '<?php\n$w = new Wallet();', 'php-class-not-found', 'PHP class not found'],
+    ['php', '<?php\necho [1] + 1;', 'php-unsupported-operand', 'PHP unsupported operand'],
+    ['php', '<?php\nfunction a() {}\nfunction a() {}', 'php-redeclare', 'PHP function defined twice'],
+    ['php', '<?php\nthrow new Exception("boom");', 'php-uncaught', 'PHP uncaught exception'],
   ];
   for (const [language, code, expectedId, label] of cases) {
     const res = await runLang(language, code, language === 'sql' ? 'CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT NOT NULL); CREATE TABLE u (id INTEGER, name TEXT); INSERT INTO t VALUES (1, \'Amina\');' : '');
@@ -370,6 +393,9 @@ section('Error translator (real messages from the runtimes)');
   check('python error line number is found', extractLine(pyErr, 'python') === 2, `got ${extractLine(pyErr, 'python')}`);
   const cErr = runC('#include <stdio.h>\nint main(){ printf("%d", y); return 0; }').error;
   check('C error line number is found', extractLine(cErr, 'c') === 2, `got ${extractLine(cErr, 'c')}`);
+  const phpErr = (await runPhpTest('<?php\n\necho 1 / 0;')).error;
+  check('PHP error line number is found', extractLine(phpErr, 'php') === 3, `got ${extractLine(phpErr, 'php')} for ${phpErr}`);
+  check('python rules do not fire for PHP', translateError('ZeroDivisionError: division by zero', { language: 'php', lang: 'en' }) === null);
   const hdr = translateError('1:13 variable sqrt does not exist', { language: 'c', lang: 'en' });
   check('missing header names the right file', hdr?.title.includes('<math.h>'), hdr?.title);
 }
@@ -571,6 +597,41 @@ section('SQL engine (SQLite via sql.js: the same core file the worker uses)');
   check('very long results are cut and say so', many.stdout.includes('... 300 more rows not shown') && many.stdout.split('\n').length < 210, many.stdout.split('\n').slice(-3).join(' | '));
 }
 
+section('PHP engine (the shared core, on real PHP 8.3 WebAssembly)');
+{
+  const r = (code, stdin = '') => runPhpCore(phpInstance, code, stdin);
+  check('PHP runs a script', (await r('<?php echo "Hello, Kampala!\\n";')).stdout === 'Hello, Kampala!\n');
+  check('PHP is version 8.3', (await r('<?php echo PHP_MAJOR_VERSION, ".", PHP_MINOR_VERSION;')).stdout === '8.3');
+  check('PHP reads input with fgets(STDIN)', (await r('<?php $n = trim(fgets(STDIN)); $m = (int) fgets(STDIN); echo "$n $m";', 'Mary\n50\n')).stdout === 'Mary 50');
+  check('PHP with no input: fgets(STDIN) gives false', (await r('<?php var_dump(fgets(STDIN));')).stdout === 'bool(false)\n');
+  const warn = await r('<?php echo "a\\n"; echo $nope; echo "b\\n";');
+  check('a warning stays inline in the output and is not an error', warn.error === null && warn.stdout === 'a\n\nWarning: Undefined variable $nope in main.php on line 1\nb\n', JSON.stringify(warn));
+  const fatal = await r('<?php echo "before\\n";\necho 1 / 0;');
+  check('a fatal error keeps the output before it and is reported separately', fatal.stdout === 'before\n' && /^Fatal error: Uncaught DivisionByZeroError: Division by zero in main\.php:2/.test(fatal.error), JSON.stringify(fatal));
+  check('error messages show main.php, never the runner file', !/internal|eval\.php|\/tmp\/sm/.test(fatal.error));
+  const trace = await r('<?php\nfunction f(int $x) { return $x; }\nf("abc");');
+  check('stack traces start at the learner code and are numbered from #0', /#0 main\.php\(3\): f\('abc'\)\n#1 \{main\}/.test(trace.error), trace.error);
+  const parse = await r('<?php echo "a" ');
+  check('a parse error has no output and says Parse error', parse.stdout === '' && /^Parse error: /.test(parse.error), JSON.stringify(parse));
+  check('the learner\'s own line numbers are used', /on line 4/.test((await r('<?php\n\n\necho $x[1];\n')).stdout));
+  check('HTML is not used in messages', !/<b>|<br/.test(warn.stdout));
+  await r('<?php file_put_contents("keep.txt", "1"); mkdir("sub"); file_put_contents("sub/x.txt", "2");');
+  check('files a program makes are gone on the next run', (await r('<?php echo count(scandir(".")) - 2;')).stdout === '0');
+  check('a program can read back a file it wrote in the same run', (await r('<?php file_put_contents("a.txt", "hi"); echo file_get_contents("a.txt");')).stdout === 'hi');
+  check('mbstring works (Luganda and Kiswahili text)', (await r('<?php echo mb_strlen("Nnyabo"), mb_strtoupper("ŋ"), mb_substr("Kampala", 0, 3);')).stdout === '6ŊKam');
+  check('json works', (await r('<?php echo json_encode(["ugx" => 12500, "ok" => true]);')).stdout === '{"ugx":12500,"ok":true}');
+  check('SQLite through PDO works', (await r('<?php $d = new PDO("sqlite::memory:"); $d->exec("create table t(a)"); $d->exec("insert into t values (5)"); echo $d->query("select a from t")->fetchColumn();')).stdout === '5');
+  check('time zone is Africa/Kampala', (await r('<?php echo date_default_timezone_get(), " ", date("H:i", 0);')).stdout === 'Africa/Kampala 03:00');
+  check('number_format and str_pad behave', (await r('<?php echo number_format(1500000), "|", str_pad("5", 3, "0", STR_PAD_LEFT);')).stdout === '1,500,000|005');
+  check('floats print like PHP 8 (0.1 + 0.2)', (await r('<?php echo 0.1 + 0.2, "|"; var_dump(0.1 + 0.2);')).stdout === '0.3|float(0.30000000000000004)\n');
+  check('classes, constructor promotion and readonly work', (await r('<?php final class W { public function __construct(public readonly int $b = 0) {} } $w = new W(5000); echo $w->b;')).stdout === '5000');
+  check('enums and match work (PHP 8.1+)', (await r('<?php enum Net: string { case MTN = "mtn"; case AIRTEL = "airtel"; } echo match (Net::from("mtn")) { Net::MTN => "yellow", Net::AIRTEL => "red" };')).stdout === 'yellow');
+  check('very long output is cut', (await r('<?php for ($i = 0; $i < 30000; $i++) { echo "x"; }')).stdout.length === 20000);
+  const again = await r('<?php echo isset($leak) ? "leak" : "clean";');
+  check('variables never leak between runs', (await r('<?php $leak = 1;')).error === null && again.stdout === 'clean');
+  check('a fatal error does not break the next run', (await r('<?php echo 1 / 0;')).error !== null && (await r('<?php echo "ok";')).stdout === 'ok');
+}
+
 section('Dates');
 {
   check('dayKey format', dayKey(new Date(2026, 10, 9)) === '2026-11-09');
@@ -578,6 +639,8 @@ section('Dates');
 }
 
 console.log(`\n${passed} checks passed, ${failures.length} failed`);
+// the PHP runtime keeps Node alive after the last check, so end the process explicitly
+if (!failures.length) process.exit(0);
 if (failures.length) {
   console.log('\nFAILURES:');
   for (const f of failures) console.log(`  - ${f}`);

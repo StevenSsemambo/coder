@@ -4,7 +4,6 @@ import { saveSettings } from '../../lib/storage.js';
 import { LANGUAGES } from '../../lib/errors.js';
 import { PACKS, packStatus, downloadPack, removePack, formatBytes, cacheSupported } from '../../lib/packs.js';
 import { toast } from '../components.js';
-import packInfo from '../../generated/pack-info.json';
 
 export async function settingsView() {
   const persist = async () => {
@@ -35,41 +34,46 @@ export async function settingsView() {
     },
   });
 
-  // ---- python pack
-  const pack = PACKS.python;
-  const packRow = h('div', { class: 'card pack' });
-  const progressNode = h('div', { class: 'bar hidden' }, h('span', { style: 'width:0%' }));
+  // ---- runtime packs (Python, PHP): each is a separate download so the app stays small
+  const packRows = ['python', 'php'].map((id) => makePackRow(id));
+  function makePackRow(id) {
+    const pack = PACKS[id];
+    const label = id === 'python' ? 'Needed for Python' : 'Needed for PHP';
+    const row = h('div', { class: 'card pack' });
+    const progress = h('div', { class: 'bar hidden' }, h('span', { style: 'width:0%' }));
 
-  async function renderPack() {
-    const st = await packStatus('python');
-    const status = !st.supported ? 'Offline storage is not available in this browser.' : st.installed ? 'Installed. Works with no internet.' : `Not downloaded (${formatBytes(pack.bytes)}).`;
-    replace(
-      packRow,
-      h('div', { class: 'course-top' }, h('h3', null, pack.name), h('span', { class: `chip ${st.installed ? 'chip-ok' : ''}` }, st.installed ? 'Installed' : 'Needed for Python')),
-      h('p', { class: 'muted' }, status),
-      progressNode,
-      st.supported
-        ? st.installed
-          ? h('button', { class: 'btn btn-ghost', type: 'button', onclick: async () => { await removePack('python'); renderPack(); } }, 'Remove from this phone')
-          : h('button', { class: 'btn btn-primary', type: 'button', id: 'download-python', onclick: startDownload }, `Download ${formatBytes(pack.bytes)}`)
-        : null,
-    );
-  }
-
-  async function startDownload(e) {
-    const btn = e.currentTarget;
-    btn.disabled = true;
-    btn.textContent = 'Downloading…';
-    progressNode.classList.remove('hidden');
-    try {
-      await downloadPack('python', (f) => { progressNode.firstChild.style.width = `${Math.round(f * 100)}%`; });
-      toast('Python is ready to use offline.');
-    } catch (err) {
-      toast(`Download failed. Check your connection and try again. (${err.message})`);
+    async function render() {
+      const st = await packStatus(id);
+      const status = !st.supported ? 'Offline storage is not available in this browser.' : st.installed ? 'Installed. Works with no internet.' : `Not downloaded (${formatBytes(pack.bytes)}).`;
+      replace(
+        row,
+        h('div', { class: 'course-top' }, h('h3', null, pack.name), h('span', { class: `chip ${st.installed ? 'chip-ok' : ''}` }, st.installed ? 'Installed' : label)),
+        h('p', { class: 'muted' }, status),
+        progress,
+        st.supported
+          ? st.installed
+            ? h('button', { class: 'btn btn-ghost', type: 'button', onclick: async () => { await removePack(id); render(); } }, 'Remove from this phone')
+            : h('button', { class: 'btn btn-primary', type: 'button', id: `download-${id}`, onclick: start }, `Download ${formatBytes(pack.bytes)}`)
+          : null,
+      );
     }
-    renderPack();
+
+    async function start(e) {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = 'Downloading…';
+      progress.classList.remove('hidden');
+      try {
+        await downloadPack(id, (f) => { progress.firstChild.style.width = `${Math.round(f * 100)}%`; });
+        toast(`${id === 'python' ? 'Python' : 'PHP'} is ready to use offline.`);
+      } catch (err) {
+        toast(`Download failed. Check your connection and try again. (${err.message})`);
+      }
+      render();
+    }
+    return { row, render };
   }
-  await renderPack();
+  for (const p of packRows) await p.render();
 
   // ---- storage safety
   const storageNote = h('p', { class: 'muted' }, 'Checking storage…');
@@ -96,8 +100,8 @@ export async function settingsView() {
     { class: 'view' },
     h('h1', null, 'Settings'),
     h('h2', { class: 'section-title' }, 'Downloads'),
-    h('p', { class: 'muted' }, `C is built in (${formatBytes(packInfo.c.bundledBytes)}). Python is a separate download so the app stays small.`),
-    packRow,
+    h('p', { class: 'muted' }, `C and SQL are built in. Python and PHP are separate downloads so the app stays small.`),
+    packRows.map((p) => p.row),
     h('h2', { class: 'section-title' }, 'Reading and language'),
     h('label', { class: 'field' }, h('span', null, 'Explain errors in'), langSelect),
     h('label', { class: 'field' }, h('span', null, 'Code text size'), sizeInput, sizeValue),

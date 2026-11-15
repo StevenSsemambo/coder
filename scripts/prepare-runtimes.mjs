@@ -4,7 +4,7 @@
 //   - sql.js (SQLite on WebAssembly, about 0.7 MB) copied into public/vendor/sqljs
 // Also writes src/generated/pack-info.json so the UI can show real pack sizes.
 import { build } from 'esbuild';
-import { copyFileSync, mkdirSync, statSync, writeFileSync, readFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readdirSync, statSync, writeFileSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -374,6 +374,59 @@ const sqlFiles = ['sql-wasm.js', 'sql-wasm.wasm'].map((name) => {
 });
 const sqlBytes = sqlFiles.reduce((n, f) => n + f.size, 0);
 
+// ---- PHP (optional pack) ------------------------------------------------------
+// Real PHP 8.3 on WebAssembly (@php-wasm). The worker (small) is bundled into public/workers/php.worker.js and is
+// precached with the app. The one big WebAssembly file goes to public/php/ and is a download in Settings (like Python).
+// Only PHP's "asyncify" build is shipped: it works in every browser; the faster "jspi" build needs a new Chrome and
+// would double the download.
+mkdirSync(join(root, 'public/php'), { recursive: true });
+// the folder name carries the PHP patch version (for example 8_3_36), so find it instead of hard-coding it
+const phpAsyncify = nm('@php-wasm/web-8-3/asyncify');
+const phpPatchDir = readdirSync(phpAsyncify).find((d) => /^8_3_\d+$/.test(d));
+if (!phpPatchDir) throw new Error('PHP 8.3 WebAssembly build not found in @php-wasm/web-8-3');
+const phpWasmSrc = join(phpAsyncify, phpPatchDir, 'php_8_3.wasm');
+copyFileSync(phpWasmSrc, join(root, 'public/php/php_8_3.wasm'));
+const phpWasmSize = statSync(phpWasmSrc).size;
+
+const phpStubs = {
+  name: 'php-stubs',
+  setup(b) {
+    // PHP's loader asks "is JSPI available?". Always answer no, so the asyncify build is used everywhere.
+    b.onResolve({ filter: /^wasm-feature-detect$/ }, () => ({ path: 'wfd', namespace: 'php-stub' }));
+    b.onLoad({ filter: /^wfd$/, namespace: 'php-stub' }, () => ({
+      contents: 'export const jspi = async () => false; export const exceptions = async () => true; export const simd = async () => true;',
+      loader: 'js',
+    }));
+    // Keep only PHP 8.3: every other PHP version is replaced by an empty module (they would add hundreds of MB).
+    b.onResolve({ filter: /^@php-wasm\/web-[0-9]-[0-9]$/ }, (a) => (a.path === '@php-wasm/web-8-3' ? undefined : { path: a.path, namespace: 'php-stub' }));
+    // Node-only imports and optional extras that the browser never uses (intl extension, ICU data).
+    b.onResolve({ filter: /^worker_threads$|\.(so|la|dat)(\?url)?$/ }, (a) => ({ path: a.path, namespace: 'php-stub' }));
+    b.onLoad({ filter: /.*/, namespace: 'php-stub' }, (a) => ({
+      contents: /^@php-wasm\/web-/.test(a.path)
+        ? 'export const getPHPLoaderModule = async () => { throw new Error("This PHP version is not included."); }; export const getIntlExtensionPath = async () => "";'
+        : 'export default ""; export const receiveMessageOnPort = undefined;',
+      loader: 'js',
+    }));
+    // The asyncify loader imports its wasm file by name ("./8_3_36/php_8_3.wasm"). Give it a plain file name;
+    // php.worker.js turns that into the pack URL (see scripts/php-worker-entry.mjs).
+    b.onResolve({ filter: /\.wasm$/ }, () => ({ path: 'php_8_3.wasm', namespace: 'php-wasm-name' }));
+    b.onLoad({ filter: /.*/, namespace: 'php-wasm-name' }, () => ({ contents: 'export default "php_8_3.wasm";', loader: 'js' }));
+  },
+};
+await build({
+  entryPoints: [join(root, 'scripts/php-worker-entry.mjs')],
+  outfile: join(root, 'public/workers/php.worker.js'),
+  bundle: true,
+  format: 'esm',
+  platform: 'browser',
+  target: 'es2022',
+  minify: true,
+  logLevel: 'error',
+  plugins: [phpStubs],
+  define: { 'process.env.VITEST': 'undefined', 'process.env.NODE_ENV': '"production"' },
+});
+const phpWorkerSize = statSync(join(root, 'public/workers/php.worker.js')).size;
+
 // ---- Pack info for the UI ---------------------------------------------------
 mkdirSync(join(root, 'src/generated'), { recursive: true });
 const info = {
@@ -384,6 +437,12 @@ const info = {
   },
   c: { bundledBytes: cSize },
   sql: { bundledBytes: sqlBytes },
+  php: {
+    version: '8.3',
+    files: [{ name: 'php_8_3.wasm', size: phpWasmSize }],
+    totalBytes: phpWasmSize,
+    workerBytes: phpWorkerSize,
+  },
 };
 writeFileSync(join(root, 'src/generated/pack-info.json'), JSON.stringify(info, null, 2));
-console.log(`runtimes ready: python ${(info.python.totalBytes / 1048576).toFixed(1)} MB, c ${(cSize / 1024).toFixed(0)} KB, sql ${(sqlBytes / 1024).toFixed(0)} KB`);
+console.log(`runtimes ready: python ${(info.python.totalBytes / 1048576).toFixed(1)} MB, c ${(cSize / 1024).toFixed(0)} KB, sql ${(sqlBytes / 1024).toFixed(0)} KB, php ${(phpWasmSize / 1048576).toFixed(1)} MB (+ worker ${(phpWorkerSize / 1024).toFixed(0)} KB)`);

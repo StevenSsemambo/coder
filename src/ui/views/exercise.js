@@ -9,7 +9,7 @@ import { symbolBar, stdinField, outputView, testResultsView, dock } from '../com
 import { webExerciseView } from './web-exercise.js';
 
 const HINT_LABELS = ['Nudge', 'Bigger hint', 'Worked example'];
-const LANGUAGE_NAME = { c: 'C', python: 'Python', web: 'JavaScript', sql: 'SQLite' };
+const LANGUAGE_NAME = { c: 'C', python: 'Python', web: 'JavaScript', sql: 'SQLite', php: 'PHP' };
 
 function promptBlocks(text) {
   return text.split('\n\n').map((para) => h('p', null, para.split('\n').map((line, i, all) => [richText(line), i < all.length - 1 ? h('br') : null])));

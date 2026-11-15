@@ -8,6 +8,7 @@ import { tags } from '@lezer/highlight';
 import { python } from '@codemirror/lang-python';
 import { cpp } from '@codemirror/lang-cpp';
 import { sql, SQLite } from '@codemirror/lang-sql';
+import { php } from '@codemirror/lang-php';
 import { html } from '@codemirror/lang-html';
 import { css } from '@codemirror/lang-css';
 import { javascript } from '@codemirror/lang-javascript';
@@ -40,6 +41,7 @@ const theme = EditorView.theme({
 const languageExtension = (language) => {
   if (language === 'c' || language === 'cpp') return cpp();
   if (language === 'sql') return sql({ dialect: SQLite, upperCaseKeywords: false });
+  if (language === 'php') return php();
   if (language === 'html') return html();
   if (language === 'css') return css();
   if (language === 'js') return javascript();

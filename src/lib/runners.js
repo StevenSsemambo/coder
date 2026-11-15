@@ -3,7 +3,7 @@
 import { prepareSource } from './csource.js';
 import { runConsoleJs } from './webrun.js';
 
-const WORKER_FILES = { python: 'py.worker.js', c: 'c.worker.js', cpp: 'c.worker.js', sql: 'sql.worker.js' };
+const WORKER_FILES = { python: 'py.worker.js', c: 'c.worker.js', cpp: 'c.worker.js', sql: 'sql.worker.js', php: 'php.worker.js' };
 export const DEFAULT_TIMEOUT_MS = 8000;
 
 const listeners = new Set();
@@ -30,8 +30,8 @@ class LanguageRunner {
   start() {
     if (this.worker) return this.ready;
     emit(this.language, 'loading');
-    // Python (Pyodide) needs a module worker; the C interpreter is a classic script worker.
-    const options = this.language === 'python' ? { type: 'module' } : undefined;
+    // Python (Pyodide) and PHP (bundled as an ES module) need a module worker; the C interpreter is a classic script worker.
+    const options = this.language === 'python' || this.language === 'php' ? { type: 'module' } : undefined;
     const worker = new Worker(workerURL(WORKER_FILES[this.language]), options);
     this.worker = worker;
     this.ready = new Promise((resolve) => {
@@ -113,7 +113,7 @@ class LanguageRunner {
   }
 }
 
-const runners = { python: new LanguageRunner('python'), c: new LanguageRunner('c'), cpp: new LanguageRunner('cpp'), sql: new LanguageRunner('sql') };
+const runners = { python: new LanguageRunner('python'), c: new LanguageRunner('c'), cpp: new LanguageRunner('cpp'), sql: new LanguageRunner('sql'), php: new LanguageRunner('php') };
 
 /** Start loading a runtime early (for example while the student reads the lesson). */
 export function warmUp(language) {

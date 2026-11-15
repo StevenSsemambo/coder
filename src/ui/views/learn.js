@@ -3,7 +3,7 @@ import { courses, courseProgress, getCourse, flatExercises } from '../../content
 import { state } from '../../state.js';
 import { progressBar } from '../components.js';
 
-const LANGUAGE_LABEL = { c: 'C', cpp: 'C++', python: 'Python', web: 'Web', sql: 'SQL' };
+const LANGUAGE_LABEL = { c: 'C', cpp: 'C++', python: 'Python', web: 'Web', sql: 'SQL', php: 'PHP' };
 
 export function learnView() {
   const node = h(
