@@ -5,26 +5,29 @@ Learn to code on a phone, with no data and no subscription.
 SayMaCoder is an offline-first Progressive Web App (PWA). After one download, students can read
 lessons, write code, run it, get instant feedback and see their progress with **no internet**.
 
-This is the **Phase 0 prototype** described in the project document.
+It is built by several Claude accounts, one track each. **Contributors: read `docs/TRACKS.md` first.**
 
 ## What works today
 
 | Feature | Status |
 |---|---|
 | Touch-first code editor (CodeMirror 6) with a symbol bar | Working |
-| Run **C** (built in, about 400 KB) and **Python** (separate 13 MB download) | Working |
+| Run **C** and **C++** (built in, about 400 KB, one interpreter), **SQL** (SQLite, built in) and **Python** (separate 13 MB download) | Working |
 | Programs run in Web Workers with a time limit (infinite loops are stopped) | Working |
 | Auto-grader with visible and hidden test cases | Working |
 | Hint ladder (nudge, bigger hint, worked example) | Working |
 | Error translator: plain English and Kiswahili (Luganda needs a native speaker) | Working |
 | Progress, streaks and saved drafts (IndexedDB) | Working |
 | Installs to the home screen and works with the network off | Working (tested) |
-| **Web track** (HTML, CSS, JavaScript with a sandboxed live preview and auto-checker): 36 lessons, about 100 exercises, from first tag to a client site and pricing. Coverage audit and roadmap in `docs/WEB-TRACK.md` | Written |
-| Courses: C (4 lessons, 12 exercises, draft) and Python (Level 1: 11 lessons, 22 exercises, ends with a shop-till project) | Python Level 1 written, C draft |
+| **Web track** (HTML, CSS, JavaScript with a sandboxed live preview and auto-checker): 45 lessons, 136 exercises. Roadmap in `docs/WEB-TRACK.md` | Written |
+| **Python**: 35 lessons in 5 levels, 68 exercises | Written |
+| **C** (module TTSD113): 25 lessons, 75 exercises, from `printf` to pointers and arrays. Structs, `malloc` and files (Part B) wait for a real C runtime. Roadmap in `docs/C-TRACK.md` | Part A written |
+| **C++**: 13 lessons, 37 exercises (Part A, what C++ shares with C plus streams). Roadmap in `docs/CPP-TRACK.md` | In progress |
+| **SQL** (SQLite): 25 lessons, 75 exercises, one shop database throughout. Roadmap in `docs/SQL-TRACK.md` | Written |
 | Rich lessons: real-life stories, analogies, runnable examples, predict-the-output, fill-the-gaps, put-in-order, find-the-bug, mistake museum, recap cards | Working |
 
 Not built yet: C memory visualizer, lecturer mode, certificates, phone-to-phone sharing,
-on-device AI tutor, Java and VB.NET. See the roadmap in the project document.
+on-device AI tutor, Java and VB.NET (both need a runtime first, see `docs/TRACKS.md`). See the roadmap in the project document.
 
 ## Run it
 
@@ -61,10 +64,11 @@ If the run fails at **Test**, a change broke an exercise; nothing is published u
 src/lib/       grader, error translator, runners (Web Workers), storage, editor
 src/content/   the courses (plain JavaScript data: lessons, exercises, tests, hints)
 src/ui/        screens and components (no framework, to stay small on low-end phones)
-public/workers py.worker.js (module worker) and c.worker.js (classic worker)
+public/workers py, C/C++ and SQL workers (Python is a module worker, the others classic)
 public/pack-sw.js   serves the downloaded Python files when offline
 scripts/prepare-runtimes.mjs   copies Pyodide, bundles and patches the C interpreter
-tests/         logic tests and reference solutions
+tests/         logic tests, render tests and reference solutions (one file per course)
+docs/          TRACKS.md (how the accounts work together) and one roadmap per track
 ```
 
 ### Writing lessons
@@ -79,14 +83,18 @@ lesson opens with a story and ends with a recap.
 
 * **Python** is [Pyodide](https://pyodide.org) (Python compiled to WebAssembly). It needs a *module*
   worker, so it works on Chrome 80+, Safari 15+ and Firefox 114+.
-* **C** is [JSCPP](https://github.com/felixhao28/JSCPP), a C/C++ teaching-subset interpreter written
-  in JavaScript. It is **not a real compiler**: it covers what a first module needs (variables,
-  `printf`/`scanf`, `if`, loops, functions, arrays, pointers) but not everything in the C standard.
-  `scripts/prepare-runtimes.mjs` applies three small fixes so it behaves like real C; the build
-  stops with an error if the library changes and a fix no longer applies:
-  `puts()` adds its newline, `scanf("%c")` stores the character, and `scanf(" %c")` skips whitespace.
-  `src/lib/csource.js` works around two more quirks (`main(void)`, and spaces after commas inside
-  strings in function calls).
+* **C and C++** run on [JSCPP](https://github.com/felixhao28/JSCPP), a C/C++ teaching-subset
+  interpreter written in JavaScript. It is **not a real compiler**: it covers what a first module
+  needs (variables, `printf`/`scanf`, `if`, loops, functions, arrays, strings, basic pointers) but not
+  everything in the standard. Structs, `malloc`, file I/O and most of C++ beyond the basics do not run.
+  `scripts/prepare-runtimes.mjs` applies a set of exact-match patches so it behaves like real C
+  (static locals, partial array initialisers, `strcmp`, assignable `scanf`/`gets`/`strcpy` targets,
+  pointer comparison and arithmetic, and more); each patch must match exactly once, so the build stops
+  with an error if the library changes. `src/lib/csource.js` preprocesses source for the quirks
+  that are easier to fix there (`main(void)`, spaces inside string literals). Known gaps are listed
+  in `docs/C-TRACK.md`; `tests/run.mjs` has an engine check for every patch.
+* **SQL** is [sql.js](https://github.com/sql-js/sql.js) (SQLite compiled to WebAssembly), vendored in
+  `public/vendor/sqljs`, so it works offline from the first visit.
 
 ### Offline design
 
@@ -101,14 +109,15 @@ lesson opens with a story and ends with a recap.
 
 All lessons and exercises are original. Do not copy proprietary course material into the packs.
 Third-party runtimes keep their own licences (Pyodide: MPL-2.0, JSCPP: MIT, CodeMirror: MIT).
-The C course is a **draft**: map its topics to the official module outline before using it for
-assessed work.
+The C course is written but still to be compared with the official TTSD113 outline; do that before
+using it for assessed work.
 
 ## Known limits
 
 * Tested in desktop Chromium emulating a 390 px phone, including with the server stopped. **Not yet
   tested on real low-end Android phones.** That is the next priority.
 * Luganda error explanations are empty on purpose and fall back to English.
-* The C interpreter is slower than a real compiler and rejects some valid C.
+* The C interpreter is slower than a real compiler, rejects some valid C and accepts some invalid C
+  (for example, functions can see their caller's variables). The differences are listed in `docs/C-TRACK.md`.
 * Safari on iOS may remove stored downloads after a period of non-use. Use "Protect my downloads"
   in Settings and install the app to the home screen.
