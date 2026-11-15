@@ -682,4 +682,162 @@ int main() {
     scanf("%d", &n);
     printf("Last digit: %d\n", n % 10);
     printf("Rest: %d\n", n / 10);`),
+
+  // Level 6: beyond the basics (lessons 26 to 29)
+  'c26-binary': C(String.raw`    int n, i;
+    scanf("%d", &n);
+    for (i = 7; i >= 0; i--) {
+        printf("%d", (n >> i) & 1);
+    }
+    printf("\n");`),
+  'c26-count': C(String.raw`    int n, i, ones = 0;
+    scanf("%d", &n);
+    for (i = 7; i >= 0; i--) {
+        ones = ones + ((n >> i) & 1);
+    }
+    printf("Ones: %d\n", ones);`),
+  'c26-pow2': C(String.raw`    int n;
+    scanf("%d", &n);
+    if ((n & (n - 1)) == 0) {
+        printf("Yes\n");
+    } else {
+        printf("No\n");
+    }`),
+  'c27-circle': `#include <stdio.h>
+
+#define PI 3.14159
+
+int main() {
+    float r;
+    scanf("%f", &r);
+    printf("Area: %.2f\\n", PI * r * r);
+    return 0;
+}
+`,
+  'c27-cube': `#include <stdio.h>
+
+#define CUBE(x) ((x) * (x) * (x))
+
+int main() {
+    int n;
+    scanf("%d", &n);
+    printf("Cube: %d\\n", CUBE(n));
+    return 0;
+}
+`,
+  'c27-rolex': `#include <stdio.h>
+
+#define PRICE 3000
+#define DISCOUNT_AT 5
+
+int main() {
+    int plates, total;
+    scanf("%d", &plates);
+    total = plates * PRICE;
+    if (plates >= DISCOUNT_AT) {
+        total = total - total / 10;
+    }
+    printf("Total: %d\\n", total);
+    return 0;
+}
+`,
+  'c28-digitsum': C(String.raw`    int n, sum = 0;
+    scanf("%d", &n);
+    while (n > 0) {
+        sum = sum + n % 10;
+        n = n / 10;
+    }
+    printf("Sum: %d\n", sum);`),
+  'c28-gcd': C(String.raw`    int a, b;
+    scanf("%d %d", &a, &b);
+    while (b != 0) {
+        int rest = a % b;
+        a = b;
+        b = rest;
+    }
+    printf("GCD: %d\n", a);`),
+  'c28-prime': C(String.raw`    int n, i, prime = 1;
+    scanf("%d", &n);
+    if (n < 2) {
+        prime = 0;
+    }
+    for (i = 2; i * i <= n; i++) {
+        if (n % i == 0) {
+            prime = 0;
+        }
+    }
+    if (prime) {
+        printf("Prime\n");
+    } else {
+        printf("Not prime\n");
+    }`),
+  'c28-fib': C(String.raw`    int n, i, a = 0, b = 1;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        if (i > 0) printf(" ");
+        printf("%d", a);
+        int next = a + b;
+        a = b;
+        b = next;
+    }
+    printf("\n");`),
+  'c29-selection': C(String.raw`    int a[5];
+    int i, j, smallest, temp;
+    for (i = 0; i < 5; i++) {
+        scanf("%d", &a[i]);
+    }
+    for (i = 0; i < 4; i++) {
+        smallest = i;
+        for (j = i + 1; j < 5; j++) {
+            if (a[j] < a[smallest]) {
+                smallest = j;
+            }
+        }
+        temp = a[i];
+        a[i] = a[smallest];
+        a[smallest] = temp;
+    }
+    for (i = 0; i < 5; i++) {
+        if (i > 0) printf(" ");
+        printf("%d", a[i]);
+    }
+    printf("\n");`),
+  'c29-bsearch': C(String.raw`    int a[7] = {3, 8, 15, 22, 37, 41, 56};
+    int target, low = 0, high = 6, found = -1;
+    scanf("%d", &target);
+    while (low <= high) {
+        int mid = (low + high) / 2;
+        if (a[mid] == target) {
+            found = mid;
+            break;
+        } else if (a[mid] < target) {
+            low = mid + 1;
+        } else {
+            high = mid - 1;
+        }
+    }
+    if (found >= 0) {
+        printf("Position: %d\n", found);
+    } else {
+        printf("Not found\n");
+    }`),
+  'c29-top3': C(String.raw`    int m[6];
+    int i, j, biggest, temp;
+    for (i = 0; i < 6; i++) {
+        scanf("%d", &m[i]);
+    }
+    for (i = 0; i < 3; i++) {
+        biggest = i;
+        for (j = i + 1; j < 6; j++) {
+            if (m[j] > m[biggest]) {
+                biggest = j;
+            }
+        }
+        temp = m[i];
+        m[i] = m[biggest];
+        m[biggest] = temp;
+    }
+    printf("1st: %d\n", m[0]);
+    printf("2nd: %d\n", m[1]);
+    printf("3rd: %d\n", m[2]);`),
 };

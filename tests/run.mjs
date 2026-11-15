@@ -489,6 +489,10 @@ section('C source preparation');
   const r = runC('#include <stdio.h>\nint main(void) { printf("ok\\n"); return 0; }');
   check('main(void) programs now run', r.stdout === 'ok\n' && !r.error, r.error || '');
 
+  const pi = runC('#include <stdio.h>\n#define PI 3.14159\n#define K 2\nint main() {\n    printf("%.2f %d\\n", PI * 2, K);\n    return 0;\n}\n');
+  check('decimal #define values work', pi.stdout === '6.28 2\n' && !pi.error, pi.error || '');
+  check('integer #define is untouched', normalizeC('#define N 5\n') === '#define N 5\n');
+
   // The interpreter drops whitespace after a comma inside strings in function calls. We work around it.
   const H = '#include <stdio.h>\n';
   const out = (body, stdin = '') => runC(`${H}int main() { ${body} return 0; }`, stdin);

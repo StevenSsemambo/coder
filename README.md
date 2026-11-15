@@ -21,7 +21,7 @@ It is built by several Claude accounts, one track each. **Contributors: read `do
 | Installs to the home screen and works with the network off | Working (tested) |
 | **Web track** (HTML, CSS, JavaScript with a sandboxed live preview and auto-checker): 45 lessons, 136 exercises. Roadmap in `docs/WEB-TRACK.md` | Written |
 | **Python**: 35 lessons in 5 levels, 68 exercises | Written |
-| **C** (module TTSD113): 25 lessons, 75 exercises, from `printf` to pointers and arrays. Structs, `malloc` and files (Part B) wait for a real C runtime. Roadmap in `docs/C-TRACK.md` | Part A written |
+| **C**: 29 lessons, 88 exercises, from `printf` to pointers, bits, macros, algorithms and sorting. Structs, `malloc` and files (Part B) wait for a real C runtime. Roadmap in `docs/C-TRACK.md` | Part A written |
 | **C++**: 13 lessons, 37 exercises (Part A, what C++ shares with C plus streams). Roadmap in `docs/CPP-TRACK.md` | In progress |
 | **SQL** (SQLite): 25 lessons, 75 exercises, one shop database throughout. Roadmap in `docs/SQL-TRACK.md` | Written |
 | Rich lessons: real-life stories, analogies, runnable examples, predict-the-output, fill-the-gaps, put-in-order, find-the-bug, mistake museum, recap cards | Working |
@@ -109,8 +109,8 @@ lesson opens with a story and ends with a recap.
 
 All lessons and exercises are original. Do not copy proprietary course material into the packs.
 Third-party runtimes keep their own licences (Pyodide: MPL-2.0, JSCPP: MIT, CodeMirror: MIT).
-The C course is written but still to be compared with the official TTSD113 outline; do that before
-using it for assessed work.
+The C course is a general beginner-to-advanced course, not written from any one syllabus. Compare it
+with your module outline before using it for assessed work.
 
 ## Known limits
 
