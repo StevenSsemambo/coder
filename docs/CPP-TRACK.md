@@ -3,7 +3,7 @@
 Course id `cpp-start`, language id `cpp`. Files: `src/content/cpp/` (lessons), `src/content/cpp-course.js`
 (the course list), `tests/solutions-cpp.mjs` (reference solutions). Owner: the C++ account.
 
-Files by lesson: `level1.js` (1 to 3), `level2.js` (4), `switch.js` (5), `loops.js` (6 to 8), `till.js` (9), `functions.js` (10 to 12), `momo.js` (13), `arrays.js` (14 to 16), `text.js` (17), `pointers.js` (18).
+Files by lesson (the phone test page is in `public/cpp-test/`): `level1.js` (1 to 3), `level2.js` (4), `switch.js` (5), `loops.js` (6 to 8), `till.js` (9), `functions.js` (10 to 12), `momo.js` (13), `arrays.js` (14 to 16), `text.js` (17), `pointers.js` (18).
 
 Running project: **Mama Rose's Rolex Stand**, a rolex (chapati rolled round an omelette) stall beside the
 campus gate. Learners meet it in lesson 1 (the chalkboard menu) and finish Part A by building its till.
@@ -151,18 +151,69 @@ are unavailable unless a way is found to link the exception runtime. Exceptions 
 4. Compiler error messages are real Clang messages. `src/lib/errors.js` needs rules to translate the common
    ones into plain English and Kiswahili.
 
+**Update, same day: the browser proof (desktop engine).** `public/cpp-test/` is a standalone test page (see "Phone test"
+below). It was driven in **headless Chromium 153** from a local server, three runs in a row (first download, saved
+copy, saved copy with the network emulated **off**). All five test programs passed in every run:
+
+| Measured in Chromium (1 CPU core, server-class) | Result |
+|---|---|
+| Compiler runs in a **module Web Worker**, no `SharedArrayBuffer` or threads needed | Yes |
+| Start-up, first run (files read from a local server, so not a real download time) / from the saved copy | 1.9 s / 1.2 s |
+| Compile `hello` / string+vector+class / inheritance+virtual+template+lambda+`map`+`cin` | 4.6 s / 2.7 s / 3.6 s |
+| Compile of code with a mistake: real Clang message came back | 1.7 s, `expected ';' at end of declaration` |
+| Compiled programs | 574 to 705 KB each |
+| `std::cin` through a small WASI layer (stdin from a string), `std::cout`, `new`/`delete`, `virtual`, templates, lambdas, `std::map`, `std::sort` | all correct |
+| A program that never ends, run in its own worker and **terminated after 3 s** | stopped; the page never froze (0 ms) |
+| Saved for offline in Cache Storage | 105.5 MB; run 3 worked with the network off |
+
+What this does **not** prove: speed and memory on a real phone, the CDN download, and Safari. Those are what the phone
+test is for.
+
 **Not yet known (must be tested before any Part B lesson is written):**
 
-- Does it compile and run in a **browser worker** at all (the package README says WASI support is uneven)?
+- ~~Does it compile and run in a browser worker at all?~~ Yes, in Chromium on a desktop-class CPU (see above). Still untested on a phone and in Safari.
 - **Time and memory on a real low-end Android phone.** A compile that takes 3 s here could take 30 s there, or
   run out of memory with a 75 MB module.
-- Does it work with the service worker and Cache Storage fully **offline**?
+- ~~Does it work from Cache Storage offline?~~ Yes in Chromium. (The app's service worker precaches the small page files; the 105 MB compiler is kept in Cache Storage by the page itself.)
 - Licences (LLVM and the YoWASP package) must be read before shipping.
 
 **Recommendation:** treat Part B as an optional "real C++" pack. First task for the engine owner: a small
 proof page that compiles and runs three programs in a browser worker on a real phone and reports the times.
 If the numbers are bad, the fallback is to extend JSCPP with `std::string`, `vector`, `struct` and `class`, which is
 a big job and still not the real language.
+
+## Phone test
+
+A standalone page that answers the one question that still decides Part B: **does real C++ run well enough on a
+real, low-end phone?** It is `public/cpp-test/` (`index.html`, `test.js`, `compiler-worker.js`, `runner-worker.js`),
+shipped by the normal deploy. It is not linked from the app.
+
+* **Address** (once the deploy is green): `<your Pages address>/cpp-test/index.html`, for example
+  `https://stevenssemambo.github.io/coder/cpp-test/index.html`.
+* **How to run it:** Wi-Fi, a **private/incognito tab** in the phone's normal browser (not the installed app), close other
+  apps, tap **Run the test**, wait (first run downloads about 105 MB), then tap **Copy results** and paste the report.
+* **Offline check:** after one finished run, switch on airplane mode **without closing or reloading the page** and tap
+  **Run again**. The compiler must start from the saved copy. (The worker scripts are kept in memory so this works.)
+* **What it does:** downloads `@yowasp/clang` (pinned to 22.0.0-git20542-10) from unpkg (or jsDelivr, or a custom address),
+  keeps every file in Cache Storage, then compiles and runs 5 programs: hello, string/vector/class, inheritance +
+  virtual + template + lambda + `map` + `cin`, a deliberate mistake (must be rejected with a real message), and a
+  program that never ends (must be stopped by terminating its worker, with the page staying responsive).
+  Flags: `-std=c++17 -O0 -fno-exceptions`.
+* **Crash detection:** if the browser runs out of memory and the tab dies, reopening the page says which step it stopped at.
+
+How to read the report (the page prints one of three verdicts):
+
+| Verdict | Meaning | Next step |
+|---|---|---|
+| **GOOD** | All steps passed and the slowest compile was under 20 s | Engine owner integrates the compiler as an optional pack; Part B lessons are written against it |
+| **WORKS BUT SLOW** | All passed, slowest compile 20 s or more | Still usable as an optional pack for better phones and Wi-Fi; decide on the lesson style (short programs) and a "compiling..." experience |
+| **FAILED** | A step failed, ran out of memory, or the download failed | If the download failed: host the compiler files ourselves. If memory or speed: extend the built-in interpreter instead (`std::string`, `vector`, `struct`, `class`), a much bigger job and still not real C++ |
+
+Known risks that only the phone can show: the 75 MB WebAssembly module may not fit in memory on a 2 GB phone;
+a compile that takes 4 s here may take 20 s or more there; unpkg may be slow or refuse the 75 MB file (jsDelivr
+limits large npm files, so it may refuse it too; the page then reports the HTTP status); Safari on iPhone is
+untested. The test page changes nothing about the app, except that `vite.config.js` now keeps `/cpp-test/` out of the
+service worker's navigation fallback so that the app shell never answers the test page.
 
 ## Engine files this track touched (all additive; C, Python and Web behave exactly as before)
 
@@ -173,6 +224,7 @@ a big job and still not the real language.
 | `src/lib/editor.js`, `src/lib/symbols.js` | C++ syntax colouring and a symbol bar with `<<` and `>>` |
 | `src/lib/errors.js` | new C++-only rules `cpp-missing-iostream`, `cpp-stack`, `cpp-index`, `cpp-pointer-uninit` and `cpp-pointer-type`; C++ also uses the C rules; `timeout` covers `cpp` |
 | `src/ui/views/learn.js` | label `C++` |
+| `vite.config.js` | `navigateFallbackDenylist` for `/cpp-test/` (the phone test page) |
 | `src/content/index.js` | one import and one entry in the registry |
 | `tests/run.mjs`, `tests/solutions.mjs` | C++ runs on the C runner; 10 new error-translator checks; `cppSolutions` merged |
 

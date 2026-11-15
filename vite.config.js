@@ -36,6 +36,8 @@ export default defineConfig({
         // Longer term: load each course on demand (dynamic import) instead of bundling all of them together.
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallback: 'index.html',
+        // The C++ phone test page (public/cpp-test/) is its own page: never answer it with the app shell.
+        navigateFallbackDenylist: [/\/cpp-test\//],
         cleanupOutdatedCaches: true,
         // Runtime packs are served by public/pack-sw.js (registered synchronously inside the service worker).
         importScripts: ['pack-sw.js'],

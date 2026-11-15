@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>C++ phone test</title>
+<style>
+  :root { --bg: #f6f5f1; --fg: #1c1c1a; --card: #ffffff; --line: #d9d6cc; --accent: #0b6b4f; --bad: #b3261e; --warn: #8a5a00; --good: #0b6b4f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14130f; --fg: #eeece4; --card: #1f1e19; --line: #3a382f; --accent: #4fc79d; --bad: #ff8a80; --warn: #f2c14e; --good: #4fc79d; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; max-width: 720px; margin-inline: auto; }
+  h1 { font-size: 1.4rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 20px 0 8px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 10px 0; }
+  .muted { opacity: .75; font-size: .92rem; }
+  button { font: inherit; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--fg); min-height: 48px; }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+  button:disabled { opacity: .5; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  select, input[type=text] { font: inherit; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+  ol { list-style: none; padding: 0; margin: 0; }
+  li.step { padding: 10px 0; border-top: 1px solid var(--line); }
+  li.step:first-child { border-top: 0; }
+  .st { display: inline-block; width: 1.6em; }
+  .ok { color: var(--good); } .fail { color: var(--bad); } .warn { color: var(--warn); }
+  .detail { font-size: .88rem; opacity: .85; white-space: pre-wrap; word-break: break-word; margin-left: 1.6em; }
+  .bar { height: 10px; background: var(--line); border-radius: 6px; overflow: hidden; margin: 6px 0 0 1.6em; }
+  .bar > div { height: 100%; width: 0; background: var(--accent); }
+  textarea { width: 100%; height: 220px; font: 12px/1.4 ui-monospace, monospace; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+  .verdict { font-size: 1.2rem; font-weight: 700; }
+  .banner { border: 1px solid var(--warn); color: var(--warn); border-radius: 10px; padding: 10px 12px; margin: 10px 0; }
+  code { font: .9em ui-monospace, monospace; }
+</style>
+</head>
+<body>
+<h1>C++ phone test</h1>
+<p class="muted">Checks whether a real C++ compiler (LLVM/Clang built for WebAssembly) can run inside a phone browser, for the SayMaCoder app. Nothing here is the app itself, and nothing is sent anywhere.</p>
+
+<div class="card">
+  <strong>Before you start</strong>
+  <ul>
+    <li>Use <strong>Wi-Fi</strong>. The first run downloads about <strong>105 MB</strong> (about 27 MB if your network compresses it).</li>
+    <li>Open this page in a <strong>private / incognito tab</strong> in the phone’s normal browser (Chrome or Safari), not inside the installed app.</li>
+    <li>Close other apps. Keep the screen on and stay on this page until it finishes. It can take a few minutes.</li>
+    <li>If the page <strong>crashes or the browser closes</strong>, open it again. That is an important result too, and the page will tell you which step it stopped at.</li>
+  </ul>
+</div>
+
+<div id="crashBanner" class="banner" hidden></div>
+
+<div class="card">
+  <label for="source"><strong>Where to load the compiler from</strong></label>
+  <select id="source">
+    <option value="unpkg">unpkg.com (default)</option>
+    <option value="jsdelivr">cdn.jsdelivr.net</option>
+    <option value="custom">Custom address</option>
+  </select>
+  <input id="custom" type="text" placeholder="https://.../gen/  (folder that contains bundle.js)" hidden style="margin-top:8px">
+</div>
+
+<div class="row">
+  <button id="run" class="primary">Run the test</button>
+  <button id="again" disabled>Run again (saved compiler)</button>
+  <button id="clear">Delete saved compiler</button>
+</div>
+
+<div class="card" id="deviceCard"><strong>This device</strong><div class="detail" id="device" style="margin-left:0"></div></div>
+
+<h2>Steps</h2>
+<div class="card"><ol id="steps"></ol></div>
+
+<h2>Result</h2>
+<div class="card">
+  <div id="verdict" class="verdict muted">Not run yet</div>
+  <div class="detail" id="verdictWhy" style="margin-left:0"></div>
+</div>
+
+<h2>Send this to Claude</h2>
+<div class="card">
+  <p class="muted" style="margin-top:0">When the test ends, tap <strong>Copy results</strong> (or touch and hold the text below and choose Select all, then Copy) and paste it into the chat.</p>
+  <textarea id="report" readonly placeholder="The report appears here after the test."></textarea>
+  <div class="row"><button id="copy" disabled>Copy results</button></div>
+</div>
+
+<script type="module" src="test.js"></script>
+</body>
+</html>
