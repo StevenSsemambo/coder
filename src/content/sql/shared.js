@@ -127,3 +127,21 @@ export const DUUKA_S = duukaSetup(PRODUCTS, CUSTOMERS, SALES);
 export const DUUKA_S_B = duukaSetup(PRODUCTS_B, CUSTOMERS_B, SALES_B);
 export const salesView = (names, rows = SALES) => tbl(names, rows.map((r) => names.map((n) => r[SALE_COLS.indexOf(n)])));
 export const allSales = (rows = SALES) => tbl(SALE_COLS, rows);
+
+// Suppliers (Level 3, lesson 14): a small table that learners add rows to.
+export const SUPPLIER_COLS = ['id', 'name', 'town', 'phone'];
+export const SUPPLIERS = [
+  [1, 'Kakira Traders', 'Jinja', '0700 100 001'],
+  [2, 'Kampala Grains', 'Kampala', '0700 100 002'],
+  [3, 'Jinja Soaps', 'Jinja', '0700 100 003'],
+];
+export const SUPPLIERS_B = [
+  [1, 'Lira Millers', 'Lira', '0700 100 201'],
+  [2, 'Gulu Fresh', 'Gulu', '0700 100 202'],
+];
+export const suppliersSetup = (rows = SUPPLIERS) => tableScript('suppliers', 'id INTEGER PRIMARY KEY, name TEXT, town TEXT, phone TEXT', rows);
+export const SUP = suppliersSetup();
+export const SUP_B = suppliersSetup(SUPPLIERS_B);
+
+/** The text the app prints after an INSERT, UPDATE or DELETE. */
+export const changed = (n) => `(${n} ${n === 1 ? 'row' : 'rows'} changed)`;

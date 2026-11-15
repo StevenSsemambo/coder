@@ -744,6 +744,57 @@ const RULES = [
       },
     }),
   },
+  {
+    id: 'sql-check',
+    languages: ['sql'],
+    match: /CHECK constraint failed: (.+)/,
+    build: (m) => ({
+      en: {
+        title: 'The value breaks a rule of the table',
+        why: `This table has a rule (CHECK ${m[1].trim()}) and the value you tried to save does not obey it, so SQLite refused the whole change.`,
+        fix: 'Use a value that follows the rule, or change the rule if the rule itself is wrong.',
+      },
+      sw: {
+        title: 'Thamani inavunja sheria ya jedwali',
+        why: `Jedwali hili lina sheria (CHECK ${m[1].trim()}) na thamani uliyojaribu kuhifadhi haiitii, kwa hiyo SQLite ilikataa mabadiliko yote.`,
+        fix: 'Tumia thamani inayofuata sheria, au badilisha sheria kama sheria yenyewe ndiyo yenye kosa.',
+      },
+    }),
+  },
+  {
+    id: 'sql-no-column-named',
+    languages: ['sql'],
+    match: /table (\S+) has no column named (\S+)/,
+    build: (m) => ({
+      en: {
+        title: `The table ${m[1]} has no column called "${m[2]}"`,
+        why: `Your INSERT names a column (${m[2]}) that ${m[1]} does not have. The name may be misspelled.`,
+        fix: `See the real column names with PRAGMA table_info(${m[1]}); and use exactly those.`,
+      },
+      sw: {
+        title: `Jedwali ${m[1]} halina safu inayoitwa "${m[2]}"`,
+        why: `INSERT yako inataja safu (${m[2]}) ambayo ${m[1]} haina. Jina linaweza kuwa limekosewa tahajia.`,
+        fix: `Angalia majina halisi ya safu kwa PRAGMA table_info(${m[1]}); kisha utumie hayohayo.`,
+      },
+    }),
+  },
+  {
+    id: 'sql-add-notnull',
+    languages: ['sql'],
+    match: /Cannot add a NOT NULL column with default value NULL/,
+    build: () => ({
+      en: {
+        title: 'A new required column needs a starting value',
+        why: 'The table already has rows. A new NOT NULL column would be empty in all of them, which breaks its own rule.',
+        fix: "Give the column a default, for example: ALTER TABLE t ADD COLUMN level INTEGER NOT NULL DEFAULT 1;",
+      },
+      sw: {
+        title: 'Safu mpya inayohitajika inahitaji thamani ya kuanzia',
+        why: 'Jedwali tayari lina mistari. Safu mpya ya NOT NULL ingekuwa tupu kwenye yote, jambo linalovunja sheria yake yenyewe.',
+        fix: 'Ipe safu thamani ya msingi, kwa mfano: ALTER TABLE t ADD COLUMN level INTEGER NOT NULL DEFAULT 1;',
+      },
+    }),
+  },
 ];
 
 /** Line number mentioned by the raw error, if any. */

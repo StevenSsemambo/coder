@@ -30,12 +30,12 @@ progress is saved under them). Exercise ids start with `sql<lesson number>-`.
 - [x] 12. `sql-daily-report` Project: the daily sales report (needs the `sales` table, see "Data")
 
 **Level 3: Changing data and building tables**
-- [ ] 13. `sql-create` `CREATE TABLE`, data types in SQLite
-- [ ] 14. `sql-insert` `INSERT` (one row, many rows, naming columns)
-- [ ] 15. `sql-update-delete` `UPDATE`, `DELETE` (and the danger of forgetting `WHERE`)
-- [ ] 16. `sql-constraints` `PRIMARY KEY`, `NOT NULL`, `UNIQUE`, `DEFAULT`, `CHECK`
-- [ ] 17. `sql-alter` `ALTER TABLE`, `DROP TABLE`
-- [ ] 18. `sql-build-duuka` Project: build the duuka database from nothing
+- [x] 13. `sql-create` `CREATE TABLE`, data types in SQLite
+- [x] 14. `sql-insert` `INSERT` (one row, many rows, naming columns)
+- [x] 15. `sql-update-delete` `UPDATE`, `DELETE` (and the danger of forgetting `WHERE`)
+- [x] 16. `sql-constraints` `PRIMARY KEY`, `NOT NULL`, `UNIQUE`, `DEFAULT`, `CHECK`
+- [x] 17. `sql-alter` `ALTER TABLE`, `DROP TABLE`
+- [x] 18. `sql-build-duuka` Project: build the duuka database from nothing
 
 **Level 4: Many tables**
 - [ ] 19. `sql-relations` Why split tables; one-to-many; foreign keys (and `PRAGMA foreign_keys = ON`)
@@ -78,6 +78,10 @@ that same file, so what the tests prove is what ships. Rules:
 - **Expected outputs are built from JavaScript data with `tbl()`** (`src/content/sql/shared.js`), never
   by running the SQL. The test "lesson table helper matches the app's table format" keeps `tbl()` and
   the engine in step.
+- Lessons that change data show the change by running a `SELECT` in the same run, because every run starts from a
+  fresh database. Exercises that build tables need no input at all (leave `usesInput` off); hidden tests can still
+  pass a setup script to prove the answer does not depend on an empty database. `PRAGMA table_info(t)` prints the
+  columns, types, `notnull`, default and `pk`, and is the way to grade a `CREATE TABLE`.
 - An error stops the run at that statement. Output printed before the error is kept. Error messages are
   translated by the `sql-*` rules in `src/lib/errors.js` (English and Kiswahili).
 - A runaway query (for example an endless recursive `WITH`) is stopped by the 8 second backstop in
@@ -114,7 +118,8 @@ out-of-stock item) and `customers` (6 rows), a second set of different rows for 
 (`PRODUCTS_B`, `CUSTOMERS_B`), and helpers (`tbl`, `tableScript`, `duukaSetup`, `productView`, ...).
 `sales` (15 rows, `SALES_B` for hidden tests) arrived in Level 2: `id, sale_date, product_id, qty, amount, method`.
 `amount` is the UGX paid, so reports need no join until Level 4. Lessons 11 and 12 use `DUUKA_S` / `DUUKA_S_B`
-(`duukaSetup(products, customers, sales)`); lessons 1 to 10 keep using `DUUKA` without sales. Add new tables as new
+(`duukaSetup(products, customers, sales)`); lessons 1 to 10 keep using `DUUKA` without sales. `suppliers` (3 rows, `SUPPLIERS_B` for hidden tests, `SUP`/`SUP_B` setups) arrived in lesson 14. Level 3 also defines
+its own small tables (`members`, `loans`, the project's `products`) inside `level3.js`. Add new tables as new
 exports and do not change existing rows, or finished lessons' expected outputs change. GROUP BY output is
 compared with ORDER BY in every solution, never with the engine's natural group order.
 
