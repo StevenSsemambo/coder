@@ -2,6 +2,7 @@
 // Every exercise must have one, and it must pass all its tests. The starter code must NOT pass.
 
 import { level6Solution as L6 } from '../src/content/py/level6b.js';
+import { level7Solution as L7 } from '../src/content/py/level7a.js';
 
 export const pySolutions = {
   // ---- lesson 36: decorators
@@ -214,5 +215,116 @@ with ledger_session():
         line = input()
         process(ledger, line)
     print(f"Total owed: {ledger.total_owed}")
+`,
+
+  // ---- lesson 42: Big-O
+  'py41-linear': `def count_steps(items, target):
+    steps = 0
+    for item in items:
+        steps += 1
+        if item == target:
+            break
+    return steps
+
+items = [int(x) for x in input().split()]
+target = int(input())
+print(count_steps(items, target))
+`,
+  'py41-guesses': `n = int(input())
+steps = 0
+while n > 0:
+    n = n // 2
+    steps += 1
+print(steps)
+`,
+  'py41-duplicates': `numbers = input().split()
+seen = set()
+found = False
+for n in numbers:
+    if n in seen:
+        found = True
+    seen.add(n)
+print("Duplicates" if found else "All different")
+`,
+
+  // ---- lesson 43: searching, hashing, recursion
+  'py42-binary': `def binary_search(items, target):
+    low, high = 0, len(items) - 1
+    while low <= high:
+        mid = (low + high) // 2
+        if items[mid] == target:
+            return mid
+        if items[mid] < target:
+            low = mid + 1
+        else:
+            high = mid - 1
+    return -1
+
+items = [int(x) for x in input().split()]
+target = int(input())
+print(binary_search(items, target))
+`,
+  'py42-shelf': `shelves = int(input())
+words = input().split()
+for word in words:
+    total = sum(ord(ch) for ch in word)
+    print(word, total % shelves)
+`,
+  'py42-fib': `from functools import lru_cache
+
+@lru_cache(maxsize=None)
+def fib(n):
+    if n < 2:
+        return n
+    return fib(n - 1) + fib(n - 2)
+
+print(fib(int(input())))
+`,
+
+  // ---- lesson 44: stacks, queues, linked lists
+  'py43-brackets': `text = input()
+pairs = {")": "(", "]": "[", "}": "{"}
+stack = []
+ok = True
+for ch in text:
+    if ch in "([{":
+        stack.append(ch)
+    elif ch in pairs:
+        if not stack or stack.pop() != pairs[ch]:
+            ok = False
+            break
+if stack:
+    ok = False
+print("Balanced" if ok else "Not balanced")
+`,
+  'py43-queue': `from collections import deque
+
+n = int(input())
+line = deque()
+for i in range(n):
+    command = input().split()
+    if command[0] == "join":
+        line.append(command[1])
+    elif command[0] == "serve":
+        if line:
+            print("Serving", line.popleft())
+        else:
+            print("Nobody waiting")
+print(f"Still waiting: {len(line)}")
+`,
+  'py43-linked': `${L7.NODE_LIST}
+
+    def to_text(self):
+        values = []
+        current = self.head
+        while current is not None:
+            values.append(current.value)
+            current = current.next
+        return " -> ".join(values)
+
+chain = LinkedList()
+for value in input().split():
+    chain.add_front(value)
+print(chain.to_text())
 `,
 };

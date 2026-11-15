@@ -29,9 +29,9 @@ is run by `npm test`, so nothing is taught that does not work.
 - [x] 41 `py-project-ledger`: Project: customer ledger with proper error handling
 
 ### Level 7: Data and algorithms (lessons 42 to 46)
-- [ ] 42 Big-O in plain words
-- [ ] 43 Searching, hashing and recursion in depth
-- [ ] 44 Stacks, queues and linked structures
+- [x] 42 `py-bigo`: Big-O in plain words (steps are counted, never timed)
+- [x] 43 `py-search-hash`: binary search, hashing (a toy hash table), recursion and memoization
+- [x] 44 `py-structures`: stacks, queues (`deque`) and linked lists
 - [ ] 45 CSV and data cleaning
 - [ ] 46 Project: sales analyzer with a reusable data pipeline
 
