@@ -330,6 +330,8 @@ section('Error translator (real messages from the runtimes)');
     ['sql', 'CREATE TABLE k (n INT CHECK (n > 0)); INSERT INTO k VALUES (-1);', 'sql-check', 'SQL CHECK rule broken'],
     ['sql', "INSERT INTO t (colour) VALUES ('x');", 'sql-no-column-named', 'SQL INSERT names a missing column'],
     ['sql', 'ALTER TABLE t ADD COLUMN level INTEGER NOT NULL;', 'sql-add-notnull', 'SQL new NOT NULL column without default'],
+    ['sql', 'PRAGMA foreign_keys = ON; CREATE TABLE ch (p INTEGER REFERENCES t(id)); INSERT INTO ch VALUES (99);', 'sql-foreign-key', 'SQL foreign key broken'],
+    ['sql', 'SELECT * FROM t WHERE id IN (SELECT id, name FROM t);', 'sql-subquery-columns', 'SQL inner query returns two columns'],
     ['python', 'print(undefined_name)', 'py-name-error', 'NameError'],
     ['python', 'x = (1 +', 'py-never-closed', 'unclosed bracket'],
     ['python', 'if True\n    print(1)', 'py-missing-colon', 'missing colon'],

@@ -145,3 +145,38 @@ export const SUP_B = suppliersSetup(SUPPLIERS_B);
 
 /** The text the app prints after an INSERT, UPDATE or DELETE. */
 export const changed = (n) => `(${n} ${n === 1 ? 'row' : 'rows'} changed)`;
+
+// Orders (Level 4): the tables that link customers and products. orders -> customers is one-to-many, and
+// order_items is the junction table between orders and products (many-to-many). Hassan (4) and Joseph (6) have
+// never ordered, and Milk, Candle and Toothpaste have never been sold, on purpose: they show off LEFT JOIN.
+export const ORDER_COLS = ['id', 'customer_id', 'order_date', 'method'];
+export const ORDERS = [
+  [1, 1, '2026-11-02', 'Cash'],
+  [2, 1, '2026-11-09', 'MoMo'],
+  [3, 2, '2026-11-03', 'Cash'],
+  [4, 3, '2026-11-03', 'MoMo'],
+  [5, 3, '2026-11-04', 'Cash'],
+  [6, 3, '2026-11-10', 'Airtel'],
+  [7, 5, '2026-11-04', 'Cash'],
+];
+export const ORDERS_B = [
+  [1, 1, '2026-11-05', 'MoMo'],
+  [2, 1, '2026-11-06', 'Cash'],
+  [3, 2, '2026-11-06', 'Cash'],
+  [4, 3, '2026-12-02', 'Airtel'],
+];
+export const ITEM_COLS = ['id', 'order_id', 'product_id', 'qty'];
+export const ITEMS = [
+  [1, 1, 1, 2], [2, 1, 6, 1], [3, 2, 2, 3], [4, 3, 3, 1], [5, 3, 4, 2], [6, 4, 7, 4],
+  [7, 4, 8, 5], [8, 5, 5, 1], [9, 6, 6, 3], [10, 7, 2, 1], [11, 7, 12, 2], [12, 7, 4, 1],
+];
+export const ITEMS_B = [[1, 1, 3, 4], [2, 1, 6, 2], [3, 2, 1, 2], [4, 3, 4, 6], [5, 3, 2, 1], [6, 4, 7, 1], [7, 4, 6, 5]];
+
+const ORDER_SQL = 'id INTEGER PRIMARY KEY, customer_id INTEGER NOT NULL REFERENCES customers(id), order_date TEXT, method TEXT';
+const ITEM_SQL = 'id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id), product_id INTEGER NOT NULL REFERENCES products(id), qty INTEGER NOT NULL';
+
+/** products + customers + orders + order_items, with the foreign keys DECLARED (but not enforced: see lesson 19). */
+export const duukaRelational = (products = PRODUCTS, customers = CUSTOMERS, orders = ORDERS, items = ITEMS) =>
+  `${duukaSetup(products, customers)}\n\n${tableScript('orders', ORDER_SQL, orders)}\n\n${tableScript('order_items', ITEM_SQL, items)}`;
+export const DUUKA_R = duukaRelational();
+export const DUUKA_R_B = duukaRelational(PRODUCTS_B, CUSTOMERS_B, ORDERS_B, ITEMS_B);

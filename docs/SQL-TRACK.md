@@ -38,13 +38,13 @@ progress is saved under them). Exercise ids start with `sql<lesson number>-`.
 - [x] 18. `sql-build-duuka` Project: build the duuka database from nothing
 
 **Level 4: Many tables**
-- [ ] 19. `sql-relations` Why split tables; one-to-many; foreign keys (and `PRAGMA foreign_keys = ON`)
-- [ ] 20. `sql-inner-join` `INNER JOIN`
-- [ ] 21. `sql-left-join` `LEFT JOIN`, finding rows with no match
-- [ ] 22. `sql-join-agg` Joins plus `GROUP BY`; joining three tables
-- [ ] 23. `sql-subqueries` Subqueries (`IN (SELECT ...)`, in `FROM`, correlated)
-- [ ] 24. `sql-many-to-many` Many-to-many and junction tables; self joins
-- [ ] 25. `sql-statement` Project: a customer statement
+- [x] 19. `sql-relations` Why split tables; one-to-many; foreign keys (and `PRAGMA foreign_keys = ON`)
+- [x] 20. `sql-inner-join` `INNER JOIN`
+- [x] 21. `sql-left-join` `LEFT JOIN`, finding rows with no match
+- [x] 22. `sql-join-agg` Joins plus `GROUP BY`; joining three tables
+- [x] 23. `sql-subqueries` Subqueries (`IN (SELECT ...)`, in `FROM`, correlated)
+- [x] 24. `sql-many-to-many` Many-to-many and junction tables; self joins
+- [x] 25. `sql-statement` Project: a customer statement
 
 **Level 5: Market-ready SQL**
 - [ ] 26. `sql-design` Designing a schema: normalisation in plain words, avoiding repeated data
@@ -101,7 +101,9 @@ that same file, so what the tests prove is what ships. Rules:
 
 - **Foreign keys are OFF by default in SQLite.** A learner must write `PRAGMA foreign_keys = ON;` at the
   top of the run for `FOREIGN KEY` to be enforced (tested: without it a row pointing at a missing parent
-  is accepted). Lesson 19 teaches this. Decide before writing it whether the practice database turns it on.
+  is accepted). DECISION (lesson 19): the practice database does NOT turn it on; the lesson teaches the pragma as
+  a habit, because learners will meet the same default in real projects. Every exercise that must be guarded
+  starts with the pragma itself.
 - `=` on text is **case sensitive** (`'food' = 'Food'` is false), `LIKE` is case insensitive for English letters.
 - `7 / 2` is `3` (integer division); `7 / 2.0` is `3.5`.
 - SQLite types are flexible (a type name is a hint, not a rule). Teach the common types, say so once.
@@ -118,7 +120,12 @@ out-of-stock item) and `customers` (6 rows), a second set of different rows for 
 (`PRODUCTS_B`, `CUSTOMERS_B`), and helpers (`tbl`, `tableScript`, `duukaSetup`, `productView`, ...).
 `sales` (15 rows, `SALES_B` for hidden tests) arrived in Level 2: `id, sale_date, product_id, qty, amount, method`.
 `amount` is the UGX paid, so reports need no join until Level 4. Lessons 11 and 12 use `DUUKA_S` / `DUUKA_S_B`
-(`duukaSetup(products, customers, sales)`); lessons 1 to 10 keep using `DUUKA` without sales. `suppliers` (3 rows, `SUPPLIERS_B` for hidden tests, `SUP`/`SUP_B` setups) arrived in lesson 14. Level 3 also defines
+(`duukaSetup(products, customers, sales)`); lessons 1 to 10 keep using `DUUKA` without sales. `suppliers` (3 rows, `SUPPLIERS_B` for hidden tests, `SUP`/`SUP_B` setups) arrived in lesson 14. Level 4 uses `DUUKA_R` / `DUUKA_R_B` (`duukaRelational(...)`): products, customers, `orders` (one-to-many
+to customers) and `order_items` (the junction between orders and products), with the foreign keys DECLARED but not
+enforced, because SQLite enforces them only after `PRAGMA foreign_keys = ON;`. Hassan and Joseph never ordered,
+and Milk, Candle and Toothpaste never sold, on purpose (LEFT JOIN lessons). Expected answers for Level 4 come from
+`src/content/sql/world.js` (plain JavaScript over the same data: `WA`, `WB`, `byCustomer`, `byProduct`). Lesson 24's
+self-join uses a small `staff` table defined inside `level4b.js`. Level 3 also defines
 its own small tables (`members`, `loans`, the project's `products`) inside `level3.js`. Add new tables as new
 exports and do not change existing rows, or finished lessons' expected outputs change. GROUP BY output is
 compared with ORDER BY in every solution, never with the engine's natural group order.
@@ -156,3 +163,14 @@ Same rules as every track (`docs/TRACKS.md`), plus:
    learners see the data without reading `INSERT` lines.
 2. Real-phone test of the SQLite worker on low-end Android (so far only a simulated worker in Node).
 3. Show query results as a real scrollable table instead of preformatted text (wide tables scroll sideways today).
+
+## Facts learnt while writing Level 4 (tested)
+
+- `JOIN` with no `ON` is NOT an error in SQLite: it is a cross join (6 customers times 7 orders is 42 rows).
+  `LEFT JOIN ... WHERE` with no `ON` is also accepted and behaves like an inner join. Both are taught as
+  "wrong answer, no error" mistakes (`logic: true`), never as `bug` blocks.
+- `OUTER JOIN` alone is an error (`unknown join type: OUTER`); `LEFT OUTER JOIN` is fine.
+- A `WHERE` test on the right-hand table of a `LEFT JOIN` removes the unmatched rows again; put the condition in `ON`.
+- `x = (SELECT ...)` that returns many rows silently uses the first row; `x NOT IN (list with a NULL)` finds nothing.
+- Join output order is not promised: every Level 4 solution has an explicit `ORDER BY`, and expected answers are
+  sorted in JavaScript the same way (`cmp` puts NULL first, like SQLite).

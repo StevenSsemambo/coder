@@ -813,6 +813,40 @@ const RULES = [
       },
     }),
   },
+  {
+    id: 'sql-foreign-key',
+    languages: ['sql'],
+    match: /FOREIGN KEY constraint failed/,
+    build: () => ({
+      en: {
+        title: 'That row points at something that does not exist, or is still needed',
+        why: 'A foreign key links this row to a row in another table. Either the row you are adding points at a parent that is not there (for example a customer number nobody has), or you are deleting a parent that other rows still point at.',
+        fix: 'Check that the number you point at exists in the other table. To delete a parent, first delete or change the rows that point at it.',
+      },
+      sw: {
+        title: 'Mstari huo unaelekeza kwenye kitu ambacho hakipo, au bado kinahitajika',
+        why: 'Ufunguo wa kigeni unaunganisha mstari huu na mstari kwenye jedwali lingine. Ama mstari unaoongeza unaelekeza kwa mzazi asiyekuwepo (kwa mfano namba ya mteja ambayo haipo), au unafuta mzazi ambaye mistari mingine bado inamtegemea.',
+        fix: 'Hakikisha namba unayoelekeza ipo kwenye jedwali lingine. Ili kufuta mzazi, kwanza futa au badilisha mistari inayomwelekea.',
+      },
+    }),
+  },
+  {
+    id: 'sql-subquery-columns',
+    languages: ['sql'],
+    match: /sub-select returns (\d+) columns/,
+    build: (m) => ({
+      en: {
+        title: 'The inner query must return exactly one column here',
+        why: `The query in brackets returns ${m[1]} columns, but IN (...) or a comparison can only use one column of values.`,
+        fix: 'Select just the one column you need in the brackets, for example IN (SELECT customer_id FROM orders).',
+      },
+      sw: {
+        title: 'Hoja ya ndani lazima irudishe safu moja tu hapa',
+        why: `Hoja ndani ya mabano inarudisha safu ${m[1]}, lakini IN (...) au ulinganisho unaweza kutumia safu moja ya thamani tu.`,
+        fix: 'Chagua safu moja unayohitaji ndani ya mabano, kwa mfano IN (SELECT customer_id FROM orders).',
+      },
+    }),
+  },
 ];
 
 /** Line number mentioned by the raw error, if any. */
