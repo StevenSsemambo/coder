@@ -32,18 +32,20 @@ export function dock(...children) {
 }
 
 // ---- Input (stdin) field -----------------------------------------------------
-export function stdinField(initial = '') {
+export function stdinField(initial = '', language = '') {
+  // For SQL the "input" is the practice database: the tables the learner's query will look at.
+  const isSql = language === 'sql';
   const box = h('textarea', {
     class: 'stdin',
     rows: 2,
     value: initial,
-    placeholder: 'Type the program input here, one value per line or separated by spaces',
+    placeholder: isSql ? 'The practice database: CREATE TABLE and INSERT lines that build the tables' : 'Type the program input here, one value per line or separated by spaces',
     autocapitalize: 'off',
     autocorrect: 'off',
     spellcheck: 'false',
   });
   box.value = initial;
-  return { node: h('label', { class: 'stdin-wrap' }, h('span', { class: 'label' }, 'Input'), box), get value() { return box.value; } };
+  return { node: h('label', { class: 'stdin-wrap' }, h('span', { class: 'label' }, isSql ? 'Practice database (runs first)' : 'Input'), box), get value() { return box.value; } };
 }
 
 // ---- Output / error panels -----------------------------------------------------

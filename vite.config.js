@@ -26,10 +26,10 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // App shell, workers and the C interpreter are cached on first visit (small).
+        // App shell, workers, the C interpreter and SQLite (sql.js, wasm) are cached on first visit (small).
         // The big Python runtime is NOT precached: students download it on purpose from Settings,
         // and it is then served from the "saymacoder-packs" cache by pack-sw.js.
-        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest}'],
+        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,wasm}'],
         globIgnores: ['pyodide/**'],
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,

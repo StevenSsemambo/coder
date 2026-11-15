@@ -19,7 +19,7 @@ function tryBlock(block, language, ctx, label = 'Try it yourself') {
   const editor = createEditor(mount, { language: editorLanguage(language), doc: block.code });
   ctx.cleanups.push(() => editor.destroy());
 
-  const stdin = block.stdin !== undefined ? stdinField(block.stdin) : null;
+  const stdin = block.stdin !== undefined ? stdinField(block.stdin, language) : null;
   const result = h('div', { class: 'result', 'aria-live': 'polite' });
   let busy = false;
 

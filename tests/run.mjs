@@ -22,6 +22,12 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sandbox = vm.createContext({ self: {}, console });
 vm.runInContext(readFileSync(join(root, 'public/vendor/jscpp.js'), 'utf8') + ';this.__JSCPP = JSCPP;', sandbox);
 const JSCPP = sandbox.__JSCPP;
+// SQL: the exact core file the worker uses, running on sql.js (the same SQLite that ships in the app).
+const initSqlJs = require('sql.js');
+const SQLITE = await initSqlJs();
+const sqlSandbox = vm.createContext({ self: {} });
+vm.runInContext(readFileSync(join(root, 'public/workers/sqlcore.js'), 'utf8'), sqlSandbox);
+const SQLCore = sqlSandbox.self.SQLCore;
 const { loadPyodide } = await import(join(root, 'node_modules/pyodide/pyodide.mjs'));
 
 let passed = 0;
@@ -42,6 +48,12 @@ function runC(code, stdin = '') {
     const msg = String((e && e.message) || e);
     return { stdout, error: msg, timedOut: /Time limit exceeded/i.test(msg) };
   }
+}
+
+// For SQL the "stdin" is the practice database (see public/workers/sqlcore.js).
+function runSql(code, setup = '') {
+  const r = SQLCore.runSql(SQLITE, setup, code);
+  return { stdout: r.stdout, error: r.error, timedOut: false };
 }
 
 const py = await loadPyodide();
@@ -89,7 +101,7 @@ async function gradeWebNode(ex, files) {
   dom.window.close();
   return shaped;
 }
-const runLang = (language, code, stdin) => (language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : runPython(code, stdin));
+const runLang = (language, code, stdin) => (language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'sql' ? runSql(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : runPython(code, stdin));
 
 // ---- 1. every exercise: solution passes, starter fails ----------------------------
 section('Exercises (reference solution must pass, untouched starter must fail)');
@@ -303,6 +315,17 @@ section('Error translator (real messages from the runtimes)');
     ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ cout << total; return 0; }', 'c-undeclared', 'C++ undeclared variable'],
     ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ int a = 5, b = 0; cout << a / b; return 0; }', 'c-zero-division', 'C++ divide by zero'],
     ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ while (true) { } return 0; }', 'timeout', 'C++ infinite loop'],
+    ['sql', 'SELECT * FROM pupils;', 'sql-no-table', 'SQL missing table'],
+    ['sql', 'SELECT colour FROM t;', 'sql-no-column', 'SQL missing column'],
+    ['sql', 'SELECT name FORM t;', 'sql-syntax', 'SQL misspelled keyword'],
+    ['sql', "SELECT name FROM t WHERE name = 'Amina;", 'sql-incomplete', 'SQL unclosed quote'],
+    ['sql', 'SELECT name FROM t, u;', 'sql-ambiguous', 'SQL ambiguous column'],
+    ['sql', "INSERT INTO t VALUES (1, 'Amina');", 'sql-unique', 'SQL duplicate key'],
+    ['sql', "INSERT INTO t (id) VALUES (9);", 'sql-not-null', 'SQL missing required value'],
+    ['sql', "INSERT INTO t VALUES (7, 'Sam', 3);", 'sql-column-count', 'SQL wrong number of values'],
+    ['sql', 'SELECT name FROM t WHERE COUNT(*) > 1;', 'sql-aggregate-where', 'SQL aggregate in WHERE'],
+    ['sql', 'SELECT NOW();', 'sql-no-function', 'SQL unknown function'],
+    ['sql', 'CREATE TABLE t (a INT);', 'sql-table-exists', 'SQL table already exists'],
     ['python', 'print(undefined_name)', 'py-name-error', 'NameError'],
     ['python', 'x = (1 +', 'py-never-closed', 'unclosed bracket'],
     ['python', 'if True\n    print(1)', 'py-missing-colon', 'missing colon'],
@@ -319,7 +342,7 @@ section('Error translator (real messages from the runtimes)');
     ['python', 'x = = 3', 'py-syntax', 'generic SyntaxError'],
   ];
   for (const [language, code, expectedId, label] of cases) {
-    const res = await runLang(language, code, '');
+    const res = await runLang(language, code, language === 'sql' ? 'CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT NOT NULL); CREATE TABLE u (id INTEGER, name TEXT); INSERT INTO t VALUES (1, \'Amina\');' : '');
     const raw = res.error || '';
     const en = translateError(raw, { language, lang: 'en' });
     check(`${label}: rule ${expectedId}`, en?.id === expectedId, `got ${en?.id ?? 'no match'} for: ${raw.split('\n').slice(-2).join(' | ').slice(0, 140)}`);
@@ -500,6 +523,35 @@ section('C source preparation');
 }
 
 // ---- 5. dates and streak keys --------------------------------------------------------
+section('SQL engine (SQLite via sql.js: the same core file the worker uses)');
+{
+  const { tbl } = await import('../src/content/sql/shared.js');
+  const T = (cols, rows) => SQLCore.formatTable(cols, rows);
+  const samples = [
+    [['name', 'price'], [['Soap', 1500], ['Matooke bunch', 15000]]],
+    [['a'], []],
+    [['id', 'supplier'], [[1, null], [22, 'Kampala Grains']]],
+    [['Price (UGX)'], [[4500]]],
+  ];
+  for (const [cols, rows] of samples) check(`lesson table helper matches the app's table format for ${JSON.stringify(cols)}`, tbl(cols, rows) === T(cols, rows), `${JSON.stringify(tbl(cols, rows))} vs ${JSON.stringify(T(cols, rows))}`);
+
+  const db = 'CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT); INSERT INTO t VALUES (1, \'Amina\'), (2, \'Brian\');';
+  check('SELECT prints a text table', runSql('SELECT * FROM t;', db).stdout === 'id | name\n---+------\n1  | Amina\n2  | Brian\n', JSON.stringify(runSql('SELECT * FROM t;', db).stdout));
+  check('no rows prints (0 rows) under the header', runSql("SELECT * FROM t WHERE id = 99;", db).stdout.includes('(0 rows)'));
+  check('NULL shows as NULL', runSql('SELECT NULL AS x;', '').stdout === 'x\n----\nNULL\n', JSON.stringify(runSql('SELECT NULL AS x;', '').stdout));
+  check('INSERT reports the rows changed', runSql("INSERT INTO t VALUES (3, 'Grace');", db).stdout === '(1 row changed)\n');
+  check('UPDATE and DELETE report the rows changed', runSql("UPDATE t SET name = 'X'; DELETE FROM t WHERE id = 1;", db).stdout === '(2 rows changed)\n\n(1 row changed)\n');
+  check('CREATE TABLE is silent', runSql('CREATE TABLE z (a INT);', '').stdout === '');
+  check('two queries print two tables with a blank line between', runSql('SELECT 1 AS a; SELECT 2 AS b;', '').stdout === 'a\n-\n1\n\nb\n-\n2\n');
+  check('every run starts with a fresh database', runSql('CREATE TABLE once (a INT);', '').error === null && runSql('CREATE TABLE once (a INT);', '').error === null);
+  check('earlier changes never leak into the next run', runSql("DELETE FROM t;", db).error === null && runSql('SELECT COUNT(*) AS n FROM t;', db).stdout === 'n\n-\n2\n');
+  const bad = runSql('SELECT 1;', 'CREATE TABLE oops (');
+  check('a broken practice database is reported as such', /practice database could not be built/.test(bad.error || ''), bad.error);
+  check('an error keeps the output that came before it', runSql('SELECT 1 AS a; SELECT * FROM nope;', '').stdout === 'a\n-\n1\n' && /no such table/.test(runSql('SELECT 1 AS a; SELECT * FROM nope;', '').error));
+  const many = runSql('WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c WHERE x < 500) SELECT x FROM c;', '');
+  check('very long results are cut and say so', many.stdout.includes('... 300 more rows not shown') && many.stdout.split('\n').length < 210, many.stdout.split('\n').slice(-3).join(' | '));
+}
+
 section('Dates');
 {
   check('dayKey format', dayKey(new Date(2026, 10, 9)) === '2026-11-09');

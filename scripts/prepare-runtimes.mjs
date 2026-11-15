@@ -1,6 +1,7 @@
 // Prepares the offline runtimes that SayMaCoder ships:
 //   - Pyodide (Python on WebAssembly) copied into public/pyodide
 //   - JSCPP (C interpreter) bundled for the browser into public/vendor/jscpp.js
+//   - sql.js (SQLite on WebAssembly, about 0.7 MB) copied into public/vendor/sqljs
 // Also writes src/generated/pack-info.json so the UI can show real pack sizes.
 import { build } from 'esbuild';
 import { copyFileSync, mkdirSync, statSync, writeFileSync, readFileSync } from 'node:fs';
@@ -270,6 +271,15 @@ await build({
 });
 const cSize = statSync(join(root, 'public/vendor/jscpp.js')).size;
 
+// ---- sql.js (SQLite) ---------------------------------------------------------
+// Small enough to ship with the app (cached on first visit, like the C interpreter).
+mkdirSync(join(root, 'public/vendor/sqljs'), { recursive: true });
+const sqlFiles = ['sql-wasm.js', 'sql-wasm.wasm'].map((name) => {
+  copyFileSync(nm(`sql.js/dist/${name}`), join(root, 'public/vendor/sqljs', name));
+  return { name, size: statSync(nm(`sql.js/dist/${name}`)).size };
+});
+const sqlBytes = sqlFiles.reduce((n, f) => n + f.size, 0);
+
 // ---- Pack info for the UI ---------------------------------------------------
 mkdirSync(join(root, 'src/generated'), { recursive: true });
 const info = {
@@ -279,6 +289,7 @@ const info = {
     totalBytes: pyFiles.reduce((n, f) => n + f.size, 0),
   },
   c: { bundledBytes: cSize },
+  sql: { bundledBytes: sqlBytes },
 };
 writeFileSync(join(root, 'src/generated/pack-info.json'), JSON.stringify(info, null, 2));
-console.log(`runtimes ready: python ${(info.python.totalBytes / 1048576).toFixed(1)} MB, c ${(cSize / 1024).toFixed(0)} KB`);
+console.log(`runtimes ready: python ${(info.python.totalBytes / 1048576).toFixed(1)} MB, c ${(cSize / 1024).toFixed(0)} KB, sql ${(sqlBytes / 1024).toFixed(0)} KB`);

@@ -3,7 +3,7 @@
 import { prepareSource } from './csource.js';
 import { runConsoleJs } from './webrun.js';
 
-const WORKER_FILES = { python: 'py.worker.js', c: 'c.worker.js', cpp: 'c.worker.js' };
+const WORKER_FILES = { python: 'py.worker.js', c: 'c.worker.js', cpp: 'c.worker.js', sql: 'sql.worker.js' };
 export const DEFAULT_TIMEOUT_MS = 8000;
 
 const listeners = new Set();
@@ -113,7 +113,7 @@ class LanguageRunner {
   }
 }
 
-const runners = { python: new LanguageRunner('python'), c: new LanguageRunner('c'), cpp: new LanguageRunner('cpp') };
+const runners = { python: new LanguageRunner('python'), c: new LanguageRunner('c'), cpp: new LanguageRunner('cpp'), sql: new LanguageRunner('sql') };
 
 /** Start loading a runtime early (for example while the student reads the lesson). */
 export function warmUp(language) {

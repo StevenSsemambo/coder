@@ -30,7 +30,7 @@ const RULES = [
   // ---- both languages ------------------------------------------------------
   {
     id: 'timeout',
-    languages: ['python', 'c', 'cpp', 'web'],
+    languages: ['python', 'c', 'cpp', 'web', 'sql'],
     match: /Time limit exceeded/i,
     build: () => ({
       en: {
@@ -552,6 +552,195 @@ const RULES = [
         title: 'Aina ya thamani si sahihi',
         why: `Ulijaribu kuweka thamani ya aina ${m[1].trim()} mahali palipotarajiwa ${m[2].trim()}.`,
         fix: 'Tumia aina sahihi ya kigezo: int kwa nambari kamili, float kwa desimali, char kwa herufi moja. Maandishi yanahitaji safu ya char.',
+      },
+    }),
+  },
+
+  // ---- SQL (SQLite) ---------------------------------------------------------------------------
+  {
+    id: 'sql-no-table',
+    languages: ['sql'],
+    match: /no such table: (\S+)/,
+    build: (m) => ({
+      en: {
+        title: `There is no table called "${m[1]}"`,
+        why: `SQLite looked for a table named ${m[1]} in the practice database and did not find one. The name may be spelled differently, or the table may not exist in this lesson.`,
+        fix: `Check the table name in the lesson: capital letters do not matter in SQL, but every other letter does. To see every table, run: SELECT name FROM sqlite_master WHERE type = 'table';`,
+      },
+      sw: {
+        title: `Hakuna jedwali linaloitwa "${m[1]}"`,
+        why: `SQLite ilitafuta jedwali liitwalo ${m[1]} kwenye hifadhidata ya mazoezi na haikuliona. Jina linaweza kuwa limeandikwa tofauti, au jedwali hilo halipo kwenye somo hili.`,
+        fix: `Angalia jina la jedwali kwenye somo. Kuona majedwali yote, endesha: SELECT name FROM sqlite_master WHERE type = 'table';`,
+      },
+    }),
+  },
+  {
+    id: 'sql-no-column',
+    languages: ['sql'],
+    match: /no such column: (\S+)/,
+    build: (m) => ({
+      en: {
+        title: `There is no column called "${m[1]}"`,
+        why: `The table has no column with that name. Often the name is misspelled, or text was written without quotes (SQL reads ${m[1]} as a column name, not as text).`,
+        fix: `Look at the column names with SELECT * FROM tablename LIMIT 1; If you meant text, put it in single quotes, like 'Kampala'.`,
+      },
+      sw: {
+        title: `Hakuna safu inayoitwa "${m[1]}"`,
+        why: `Jedwali halina safu yenye jina hilo. Mara nyingi jina limekosewa tahajia, au maandishi yameandikwa bila nukuu (SQL inasoma ${m[1]} kama jina la safu, si maandishi).`,
+        fix: `Angalia majina ya safu kwa SELECT * FROM jina_la_jedwali LIMIT 1; Kama ulimaanisha maandishi, yaweke ndani ya nukuu moja, mfano 'Kampala'.`,
+      },
+    }),
+  },
+  {
+    id: 'sql-syntax',
+    languages: ['sql'],
+    match: /near "([^"]*)": syntax error/,
+    build: (m) => ({
+      en: {
+        title: `SQL did not understand the part near "${m[1]}"`,
+        why: `Something is wrong at or just before ${m[1]}: a keyword may be misspelled, a comma may be missing or extra, or two parts are in the wrong order (SELECT, then FROM, then WHERE, and so on).`,
+        fix: 'Read the line slowly from the left. Check the spelling of every keyword, check the commas between column names (none after the last one), and check that quotes and brackets come in pairs.',
+      },
+      sw: {
+        title: `SQL haikuelewa sehemu karibu na "${m[1]}"`,
+        why: `Kuna kosa pale ${m[1]} ilipo au kabla yake: neno kuu linaweza kuwa na tahajia mbaya, koma inaweza kukosekana au kuzidi, au sehemu mbili ziko kwenye mpangilio usio sahihi (SELECT, kisha FROM, kisha WHERE, na kadhalika).`,
+        fix: 'Soma mstari polepole kutoka kushoto. Angalia tahajia ya kila neno kuu, koma kati ya majina ya safu (hakuna baada ya ya mwisho), na nukuu na mabano yawe kwa jozi.',
+      },
+    }),
+  },
+  {
+    id: 'sql-incomplete',
+    languages: ['sql'],
+    match: /incomplete input|unrecognized token/,
+    build: () => ({
+      en: {
+        title: 'The SQL stops too early, or a quote is not closed',
+        why: 'The statement is not finished. Usually a closing quote \' or a closing bracket ) is missing.',
+        fix: 'Count your quotes and brackets: every opening one needs a closing one. Text goes in single quotes.',
+      },
+      sw: {
+        title: 'SQL inaishia mapema, au nukuu haijafungwa',
+        why: 'Amri haijakamilika. Mara nyingi nukuu ya kufunga \' au mabano ya kufunga ) yamekosekana.',
+        fix: 'Hesabu nukuu na mabano yako: kila ya kufungua inahitaji ya kufunga. Maandishi huwekwa ndani ya nukuu moja.',
+      },
+    }),
+  },
+  {
+    id: 'sql-ambiguous',
+    languages: ['sql'],
+    match: /ambiguous column name: (\S+)/,
+    build: (m) => ({
+      en: {
+        title: `"${m[1]}" could mean more than one column`,
+        why: `Two tables in your query both have a column called ${m[1]}, so SQL cannot guess which one you want.`,
+        fix: `Put the table name in front, with a dot: tablename.${m[1]}`,
+      },
+      sw: {
+        title: `"${m[1]}" inaweza kumaanisha safu zaidi ya moja`,
+        why: `Majedwali mawili kwenye hoja yako yote yana safu iitwayo ${m[1]}, kwa hiyo SQL haiwezi kubahatisha unataka ipi.`,
+        fix: `Weka jina la jedwali mbele, kwa nukta: jina_la_jedwali.${m[1]}`,
+      },
+    }),
+  },
+  {
+    id: 'sql-unique',
+    languages: ['sql'],
+    match: /UNIQUE constraint failed: (\S+)/,
+    build: (m) => ({
+      en: {
+        title: 'That value already exists',
+        why: `The column ${m[1]} must be different in every row (it is a key or is marked UNIQUE), and you tried to add a value that is already there.`,
+        fix: 'Use a new value, or change the existing row with UPDATE instead of adding a second one.',
+      },
+      sw: {
+        title: 'Thamani hiyo tayari ipo',
+        why: `Safu ${m[1]} lazima iwe tofauti kwenye kila mstari (ni ufunguo au imewekwa UNIQUE), nawe ulijaribu kuongeza thamani iliyopo tayari.`,
+        fix: 'Tumia thamani mpya, au badilisha mstari uliopo kwa UPDATE badala ya kuongeza wa pili.',
+      },
+    }),
+  },
+  {
+    id: 'sql-not-null',
+    languages: ['sql'],
+    match: /NOT NULL constraint failed: (\S+)/,
+    build: (m) => ({
+      en: {
+        title: 'A required value is missing',
+        why: `The column ${m[1]} may not be empty (NULL), but the row you tried to add has no value for it.`,
+        fix: 'Give that column a value in your INSERT, and check that the columns and the values are in the same order.',
+      },
+      sw: {
+        title: 'Thamani inayohitajika haipo',
+        why: `Safu ${m[1]} haiwezi kuwa tupu (NULL), lakini mstari uliojaribu kuongeza hauna thamani yake.`,
+        fix: 'Toa thamani kwa safu hiyo kwenye INSERT yako, na hakikisha safu na thamani ziko kwa mpangilio uleule.',
+      },
+    }),
+  },
+  {
+    id: 'sql-column-count',
+    languages: ['sql'],
+    match: /(\d+) values for (\d+) columns|table (\S+) has (\d+) columns but (\d+) values were supplied/,
+    build: () => ({
+      en: {
+        title: 'The number of values does not match the number of columns',
+        why: 'Your INSERT gives a different number of values than the number of columns it fills.',
+        fix: 'Count them. If you name the columns, write exactly one value for each, in the same order.',
+      },
+      sw: {
+        title: 'Idadi ya thamani hailingani na idadi ya safu',
+        why: 'INSERT yako inatoa idadi tofauti ya thamani kuliko idadi ya safu inazojaza.',
+        fix: 'Zihesabu. Ukitaja safu, andika thamani moja kwa kila safu, kwa mpangilio uleule.',
+      },
+    }),
+  },
+  {
+    id: 'sql-aggregate-where',
+    languages: ['sql'],
+    match: /misuse of aggregate/,
+    build: () => ({
+      en: {
+        title: 'COUNT, SUM, AVG, MIN and MAX cannot be used in WHERE',
+        why: 'WHERE picks rows one by one, before any totals exist. A total can only be tested after the rows are grouped.',
+        fix: 'Use HAVING (after GROUP BY) to test a total, for example HAVING COUNT(*) > 2.',
+      },
+      sw: {
+        title: 'COUNT, SUM, AVG, MIN na MAX haviwezi kutumika kwenye WHERE',
+        why: 'WHERE huchagua mistari moja moja, kabla ya jumla yoyote kuwepo. Jumla inaweza kupimwa tu baada ya mistari kuwekwa kwenye vikundi.',
+        fix: 'Tumia HAVING (baada ya GROUP BY) kupima jumla, mfano HAVING COUNT(*) > 2.',
+      },
+    }),
+  },
+  {
+    id: 'sql-no-function',
+    languages: ['sql'],
+    match: /no such function: (\S+)/,
+    build: (m) => ({
+      en: {
+        title: `SQLite has no function called ${m[1]}`,
+        why: `The name ${m[1]} is not a function SQLite knows. It may be misspelled, or it may exist in another database system (MySQL or SQL Server) but not in SQLite.`,
+        fix: 'Check the spelling. Common SQLite functions: COUNT, SUM, AVG, MIN, MAX, ROUND, LENGTH, UPPER, LOWER, SUBSTR, REPLACE, COALESCE, DATE.',
+      },
+      sw: {
+        title: `SQLite haina kitendakazi kiitwacho ${m[1]}`,
+        why: `Jina ${m[1]} si kitendakazi ambacho SQLite inakijua. Linaweza kuwa limekosewa tahajia, au lipo kwenye mfumo mwingine (MySQL au SQL Server) lakini si SQLite.`,
+        fix: 'Angalia tahajia. Vitendakazi vya kawaida vya SQLite: COUNT, SUM, AVG, MIN, MAX, ROUND, LENGTH, UPPER, LOWER, SUBSTR, REPLACE, COALESCE, DATE.',
+      },
+    }),
+  },
+  {
+    id: 'sql-table-exists',
+    languages: ['sql'],
+    match: /table (\S+) already exists/,
+    build: (m) => ({
+      en: {
+        title: `The table "${m[1]}" already exists`,
+        why: `You tried to create a table with a name that is already taken in this database.`,
+        fix: `Choose a different name, or write CREATE TABLE IF NOT EXISTS ${m[1]} (...) so SQL skips it when it is already there.`,
+      },
+      sw: {
+        title: `Jedwali "${m[1]}" tayari lipo`,
+        why: 'Ulijaribu kuunda jedwali kwa jina ambalo tayari limetumika kwenye hifadhidata hii.',
+        fix: `Chagua jina tofauti, au andika CREATE TABLE IF NOT EXISTS ${m[1]} (...) ili SQL liruke kama tayari lipo.`,
       },
     }),
   },

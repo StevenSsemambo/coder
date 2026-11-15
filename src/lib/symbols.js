@@ -47,6 +47,25 @@ export const SYMBOLS = {
   ],
 };
 
+// SQL: the keys a phone keyboard hides (quotes, brackets, * and %), plus the words typed most often.
+SYMBOLS.sql = [
+  { label: 'Tab', text: '  ' },
+  { label: ';', text: ';' },
+  { label: "' '", text: "''", back: 1 },
+  { label: '( )', text: '()', back: 1 },
+  { label: '*', text: '*' },
+  { label: ',', text: ',' },
+  { label: '=', text: '=' },
+  { label: '<>', text: '<>' },
+  { label: '<', text: '<' },
+  { label: '>', text: '>' },
+  { label: '%', text: '%' },
+  { label: '_', text: '_' },
+  { label: '.', text: '.' },
+  { label: '||', text: '||' },
+  { label: '--', text: '-- ' },
+];
+
 SYMBOLS.cpp = [
   { label: 'Tab', text: '    ' },
   { label: ';', text: ';' },
