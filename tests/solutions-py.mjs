@@ -1,6 +1,8 @@
 // Reference solutions for Python exercises from Level 6 on (lesson 36 and later).
 // Every exercise must have one, and it must pass all its tests. The starter code must NOT pass.
 
+import { level6Solution as L6 } from '../src/content/py/level6b.js';
+
 export const pySolutions = {
   // ---- lesson 36: decorators
   'py35-discount': `def make_discount(percent):
@@ -131,5 +133,86 @@ except ValueError as e:
     print(e)
 except AttributeError:
     print("No setter yet")
+`,
+
+  // ---- lesson 39: type hints, guard clauses, clean code
+  'py38-hints': `def average(marks: list[int]) -> float:
+    """Return the average of the marks."""
+    return sum(marks) / len(marks)
+
+marks = [int(x) for x in input().split()]
+print(average.__annotations__)
+print("Docstring:", "yes" if average.__doc__ else "no")
+print(average(marks))
+`,
+  'py38-grade': `def grade(marks):
+    if marks < 0 or marks > 100:
+        raise ValueError("Marks must be between 0 and 100")
+    if marks >= 80:
+        return "A"
+    if marks >= 50:
+        return "Pass"
+    return "Fail"
+
+marks = int(input())
+try:
+    print(grade(marks))
+except ValueError:
+    print("Invalid marks")
+`,
+  'py38-basket': `def add_item(item, basket=None):
+    if basket is None:
+        basket = []
+    basket.append(item)
+    return basket
+
+print(add_item(input()))
+print(add_item(input()))
+`,
+
+  // ---- lesson 40: regular expressions
+  'py39-extract': String.raw`import re
+
+sms = input()
+m = re.search(r"UGX ([\d,]+) from \w+ (07\d{8})", sms)
+amount = m.group(1).replace(",", "")
+phone = m.group(2)
+print(f"Amount: {amount}")
+print(f"From: {phone}")
+`,
+  'py39-validate': String.raw`import re
+
+n = int(input())
+for i in range(n):
+    number = input()
+    if re.fullmatch(r"(07|\+2567)\d{8}", number):
+        print("valid")
+    else:
+        print("invalid")
+`,
+  'py39-hide': String.raw`import re
+
+text = input()
+print(re.sub(r"(07\d{2})\d{6}", r"\1******", text))
+`,
+
+  // ---- lesson 41: project, the customer ledger
+  'py40-ledger': `import re
+from contextlib import contextmanager
+from dataclasses import dataclass
+
+${L6.LEDGER_CORE}
+
+${L6.SESSION}
+
+${L6.PROCESS}
+
+n = int(input())
+ledger = Ledger()
+with ledger_session():
+    for _ in range(n):
+        line = input()
+        process(ledger, line)
+    print(f"Total owed: {ledger.total_owed}")
 `,
 };

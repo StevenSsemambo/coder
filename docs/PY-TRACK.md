@@ -20,13 +20,13 @@ is run by `npm test`, so nothing is taught that does not work.
 
 ## Roadmap
 
-### Level 6: Writing Python like a professional (lessons 36 to 41)
+### Level 6: Writing Python like a professional (lessons 36 to 41) - DONE
 - [x] 36 `py-decorators`: functions as values, closures, decorators
 - [x] 37 `py-context`: `with`, `@contextmanager`, `raise`, custom exceptions
 - [x] 38 `py-special`: `__str__`, `__eq__`, `__len__`, `@property`, dataclasses
-- [ ] 39 `py-typing`: type hints, docstrings and clean-code habits
-- [ ] 40 `py-regex`: regular expressions
-- [ ] 41 `py-project-ledger`: Project: customer ledger with proper error handling
+- [x] 39 `py-typing`: type hints, docstrings and clean-code habits
+- [x] 40 `py-regex`: regular expressions
+- [x] 41 `py-project-ledger`: Project: customer ledger with proper error handling
 
 ### Level 7: Data and algorithms (lessons 42 to 46)
 - [ ] 42 Big-O in plain words
