@@ -3,7 +3,7 @@
 Course id `cpp-start`, language id `cpp`. Files: `src/content/cpp/` (lessons), `src/content/cpp-course.js`
 (the course list), `tests/solutions-cpp.mjs` (reference solutions). Owner: the C++ account.
 
-Files by lesson: `level1.js` (1 to 3), `level2.js` (4), `switch.js` (5), `loops.js` (6 to 8), `till.js` (9).
+Files by lesson: `level1.js` (1 to 3), `level2.js` (4), `switch.js` (5), `loops.js` (6 to 8), `till.js` (9), `functions.js` (10 to 12), `momo.js` (13).
 
 Running project: **Mama Rose's Rolex Stand**, a rolex (chapati rolled round an omelette) stall beside the
 campus gate. Learners meet it in lesson 1 (the chalkboard menu) and finish Part A by building its till.
@@ -35,10 +35,10 @@ start with `cpp<lesson number>-`.
 - [x] 9. `cpp-rolex` Project: Mama Rose's till (sentinel loop, `switch`, `bool`, receipt with `setw`)
 
 **Level 3: Functions**
-- [ ] 10. `cpp-functions` Functions: define, call, return, prototypes
-- [ ] 11. `cpp-scope` Parameters, scope, global variables, default arguments (defined in the function, see limits)
-- [ ] 12. `cpp-recursion` Recursion
-- [ ] 13. `cpp-menu` Project: a Mobile Money menu
+- [x] 10. `cpp-functions` Functions: define, call, return, prototypes, `bool` functions
+- [x] 11. `cpp-scope` Parameters are copies, local and global variables, `static`, default arguments (written in the definition, see limits)
+- [x] 12. `cpp-recursion` Recursion: base case, tracing, factorial, Fibonacci, GCD
+- [x] 13. `cpp-momo` Project: a Mobile Money kiosk built from small functions (lesson id is `cpp-momo`)
 
 **Level 4: Arrays and text**
 - [ ] 14. `cpp-arrays` Arrays
@@ -86,6 +86,13 @@ Behaviours that differ from real C++ (say so honestly in lessons where they matt
   `switch` that is not inside a loop misbehaves. Lessons never rely on either.
 - A variable **declared after `main` closes** still counts as a global here, so a "put these lines in order"
   puzzle that has a declaration line can be solved in a wrong order. Keep declarations in the fixed first block.
+- **Recursion depth is limited**: about 400 nested calls work and 500 stop with "Maximum call stack size exceeded"
+  (real C++ allows tens of thousands). Lessons keep recursion small and say so.
+- A **default argument written in a prototype** does not work here (`method ... does not seem to be implemented`).
+  Lessons write the full function, with its defaults, above `main`. Function **overloading** is also not available.
+- A call **before** a function's definition runs here without a prototype, but a real compiler refuses it. Lessons
+  say so and always define the function above `main` or write a prototype.
+- A non-`void` function that reaches its end without `return` stops with "you must return a value" (real C++ only warns).
 - A `const` **can be changed** here (no error). A real compiler refuses. Lesson 3 says so out loud.
 - Leaving out `using namespace std;` still works here when `<iostream>` is included. A real compiler refuses.
   Lessons always write it.
@@ -145,10 +152,10 @@ a big job and still not the real language.
 | `src/lib/runners.js` | `cpp` runner, using the same `c.worker.js` as C (its own worker instance) |
 | `src/lib/csource.js` | `prepareSource('cpp', ...)` normalises like C |
 | `src/lib/editor.js`, `src/lib/symbols.js` | C++ syntax colouring and a symbol bar with `<<` and `>>` |
-| `src/lib/errors.js` | new rule `cpp-missing-iostream`; C++ also uses the C rules; `timeout` covers `cpp` |
+| `src/lib/errors.js` | new rules `cpp-missing-iostream` and `cpp-stack` (C++ only); C++ also uses the C rules; `timeout` covers `cpp` |
 | `src/ui/views/learn.js` | label `C++` |
 | `src/content/index.js` | one import and one entry in the registry |
-| `tests/run.mjs`, `tests/solutions.mjs` | C++ runs on the C runner; 5 new error-translator checks; `cppSolutions` merged |
+| `tests/run.mjs`, `tests/solutions.mjs` | C++ runs on the C runner; 6 new error-translator checks; `cppSolutions` merged |
 
 ## Lesson style for C++
 

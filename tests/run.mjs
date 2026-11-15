@@ -315,6 +315,7 @@ section('Error translator (real messages from the runtimes)');
     ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ cout << total; return 0; }', 'c-undeclared', 'C++ undeclared variable'],
     ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ int a = 5, b = 0; cout << a / b; return 0; }', 'c-zero-division', 'C++ divide by zero'],
     ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ while (true) { } return 0; }', 'timeout', 'C++ infinite loop'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint f(int n){ return n + f(n - 1); }\nint main(){ cout << f(3); return 0; }', 'cpp-stack', 'C++ recursion without a base case'],
     ['sql', 'SELECT * FROM pupils;', 'sql-no-table', 'SQL missing table'],
     ['sql', 'SELECT colour FROM t;', 'sql-no-column', 'SQL missing column'],
     ['sql', 'SELECT name FORM t;', 'sql-syntax', 'SQL misspelled keyword'],

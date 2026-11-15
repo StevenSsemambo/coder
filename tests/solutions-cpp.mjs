@@ -1,6 +1,6 @@
 // Reference solutions for the C++ course (see docs/CPP-TRACK.md). Every C++ exercise must have one here,
 // it must pass all its tests, and the starter must NOT pass.
-import { prog, IO_FMT } from '../src/content/cpp/shared.js';
+import { prog, progFn, IO_FMT } from '../src/content/cpp/shared.js';
 
 const P = (body) => prog(body);
 const PF = (body) => prog(body, IO_FMT);
@@ -167,4 +167,105 @@ export const cppSolutions = {
     cout << "Highest: " << highest << endl;
     cout << fixed << setprecision(2);
     cout << "Average: " << (double)total / n << endl;`),
+
+  // Lesson 10: functions
+  'cpp10-cost': progFn('int cost(int qty) {\n    return qty * 3000;\n}', '    int qty;\n    cin >> qty;\n    cout << "Cost: " << cost(qty) << endl;'),
+  'cpp10-bigger': progFn('int bigger(int a, int b) {\n    if (a > b) {\n        return a;\n    }\n    return b;\n}', '    int a, b;\n    cin >> a >> b;\n    cout << "Bigger: " << bigger(a, b) << endl;'),
+  'cpp10-prime': progFn(String.raw`bool isPrime(int n) {
+    if (n < 2) {
+        return false;
+    }
+    for (int i = 2; i < n; i++) {
+        if (n % i == 0) {
+            return false;
+        }
+    }
+    return true;
+}`, String.raw`    int n;
+    cin >> n;
+    if (isPrime(n)) {
+        cout << "Prime" << endl;
+    } else {
+        cout << "Not prime" << endl;
+    }`),
+
+  // Lesson 11: parameters, scope, default arguments
+  'cpp11-fee': progFn('int fee(int amount, int percent = 10) {\n    return amount * percent / 100;\n}', '    int amount;\n    cin >> amount;\n    cout << "Fee: " << fee(amount) << endl;\n    cout << "Fee at 5%: " << fee(amount, 5) << endl;'),
+  'cpp11-served': progFn(String.raw`int served = 0;
+int earned = 0;
+
+void sale(int amount) {
+    served++;
+    earned += amount;
+}`, String.raw`    int amount;
+    cin >> amount;
+    while (amount != 0) {
+        sale(amount);
+        cin >> amount;
+    }
+    cout << "Served: " << served << endl;
+    cout << "Earned: " << earned << endl;`),
+  'cpp11-newprice': progFn('int discounted(int price) {\n    return price * 90 / 100;\n}', '    int price;\n    cin >> price;\n    int now = discounted(price);\n    cout << "Original: " << price << endl;\n    cout << "Now: " << now << endl;'),
+
+  // Lesson 12: recursion
+  'cpp12-factorial': progFn('int fact(int n) {\n    if (n <= 1) {\n        return 1;\n    }\n    return n * fact(n - 1);\n}', '    int n;\n    cin >> n;\n    cout << "Factorial: " << fact(n) << endl;'),
+  'cpp12-fib': progFn('int fib(int n) {\n    if (n <= 1) {\n        return n;\n    }\n    return fib(n - 1) + fib(n - 2);\n}', '    int n;\n    cin >> n;\n    cout << "Fib: " << fib(n) << endl;'),
+  'cpp12-gcd': progFn('int gcd(int a, int b) {\n    if (b == 0) {\n        return a;\n    }\n    return gcd(b, a % b);\n}', '    int a, b;\n    cin >> a >> b;\n    cout << "GCD: " << gcd(a, b) << endl;'),
+
+  // Lesson 13: the Mobile Money kiosk project
+  'cpp13-fee': progFn(String.raw`int withdrawFee(int amount) {
+    if (amount <= 10000) {
+        return 300;
+    } else if (amount <= 50000) {
+        return 700;
+    }
+    return 1500;
+}`, String.raw`    int amount;
+    cin >> amount;
+    cout << "Fee: " << withdrawFee(amount) << endl;`),
+  'cpp13-wallet': progFn(String.raw`int transactions = 0;
+
+int withdrawFee(int amount) {
+    if (amount <= 10000) {
+        return 300;
+    } else if (amount <= 50000) {
+        return 700;
+    }
+    return 1500;
+}
+
+void showBalance(int balance) {
+    cout << "Balance: " << balance << endl;
+}`, String.raw`    int balance, command, amount, fee;
+    cin >> balance;
+    cin >> command;
+    while (command != 0) {
+        switch (command) {
+            case 1:
+                cin >> amount;
+                balance += amount;
+                transactions++;
+                cout << "Deposited: " << amount << endl;
+                break;
+            case 2:
+                cin >> amount;
+                fee = withdrawFee(amount);
+                if (amount + fee <= balance) {
+                    balance -= amount + fee;
+                    transactions++;
+                    cout << "Withdrew: " << amount << " (fee " << fee << ")" << endl;
+                } else {
+                    cout << "Insufficient funds" << endl;
+                }
+                break;
+            case 3:
+                showBalance(balance);
+                break;
+            default:
+                cout << "Unknown command" << endl;
+        }
+        cin >> command;
+    }
+    cout << "Goodbye" << endl;
+    cout << "Transactions: " << transactions << endl;`),
 };

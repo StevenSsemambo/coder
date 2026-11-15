@@ -13,3 +13,6 @@ export const prog = (body, inc = IO) => `${inc}\nusing namespace std;\n\nint mai
 /** The top of every program, as ONE line for reorder blocks (so it cannot be split up). */
 export const HEAD = `${IO}\nusing namespace std;\n\nint main() {`;
 export const HEAD_FMT = `${IO_FMT}\nusing namespace std;\n\nint main() {`;
+
+/** A complete program with functions written ABOVE main: `fns` goes before main, `body` inside it. */
+export const progFn = (fns, body, inc = IO) => `${inc}\nusing namespace std;\n\n${fns}\n\nint main() {\n${body}\n    return 0;\n}\n`;

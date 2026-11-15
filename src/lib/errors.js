@@ -448,6 +448,24 @@ const RULES = [
     }),
   },
 
+  {
+    id: 'cpp-stack',
+    languages: ['cpp'],
+    match: /Maximum call stack size exceeded/,
+    build: () => ({
+      en: {
+        title: 'A function kept calling itself',
+        why: 'A function calls itself (or two functions call each other) and never reaches a point where it stops, so the program ran out of room. The practice runner in this app also allows only a few hundred nested calls.',
+        fix: 'Give the function a base case: an if that returns an answer without calling itself, and make sure every call moves closer to it.',
+      },
+      sw: {
+        title: 'Function iliendelea kujiita yenyewe',
+        why: 'Function inajiita yenyewe (au function mbili zinaitana) bila kufikia mahali pa kuacha, hivyo programu imeishiwa nafasi. Mfumo wa mazoezi wa app hii pia unaruhusu miito michache tu ya ndani.',
+        fix: 'Weka kesi ya msingi: if inayorudisha jibu bila kujiita, na hakikisha kila mwito unakaribia kesi hiyo.',
+      },
+    }),
+  },
+
   // ---- C ----------------------------------------------------------------------
   {
     id: 'c-missing-include',
