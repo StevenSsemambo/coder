@@ -19,6 +19,179 @@ export const cSolutions = {
   'c4-sum': C('    int n, i, total = 0;\n    scanf("%d", &n);\n    for (i = 1; i <= n; i++) {\n        total = total + i;\n    }\n    printf("Sum: %d\\n", total);'),
   'c4-table': C('    int n, i;\n    scanf("%d", &n);\n    for (i = 1; i <= 12; i++) {\n        printf("%d x %d = %d\\n", n, i, n * i);\n    }'),
 
+  // Level 4: arrays (lessons 16 to 19)
+  'c16-reverse': C(String.raw`    int a[50];
+    int n, i;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+    for (i = n - 1; i >= 0; i--) {
+        printf("%d\n", a[i]);
+    }`),
+  'c16-average': C(String.raw`    int marks[50];
+    int n, i, total = 0;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &marks[i]);
+        total = total + marks[i];
+    }
+    printf("Average: %.2f\n", total / (float)n);`),
+  'c16-count': C(String.raw`    int marks[50];
+    int n, i, passed = 0;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &marks[i]);
+    }
+    for (i = 0; i < n; i++) {
+        if (marks[i] >= 50) {
+            passed++;
+        }
+    }
+    printf("Passed: %d\n", passed);`),
+  'c17-minmax': C(String.raw`    int a[50];
+    int n, i, min, max;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+    min = a[0];
+    max = a[0];
+    for (i = 1; i < n; i++) {
+        if (a[i] < min) {
+            min = a[i];
+        }
+        if (a[i] > max) {
+            max = a[i];
+        }
+    }
+    printf("Min: %d\n", min);
+    printf("Max: %d\n", max);`),
+  'c17-search': C(String.raw`    int a[50];
+    int n, i, target, found = -1;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+    scanf("%d", &target);
+    for (i = 0; i < n; i++) {
+        if (a[i] == target) {
+            found = i;
+            break;
+        }
+    }
+    if (found == -1) {
+        printf("Not found\n");
+    } else {
+        printf("Found at %d\n", found);
+    }`),
+  'c17-sort': C(String.raw`    int a[50];
+    int n, i, pass, temp;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+    for (pass = 0; pass < n - 1; pass++) {
+        for (i = 0; i < n - 1 - pass; i++) {
+            if (a[i] > a[i + 1]) {
+                temp = a[i];
+                a[i] = a[i + 1];
+                a[i + 1] = temp;
+            }
+        }
+    }
+    for (i = 0; i < n; i++) {
+        printf("%d\n", a[i]);
+    }`),
+  'c18-average': F(String.raw`float average(int a[], int n) {
+    int i, total = 0;
+    for (i = 0; i < n; i++) {
+        total = total + a[i];
+    }
+    return total / (float)n;
+}`, String.raw`    int a[50];
+    int n, i;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+    printf("Average: %.2f\n", average(a, n));`),
+  'c18-countabove': F(String.raw`int count_above(int a[], int n, int limit) {
+    int i, count = 0;
+    for (i = 0; i < n; i++) {
+        if (a[i] > limit) {
+            count++;
+        }
+    }
+    return count;
+}`, String.raw`    int a[50];
+    int n, i, limit;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+    scanf("%d", &limit);
+    printf("Above: %d\n", count_above(a, n, limit));`),
+  'c18-double': F(String.raw`void double_all(int a[], int n) {
+    int i;
+    for (i = 0; i < n; i++) {
+        a[i] = a[i] * 2;
+    }
+}`, String.raw`    int a[50];
+    int n, i;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+    double_all(a, n);
+    for (i = 0; i < n; i++) {
+        printf("%d\n", a[i]);
+    }`),
+  'c19-rowsums': C(String.raw`    int m[10][10];
+    int rows, cols, i, j, total;
+    scanf("%d %d", &rows, &cols);
+    for (i = 0; i < rows; i++) {
+        for (j = 0; j < cols; j++) {
+            scanf("%d", &m[i][j]);
+        }
+    }
+    for (i = 0; i < rows; i++) {
+        total = 0;
+        for (j = 0; j < cols; j++) {
+            total = total + m[i][j];
+        }
+        printf("Row %d: %d\n", i + 1, total);
+    }`),
+  'c19-diagonal': C(String.raw`    int m[10][10];
+    int n, i, j, total = 0;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            scanf("%d", &m[i][j]);
+        }
+    }
+    for (i = 0; i < n; i++) {
+        total = total + m[i][i];
+    }
+    printf("Diagonal: %d\n", total);`),
+  'c19-transpose': C(String.raw`    int m[10][10];
+    int rows, cols, i, j;
+    scanf("%d %d", &rows, &cols);
+    for (i = 0; i < rows; i++) {
+        for (j = 0; j < cols; j++) {
+            scanf("%d", &m[i][j]);
+        }
+    }
+    for (j = 0; j < cols; j++) {
+        for (i = 0; i < rows; i++) {
+            printf("%d", m[i][j]);
+            if (i < rows - 1) {
+                printf(" ");
+            }
+        }
+        printf("\n");
+    }`),
+
   // Level 3: functions (lessons 11 to 15)
   'c11-square': F(String.raw`int square(int n) {
     return n * n;

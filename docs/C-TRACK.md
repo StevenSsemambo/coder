@@ -42,10 +42,10 @@ progress is saved under them). Exercise ids start with `c<lesson number>-`.
 - [x] 15. `c-debug` Finding bugs: error types, dry runs and trace tables, testing
 
 **Level 4: Arrays and strings**
-- [ ] 16. Arrays
-- [ ] 17. Array algorithms: search, minimum, maximum, bubble sort
-- [ ] 18. Arrays and functions
-- [ ] 19. Two-dimensional arrays
+- [x] 16. `c-arrays` Arrays
+- [x] 17. `c-array-algos` Array algorithms: search, minimum, maximum, bubble sort
+- [x] 18. `c-array-fn` Arrays and functions
+- [x] 19. `c-2d` Two-dimensional arrays
 - [ ] 20. Strings as character arrays
 - [ ] 21. `string.h` and `ctype.h`
 - [ ] 22. Project: class marks processor
@@ -93,6 +93,10 @@ Behaviours that differ from real C (say so honestly in lessons where they matter
 
 - **`static` local variables** were ignored by JSCPP (a `static` counter restarted on every call). `scripts/prepare-runtimes.mjs` now patches `interpreter.js` so a static local is created once and keeps its value; a static with no value starts at 0. Lesson 12 and `c12-ticket` exercise it.
 - **Spaces next to brackets in strings** were dropped by the interpreter inside function calls (`printf("Fee (UGX): %d")` printed `Fee(UGX):`). `src/lib/csource.js` now escapes them, the same way it already protected spaces after commas. Tests are in `tests/run.mjs`, section "C source preparation".
+
+- **Short array lists** (`int a[5] = {10, 20};`) left the missing boxes without a value, and `{5}` became `-1, 0, 0`. A new patch pads with zeros as C does, and cuts a flat list for a 2D array into rows. `{0}` now works for 2D arrays too.
+- **`strcmp` and `strncmp`** never stopped at the end of the text, so comparing two **equal** strings crashed, and `strncmp` ignored its length. Both are patched in `scripts/prepare-runtimes.mjs` (tests in `tests/run.mjs`).
+- Still not working: `strchr` (result cannot be printed), `strstr`, `fgets`. Reading or writing outside an array **stops with an error** here; real C carries on silently.
 
 ### The `scanf` patch
 

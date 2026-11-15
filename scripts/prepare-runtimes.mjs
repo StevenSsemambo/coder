@@ -127,6 +127,73 @@ const PATCHES = [
       '                            s.__statics[name] = rt.scope[rt.scope.length - 1].variables[name];\n' +
       '                        }',
   },
+  {
+    // `int a[5] = {10, 20};` must give 10, 20, 0, 0, 0. JSCPP left the missing elements without a value (reading one stopped
+    // the program) and turned `{5}` into -1, 0, 0... Pad the list with zeros first, which is what C does. A flat list for a 2D
+    // array ({1,2,3,4}) is cut into rows, as C does (brace elision).
+    file: /JSCPP\/lib\/interpreter\.js$/,
+    why: 'array initialiser lists with fewer values than the array size must fill the rest with zeros',
+    find:
+      '            const curDim = dimensions[0];\n' +
+      '            if (init) {\n',
+    replace:
+      '            const curDim = dimensions[0];\n' +
+      '            if (init && init.type === "Initializer_array" && init.Initializers != null && dimensions.length === 2 && init.Initializers.length > 0 && init.Initializers.every((e) => e.type === "Initializer_expr" && !("shorthand" in e))) {\n' +
+      '                const rows = [];\n' +
+      '                for (let r = 0; r < init.Initializers.length; r += dimensions[1]) {\n' +
+      '                    rows.push({ type: "Initializer_array", Initializers: init.Initializers.slice(r, r + dimensions[1]) });\n' +
+      '                }\n' +
+      '                init.Initializers = rows;\n' +
+      '            }\n' +
+      '            if (init && init.type === "Initializer_array" && init.Initializers != null && init.Initializers.length > 0 && init.Initializers.length < curDim) {\n' +
+      '                const padded = init.Initializers.slice();\n' +
+      '                while (padded.length < curDim) {\n' +
+      '                    padded.push(dimensions.length > 1 ? { type: "Initializer_array", Initializers: [{ type: "Initializer_expr", shorthand: this.rt.val(type, 0) }] } : { type: "Initializer_expr", shorthand: this.rt.val(type, 0) });\n' +
+      '                }\n' +
+      '                init.Initializers = padded;\n' +
+      '            }\n' +
+      '            if (init) {\n',
+  },
+  {
+    // strcmp ran past the end of the text (it never stopped at the terminating zero), so comparing two EQUAL strings
+    // crashed with "overflow of NaN". It also mixed up the two start positions.
+    file: /JSCPP\/lib\/includes\/cstring\.js$/,
+    why: 'strcmp must stop at the end of the string, so equal strings give 0',
+    find:
+      '                while ((i < srcarr.length) && (j < destarr.length) && (srcarr[i].v === destarr[i].v)) {\n' +
+      '                    i++;\n' +
+      '                    j++;\n' +
+      '                }\n' +
+      '                return rt.val(rt.intTypeLiteral, destarr[i].v - srcarr[i].v);',
+    replace:
+      '                while ((i < srcarr.length) && (j < destarr.length) && (srcarr[i].v === destarr[j].v) && (srcarr[i].v !== 0)) {\n' +
+      '                    i++;\n' +
+      '                    j++;\n' +
+      '                }\n' +
+      '                return rt.val(rt.intTypeLiteral, (j < destarr.length ? destarr[j].v : 0) - (i < srcarr.length ? srcarr[i].v : 0));',
+  },
+  {
+    // strncmp compared whole strings (it stopped counting too late) and ignored the length.
+    file: /JSCPP\/lib\/includes\/cstring\.js$/,
+    why: 'strncmp must compare at most n characters and stop at the end of the string',
+    find:
+      '                while ((n > 0) && (i < srcarr.length) && (j < destarr.length) && (srcarr[i].v === destarr[i].v)) {\n' +
+      '                    i++;\n' +
+      '                    j++;\n' +
+      '                    n--;\n' +
+      '                }\n' +
+      '                return rt.val(rt.intTypeLiteral, destarr[i].v - srcarr[i].v);',
+    replace:
+      '                while ((n > 0) && (i < srcarr.length) && (j < destarr.length) && (srcarr[i].v === destarr[j].v) && (srcarr[i].v !== 0)) {\n' +
+      '                    i++;\n' +
+      '                    j++;\n' +
+      '                    n--;\n' +
+      '                }\n' +
+      '                if (n <= 0) {\n' +
+      '                    return rt.val(rt.intTypeLiteral, 0);\n' +
+      '                }\n' +
+      '                return rt.val(rt.intTypeLiteral, (j < destarr.length ? destarr[j].v : 0) - (i < srcarr.length ? srcarr[i].v : 0));',
+  },
 ];
 const countOf = (text, part) => text.split(part).length - 1;
 
@@ -147,7 +214,7 @@ await build({
         b.onResolve({ filter: /^(util|stream|fs|readline)$/ }, (a) => ({ path: a.path, namespace: 'shim' }));
         b.onLoad({ filter: /.*/, namespace: 'shim' }, (a) => ({ contents: SHIMS[a.path], loader: 'js' }));
 
-        b.onLoad({ filter: /JSCPP[\\/]lib[\\/](includes[\\/]cstdio|interpreter)\.js$/ }, (a) => {
+        b.onLoad({ filter: /JSCPP[\\/]lib[\\/](includes[\\/]cstdio|includes[\\/]cstring|interpreter)\.js$/ }, (a) => {
           // The library ships with Windows (CRLF) line endings; normalise so patches match everywhere.
           let text = readFileSync(a.path, 'utf8').replace(/\r\n/g, '\n');
           for (const p of PATCHES.filter((x) => x.file.test(a.path.replace(/\\/g, '/')))) {
