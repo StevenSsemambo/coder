@@ -58,6 +58,11 @@ progress is saved under them). Exercise ids start with `c<lesson number>-`.
 - [x] 28. `c-number-algos` Number detective: digit sum, reverse, GCD, primes, Fibonacci
 - [x] 29. `c-sorting` Sorting and searching: selection sort, insertion sort, binary search
 
+**Level 7: Putting it together**
+- [x] 30. `c-text-algos` Text detective: vowels, reverse, palindrome, Caesar cipher
+- [x] 31. `c-recursion-deep` Recursion in depth: power, digits, binary, Tower of Hanoi, arrays
+- [x] 32. `c-stock-system` Capstone: the Duuka stock system (parallel arrays, validation, menu loop)
+
 ### Part B: blocked until the interpreter can run it
 
 Structures (`struct`), `typedef`, `enum`, `union`, dynamic memory (`malloc`, `free`), file handling

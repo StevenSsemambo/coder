@@ -840,4 +840,153 @@ int main() {
     printf("1st: %d\n", m[0]);
     printf("2nd: %d\n", m[1]);
     printf("3rd: %d\n", m[2]);`),
+
+  // Level 7: putting it together (lessons 30 to 32)
+  'c30-vowels': `#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+int main() {
+    char word[50];
+    int i, vowels = 0;
+    scanf("%s", word);
+    for (i = 0; word[i] != '\\0'; i++) {
+        char c = tolower(word[i]);
+        if (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u') {
+            vowels++;
+        }
+    }
+    printf("Vowels: %d\\n", vowels);
+    return 0;
+}
+`,
+  'c30-reverse': `#include <stdio.h>
+#include <string.h>
+
+int main() {
+    char word[50];
+    scanf("%s", word);
+    int i = 0, j = strlen(word) - 1;
+    while (i < j) {
+        char temp = word[i];
+        word[i] = word[j];
+        word[j] = temp;
+        i++;
+        j--;
+    }
+    printf("%s\\n", word);
+    return 0;
+}
+`,
+  'c30-palin': `#include <stdio.h>
+#include <string.h>
+
+int main() {
+    char s[50];
+    scanf("%s", s);
+    int i, len = strlen(s), same = 1;
+    for (i = 0; i < len / 2; i++) {
+        if (s[i] != s[len - 1 - i]) {
+            same = 0;
+        }
+    }
+    if (same) {
+        printf("Yes\\n");
+    } else {
+        printf("No\\n");
+    }
+    return 0;
+}
+`,
+  'c30-caesar': `#include <stdio.h>
+#include <string.h>
+
+int main() {
+    char word[50];
+    int shift, i;
+    scanf("%s %d", word, &shift);
+    for (i = 0; word[i] != '\\0'; i++) {
+        printf("%c", (word[i] - 'a' + shift) % 26 + 'a');
+    }
+    printf("\\n");
+    return 0;
+}
+`,
+  'c31-power': F(String.raw`int power(int base, int exp) {
+    if (exp == 0) {
+        return 1;
+    }
+    return base * power(base, exp - 1);
+}`, String.raw`    int b, e;
+    scanf("%d %d", &b, &e);
+    printf("Result: %d\n", power(b, e));`),
+  'c31-binary': F(String.raw`void binary(int n) {
+    if (n > 1) {
+        binary(n / 2);
+    }
+    printf("%d", n % 2);
+}`, String.raw`    int n;
+    scanf("%d", &n);
+    binary(n);
+    printf("\n");`),
+  'c31-sumarr': F(String.raw`int sum(int a[], int n) {
+    if (n == 0) {
+        return 0;
+    }
+    return a[n - 1] + sum(a, n - 1);
+}`, String.raw`    int a[5], i;
+    for (i = 0; i < 5; i++) {
+        scanf("%d", &a[i]);
+    }
+    printf("Total: %d\n", sum(a, 5));`),
+  'c32-sell': `#include <stdio.h>
+
+#define ITEMS 4
+
+int main() {
+    int price[ITEMS] = {3000, 1500, 2500, 800};
+    int stock[ITEMS] = {10, 20, 5, 30};
+    int code, qty;
+    scanf("%d %d", &code, &qty);
+    if (code < 1 || code > ITEMS) {
+        printf("No such item\\n");
+    } else if (qty > stock[code - 1]) {
+        printf("Not enough stock\\n");
+    } else {
+        printf("Sold: %d\\n", qty * price[code - 1]);
+    }
+    return 0;
+}
+`,
+  'c32-restock': `#include <stdio.h>
+
+#define ITEMS 4
+
+int main() {
+    int stock[ITEMS] = {10, 20, 5, 30};
+    int n, i, code, qty, total = 0;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d %d", &code, &qty);
+        stock[code - 1] = stock[code - 1] + qty;
+    }
+    for (i = 0; i < ITEMS; i++) {
+        total = total + stock[i];
+    }
+    printf("Total stock: %d\\n", total);
+    return 0;
+}
+`,
+  'c32-menu': C(String.raw`    int choice, customers = 0, sales = 0;
+    do {
+        scanf("%d", &choice);
+        if (choice == 1) {
+            customers++;
+        } else if (choice == 2) {
+            sales++;
+        } else if (choice == 3) {
+            printf("Customers: %d Sales: %d\n", customers, sales);
+        }
+    } while (choice != 0);
+    printf("Bye\n");`),
 };
