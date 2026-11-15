@@ -78,9 +78,41 @@ export const CUSTOMERS_B = [
 const PRODUCT_SQL = 'id INTEGER PRIMARY KEY, name TEXT, category TEXT, price INTEGER, stock INTEGER, supplier TEXT';
 const CUSTOMER_SQL = 'id INTEGER PRIMARY KEY, name TEXT, phone TEXT, town TEXT';
 
-/** The practice database for the lessons: products and customers. */
-export const duukaSetup = (products = PRODUCTS, customers = CUSTOMERS) =>
-  `${tableScript('products', PRODUCT_SQL, products)}\n\n${tableScript('customers', CUSTOMER_SQL, customers)}`;
+// Sales (from Level 2 on). Self-contained on purpose: `amount` is the UGX paid, so a daily report needs no join.
+export const SALE_COLS = ['id', 'sale_date', 'product_id', 'qty', 'amount', 'method'];
+export const SALES = [
+  [1, '2026-11-02', 1, 2, 9000, 'Cash'],
+  [2, '2026-11-02', 6, 1, 5000, 'MoMo'],
+  [3, '2026-11-02', 8, 5, 2500, 'Cash'],
+  [4, '2026-11-03', 2, 3, 11400, 'Cash'],
+  [5, '2026-11-03', 4, 2, 3000, 'MoMo'],
+  [6, '2026-11-03', 3, 1, 7500, 'Cash'],
+  [7, '2026-11-04', 5, 1, 15000, 'MoMo'],
+  [8, '2026-11-04', 7, 4, 4800, 'Cash'],
+  [9, '2026-11-04', 6, 2, 10000, 'Airtel'],
+  [10, '2026-11-09', 1, 1, 4500, 'Cash'],
+  [11, '2026-11-09', 12, 2, 6400, 'MoMo'],
+  [12, '2026-11-10', 10, 3, 3000, 'Cash'],
+  [13, '2026-11-10', 6, 3, 15000, 'Airtel'],
+  [14, '2026-12-01', 2, 2, 7600, 'MoMo'],
+  [15, '2026-12-01', 8, 10, 5000, 'Cash'],
+];
+export const SALES_B = [
+  [1, '2026-11-05', 3, 4, 6000, 'Cash'],
+  [2, '2026-11-05', 6, 2, 2000, 'MoMo'],
+  [3, '2026-11-06', 1, 2, 8400, 'MoMo'],
+  [4, '2026-11-06', 5, 1, 6500, 'Cash'],
+  [5, '2026-11-06', 4, 6, 1800, 'Cash'],
+  [6, '2026-12-02', 7, 1, 8000, 'Airtel'],
+  [7, '2026-12-02', 6, 5, 5000, 'MoMo'],
+  [8, '2026-12-03', 8, 2, 4000, 'Cash'],
+];
+const SALE_SQL = 'id INTEGER PRIMARY KEY, sale_date TEXT, product_id INTEGER, qty INTEGER, amount INTEGER, method TEXT';
+
+/** The practice database for the lessons: products and customers, and sales when `sales` is given. */
+export const duukaSetup = (products = PRODUCTS, customers = CUSTOMERS, sales = null) =>
+  `${tableScript('products', PRODUCT_SQL, products)}\n\n${tableScript('customers', CUSTOMER_SQL, customers)}` +
+  (sales ? `\n\n${tableScript('sales', SALE_SQL, sales)}` : '');
 export const DUUKA = duukaSetup();
 export const DUUKA_B = duukaSetup(PRODUCTS_B, CUSTOMERS_B);
 
@@ -89,3 +121,9 @@ export const productView = (names, rows = PRODUCTS) => tbl(names, rows.map((r) =
 export const customerView = (names, rows = CUSTOMERS) => tbl(names, rows.map((r) => names.map((n) => r[CUSTOMER_COLS.indexOf(n)])));
 export const allProducts = (rows = PRODUCTS) => tbl(PRODUCT_COLS, rows);
 export const allCustomers = (rows = CUSTOMERS) => tbl(CUSTOMER_COLS, rows);
+
+// With sales (Level 2, lessons 11 and 12).
+export const DUUKA_S = duukaSetup(PRODUCTS, CUSTOMERS, SALES);
+export const DUUKA_S_B = duukaSetup(PRODUCTS_B, CUSTOMERS_B, SALES_B);
+export const salesView = (names, rows = SALES) => tbl(names, rows.map((r) => names.map((n) => r[SALE_COLS.indexOf(n)])));
+export const allSales = (rows = SALES) => tbl(SALE_COLS, rows);

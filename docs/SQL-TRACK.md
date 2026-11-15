@@ -23,11 +23,11 @@ progress is saved under them). Exercise ids start with `sql<lesson number>-`.
 - [x] 7. `sql-pricelist` Project: Nakato's price list and low-stock report
 
 **Level 2: Summaries**
-- [ ] 8. `sql-aggregates` `COUNT`, `SUM`, `AVG`, `MIN`, `MAX` (and `COUNT(*)` vs `COUNT(column)`)
-- [ ] 9. `sql-group` `GROUP BY`
-- [ ] 10. `sql-having` `HAVING`, and the order of a query (`WHERE` before `GROUP BY` before `HAVING`)
-- [ ] 11. `sql-dates` Dates and times (`date`, `strftime`, grouping by month)
-- [ ] 12. `sql-daily-report` Project: the daily sales report (needs the `sales` table, see "Data")
+- [x] 8. `sql-aggregates` `COUNT`, `SUM`, `AVG`, `MIN`, `MAX` (and `COUNT(*)` vs `COUNT(column)`)
+- [x] 9. `sql-group` `GROUP BY`
+- [x] 10. `sql-having` `HAVING`, and the order of a query (`WHERE` before `GROUP BY` before `HAVING`)
+- [x] 11. `sql-dates` Dates and times (`date`, `strftime`, grouping by month)
+- [x] 12. `sql-daily-report` Project: the daily sales report (needs the `sales` table, see "Data")
 
 **Level 3: Changing data and building tables**
 - [ ] 13. `sql-create` `CREATE TABLE`, data types in SQLite
@@ -112,8 +112,11 @@ that same file, so what the tests prove is what ships. Rules:
 `src/content/sql/shared.js` holds the practice data: `products` (12 rows, with `NULL` suppliers and one
 out-of-stock item) and `customers` (6 rows), a second set of different rows for hidden tests
 (`PRODUCTS_B`, `CUSTOMERS_B`), and helpers (`tbl`, `tableScript`, `duukaSetup`, `productView`, ...).
-Later levels add a `sales` table (and `sale_items` where needed); add it to `shared.js` as new exports and
-do not change the existing rows, or the finished lessons' expected outputs change.
+`sales` (15 rows, `SALES_B` for hidden tests) arrived in Level 2: `id, sale_date, product_id, qty, amount, method`.
+`amount` is the UGX paid, so reports need no join until Level 4. Lessons 11 and 12 use `DUUKA_S` / `DUUKA_S_B`
+(`duukaSetup(products, customers, sales)`); lessons 1 to 10 keep using `DUUKA` without sales. Add new tables as new
+exports and do not change existing rows, or finished lessons' expected outputs change. GROUP BY output is
+compared with ORDER BY in every solution, never with the engine's natural group order.
 
 ## Lesson style for SQL
 
