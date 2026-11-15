@@ -47,6 +47,29 @@ export const SYMBOLS = {
   ],
 };
 
+SYMBOLS.java = [
+  { label: 'Tab', text: '    ' },
+  { label: ';', text: ';' },
+  { label: '{ }', text: '{}', back: 1 },
+  { label: '( )', text: '()', back: 1 },
+  { label: '[ ]', text: '[]', back: 1 },
+  { label: '\" \"', text: '\"\"', back: 1 },
+  { label: '<>', text: '<>', back: 1 },
+  { label: '=', text: '=' },
+  { label: '==', text: '==' },
+  { label: '!', text: '!' },
+  { label: '&&', text: '&&' },
+  { label: '||', text: '||' },
+  { label: '.', text: '.' },
+  { label: ',', text: ',' },
+  { label: '+', text: '+' },
+  { label: '-', text: '-' },
+  { label: '*', text: '*' },
+  { label: '/', text: '/' },
+  { label: '%', text: '%' },
+  { label: '\\n', text: '\\n' },
+];
+
 SYMBOLS.html = [
   { label: '<', text: '<' },
   { label: '>', text: '>' },

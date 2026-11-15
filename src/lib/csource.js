@@ -7,6 +7,8 @@
 //   2. Inside a function call, its preprocessor splits string literals at commas and brackets and drops the
 //      whitespace next to them: printf("Hello, world") prints "Hello,world" and "Total (UGX)" loses its space.
 //      Writing that whitespace as the escape \x20 keeps the exact same string and avoids the bug.
+import { normalizeJava } from './javasource.js';
+
 
 /** Split source into code, string-literal, char-literal and comment segments. */
 function segments(source) {
@@ -73,5 +75,6 @@ export function normalizeC(source) {
 }
 
 export function prepareSource(language, source) {
+  if (language === 'java') return normalizeJava(source);
   return language === 'c' ? normalizeC(source) : source;
 }

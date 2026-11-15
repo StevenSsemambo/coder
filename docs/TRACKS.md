@@ -4,7 +4,7 @@ Read this file first, every session. It exists because the project is built by m
 account, and **accounts share no memory**. Whatever is not written in this repository is forgotten.
 Already once, one account wrote lessons that another account had finished the day before.
 
-Last updated: 2026-11-14.
+Last updated: 2026-11-15.
 
 ## The five rules
 
@@ -20,6 +20,11 @@ Last updated: 2026-11-14.
 5. **Leave a trail.** Before you finish (or when you feel your limit approaching), add a row to the
    handoff log at the bottom of this file and tick the roadmap of your track.
 
+**Decision of the project owner (Steven, 2026-11-15):** the Java account owns **everything that is about Java**, including
+the engine and app code that runs, edits, downloads, tests and explains Java (the Java row below lists the files). Rule 2
+stays as it is for every other language: the Java account does not edit the C, Python or web parts of those shared files,
+and `npm test` must stay green for all languages.
+
 ## The tracks
 
 | Track | Course id | Language id | Files you own | Status | Owner |
@@ -27,21 +32,21 @@ Last updated: 2026-11-14.
 | Web (HTML, CSS, JavaScript) | `web-start` | `web` | `src/content/web/`, `src/content/web-course.js`, `docs/WEB-TRACK.md` | Written: 36 lessons, 105 exercises. Later ideas in its roadmap. | (unassigned) |
 | Python | `py-start` | `python` | `src/content/py/`, `src/content/python-course.js` | Written: 35 lessons (5 levels), 68 exercises. Depth beyond Level 5 not planned yet. | (unassigned) |
 | C (module TTSD113) | `c-structured` | `c` | `src/content/c/`, `src/content/c-course.js`, `tests/solutions-c.mjs`, `docs/C-TRACK.md` | In progress, see `docs/C-TRACK.md` | C account |
-| Java | `java-start` (proposed) | `java` | `src/content/java/`, `src/content/java-course.js`, `tests/solutions-java.mjs`, `tests/java-probe.mjs`, `docs/JAVA-TRACK.md` | Feasibility done: real Java runs offline (see `docs/JAVA-TRACK.md`). No lessons until the engine owner adds the runtime (E1 to E10 there). | Java account |
+| Java | `java-start` (proposed) | `java` | `src/content/java/`, `src/content/java-course.js`, `tests/solutions-java.mjs`, `docs/JAVA-TRACK.md`, **and the Java engine/app code**: `src/lib/javasource.js`, `public/workers/java.worker.js`, `tests/java-node.mjs`, `tests/java-node-worker.mjs`, `tests/java-probe.mjs`, plus the Java parts of `src/lib/runners.js`, `src/lib/packs.js`, `src/lib/errors.js`, `src/lib/symbols.js`, `src/lib/editor.js`, `scripts/prepare-runtimes.mjs`, `tests/run.mjs` (sections marked Java), the Settings and playground screens | **The runtime is built, tested and verified in a real browser (Chromium 153), online and offline.** The Java playground tab works. No lessons yet: Level 1 is next. See `docs/JAVA-TRACK.md`. | Java account |
 | VB.NET | not created | not created | would be `src/content/vb/` | **Not started.** Needs a runtime first (see below). | (unassigned) |
-| Engine and app | | | everything under `src/lib/`, `src/ui/`, `public/`, `scripts/`, `tests/run.mjs`, `tests/render.mjs`, `README.md`, `.github/` | Working. Open items below. | **one account only** |
+| Engine and app | | | everything under `src/lib/`, `src/ui/`, `public/`, `scripts/`, `tests/run.mjs`, `tests/render.mjs`, `README.md`, `.github/` (except the Java parts listed in the Java row) | Working. Open items below. | **one account only** |
 
 **One owner per track.** Two accounts on the same track will collide. The engine and app track has
 exactly one owner because everything else depends on it: a change there can break every course.
 
-### Java and VB.NET need a runtime before any lesson
+### VB.NET needs a runtime before any lesson (Java is done)
 
-C runs on JSCPP and Python on Pyodide, both inside the browser with no internet. There is no Java or
-VB.NET runtime in the app yet, and nobody has checked what can run **offline in a phone browser**.
-The first job on these tracks is a feasibility note (`docs/JAVA-TRACK.md`, `docs/VB-TRACK.md`):
+C runs on JSCPP, Python on Pyodide and Java on OpenJDK `javac` + TeaVM compiled to WebAssembly, all inside the browser
+with no internet. There is no VB.NET runtime in the app yet, and nobody has checked what can run **offline in a phone
+browser**. The first job on that track is a feasibility note (`docs/VB-TRACK.md`, modelled on `docs/JAVA-TRACK.md`):
 which interpreter or compiler, how big the download is, what subset of the language it supports,
 and whether it runs in a Web Worker. Do not write lessons until that note says the runtime works.
-Runtime work touches the engine files, so coordinate it with the engine owner.
+Runtime work touches the engine files, so coordinate it with the engine owner (or, for Java, see the decision above).
 
 ## Shared files (be careful)
 
@@ -51,10 +56,10 @@ These are used by every track. Do not reformat or reorganise them.
 |---|---|
 | `src/content/index.js` | The course registry. A new track adds **one** import and **one** entry. Nothing else. |
 | `src/content/blocks.js` | The lesson block format. Changing it affects every course. Engine owner only. |
-| `tests/run.mjs`, `tests/render.mjs` | The test suite. Engine owner only. |
+| `tests/run.mjs`, `tests/render.mjs` | The test suite. Engine owner only, except the sections marked Java, which the Java account owns. |
 | `tests/solutions.mjs` | Merges the per-track solution files. Do not add solutions here; add them to your track's file (`tests/solutions-c.mjs`, and so on). |
 | `README.md` | Engine owner updates it. Tracks report their status in this file instead. |
-| `src/lib/errors.js` | Plain-language error messages. Add rules for your language, never edit another language's. |
+| `src/lib/errors.js` | Plain-language error messages. Add rules for your language, never edit another language's (the `java-*` rules belong to the Java account). |
 | `scripts/prepare-runtimes.mjs` | Each runtime has a list of small patches. The account that owns a language may add a patch for **its own** runtime when a lesson is blocked by a bug, if the patch has a clear `why` and a lesson exercises it (the build stops loudly if a patch stops applying). Never edit another language's patches or the build logic. |
 
 ## Before you start a session
@@ -181,3 +186,4 @@ Add a row at the **bottom** each session. Newest last.
 | 2026-11-15 | Claude, C | C Level 4, part 1: `c-arrays`, `c-array-algos`, `c-array-fn`, `c-2d` (lessons 16 to 19, in `src/content/c/arrays.js`); 12 new exercises. **Engine files touched:** `scripts/prepare-runtimes.mjs` (3 new patches: short array lists padded with zeros, `strcmp`, `strncmp`), `tests/run.mjs` (7 new checks). Tests green: 5,508 checks, 0 failed | Strings: lessons 20 to 22 (strings, `string.h` and `ctype.h`, marks processor project) |
 | 2026-11-15 | Claude, C | C Level 4 finished: `c-strings`, `c-stringlib`, `c-marks` (project) (lessons 20 to 22, in `src/content/c/strings.js`); 8 new exercises. **Engine files touched:** `scripts/prepare-runtimes.mjs` (5 more patches: characters from `scanf %s`, `gets` and `strcpy` stay assignable), `tests/run.mjs` (4 checks). Tests green: 5,667 checks, 0 failed | C Level 5: pointers (lessons 23 to 25) |
 | 2026-11-15 | Claude, Java | Feasibility note `docs/JAVA-TRACK.md` (runtime `@live-codes/java-wasm` 0.1.0: real `javac` + TeaVM in WebAssembly, about 4.4 MB gzipped; 22 behaviours proven, 13 gaps documented, 12 engine requests E1 to E12) and `tests/java-probe.mjs` (repeatable proof, not part of `npm test`). No engine files touched. `npm test` still green: 5,667 checks, 0 failed. Pushed to `track/java` | Engine owner: E1 to E10 (runtime, pack, main-class detection, build-once-run-many, `%n` fix, tests). Java account after that: Level 1 lessons (1 to 6) |
+| 2026-11-15 | Claude, Java | **Java engine built, on branch `track/java`.** Real Java (OpenJDK `javac` + TeaVM in WebAssembly, `@live-codes/java-wasm` 0.1.0, pinned) runs in the app: Java tab in the playground, a Java download card in Settings (7.8 MB, cached for offline use like Python), editor mode, symbol bar, Java-aware errors in English and Kiswahili (`java-*` rules), a build cache so one program runs against many inputs in milliseconds, a 90 s build allowance then the normal 8 s run limit, runaway loops stopped and the engine restarted. Source preparation fixes `%n`, `10 / 0` and the main class name (`src/lib/javasource.js`). Exceptions are reported like real Java. Verified in headless Chromium 153: online, download from Settings, then **offline**. `npm test` green: 5,791 checks, 0 failed (+124 Java checks). Not verified: a real phone, Firefox, Safari | Java account: Level 1 lessons (1 to 6). Engine owner: review the shared-file changes listed in the Java row |

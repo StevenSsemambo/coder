@@ -3,7 +3,7 @@
 // every claim made in docs/JAVA-TRACK.md. It is NOT part of `npm test` (it is slow and needs the
 // engine installed). Re-run it whenever the engine version changes.
 //
-//   npm install --no-save @live-codes/java-wasm@0.1.0
+//   npm install        (the engine is a normal dependency now)
 //   node tests/java-probe.mjs            (about 3 to 4 minutes)
 //
 // "works" probes must print exactly `expect`. "gap" probes record a known limitation and must keep

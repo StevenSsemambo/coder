@@ -7,6 +7,7 @@ import { closeBrackets, closeBracketsKeymap } from '@codemirror/autocomplete';
 import { tags } from '@lezer/highlight';
 import { python } from '@codemirror/lang-python';
 import { cpp } from '@codemirror/lang-cpp';
+import { java } from '@codemirror/lang-java';
 import { html } from '@codemirror/lang-html';
 import { css } from '@codemirror/lang-css';
 import { javascript } from '@codemirror/lang-javascript';
@@ -38,6 +39,7 @@ const theme = EditorView.theme({
 
 const languageExtension = (language) => {
   if (language === 'c') return cpp();
+  if (language === 'java') return java();
   if (language === 'html') return html();
   if (language === 'css') return css();
   if (language === 'js') return javascript();

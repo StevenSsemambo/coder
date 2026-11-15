@@ -1,11 +1,11 @@
 # The Java track
 
-Course id `java-start` (proposed), language `java`. Files this track owns: `src/content/java/` (lessons),
-`src/content/java-course.js` (course list), `tests/solutions-java.mjs` (reference solutions),
-`tests/java-probe.mjs` (the runtime probe, see below) and this file. Owner: the Java account.
+Course id `java-start` (proposed), language `java`. The Java account owns the lessons (`src/content/java/`,
+`src/content/java-course.js`, `tests/solutions-java.mjs`) **and the Java engine and app code** (see the Java row in
+`docs/TRACKS.md`, decision of the project owner on 2026-11-15).
 
-Last updated: 2026-11-15. Status: **feasibility done, no lessons yet, waiting for the engine owner** (see
-"Engine requests").
+Last updated: 2026-11-15. Status: **the runtime is built into the app and verified in a real browser. No lessons yet;
+Level 1 is next.**
 
 ## 1. Verdict
 
@@ -19,8 +19,11 @@ It is **not** the full JDK. The class library is TeaVM's subset, and a few behav
 Java in ways that matter for teaching. Section 4 lists every one I found; section 5 says how lessons
 work around each. Do not write a lesson that contradicts section 5.
 
-Everything in this note was **run**, not assumed: `node tests/java-probe.mjs` repeats it
-(22 working behaviours, 13 documented gaps, 0 unexpected on 2026-11-15).
+Everything in this note was **run**, not assumed. Two scripts repeat it:
+- `node tests/java-probe.mjs` tests the **raw engine** (22 working behaviours, 13 gaps, 0 unexpected on 2026-11-15).
+- `npm test` tests the **app's Java layer** (source preparation, the shipped worker, error explanations).
+
+Section 4 describes the raw engine. Where the app now hides or fixes a gap, the table says so.
 
 ## 2. The runtime
 
@@ -77,14 +80,14 @@ but nothing survives to the next run (the engine has an optional IndexedDB mode,
 | G2 | **Null pointer cannot be caught** | `s.length()` on `null` kills the program with `dereferencing a null pointer`. No catch runs |
 | G3 | Bad cast is not detected | `(Integer) someString` does not throw `ClassCastException`; the program carries on |
 | G4 | Stack overflow cannot be caught | Infinite recursion dies with `Maximum call stack size exceeded`; `catch (StackOverflowError e)` never runs |
-| G5 | **A literal `10 / 0` crashes the compiler** | `System.out.println(10 / 0);` makes the build itself fail with `divide by zero`, and the worker needs restarting. `5 / z` with a variable `z` works and throws `ArithmeticException: / by zero` as in real Java |
-| G6 | **`%n` in the middle of a format string eats an argument** | `printf("A=%d%nB=%d%n", 1, 2)` prints `A=1`, then `B=` with the wrong value or a crash. `%n` at the very end of the string is fine, and `\n` always works |
+| G5 | A literal `10 / 0` crashes the compiler | **Fixed in the app.** The raw engine's build fails with `divide by zero`. `src/lib/javasource.js` hides a literal zero divisor from the compiler, so `10 / 0` builds and throws `ArithmeticException: / by zero` at run time, as in real Java (and `5.0 / 0` is `Infinity`) |
+| G6 | `%n` in the middle of a format string eats an argument | **Fixed in the app.** The raw engine prints wrong values or crashes. `javasource.js` rewrites `%n` to `\n` inside string literals (`%%n` is left alone). Side effect: a non-format string that contains the two characters `%n` also gets a newline; no lesson needs that |
 | G7 | No `System.exit` | Compile error `cannot find symbol` |
 | G8 | **No GUI**: `javax.swing`, `java.awt`, JavaFX | Compile error `package javax.swing does not exist` |
 | G9 | No `ExecutorService`, `Executors`, `CompletableFuture` | Compile error. Plain `Thread` works |
 | G10 | `assert` is ON | Real Java ignores `assert` unless run with `-ea`. Here a failing `assert` stops the program |
-| G11 | The class must be called `Main` | `public class Shop { ... main ... }` fails: `class Shop is public, should be declared in a file named Shop.java`. A non-public class with `main` also fails (the engine looks for `Main`) |
-| G12 | Uncaught exceptions print only the message | Real Java prints `Exception in thread "main" java.lang.IllegalArgumentException: bad input` and a stack trace. Here stderr is just `bad input`. `e.printStackTrace()` inside a `catch` does print a trace, with extra TeaVM lines at the bottom |
+| G11 | The class must be called `Main` | **Fixed in the app.** The raw engine hardcodes `Main.java`. The app finds the class that holds `main`, compiles under the public class's name and runs that class. `public class Shop`, a non-public class with `main`, helper classes first, records and enums all work |
+| G12 | Uncaught exceptions print only the message | **Improved in the app.** The worker now writes `Exception in thread "main" java.lang.IllegalStateException: boom` followed by `\tat Main.main(Main.java)` lines for the user's own methods (no line numbers: the engine does not provide them). Traps are named after the Java exception they stand for (`NullPointerException`, `ArrayIndexOutOfBoundsException`, `StackOverflowError`), but they still **cannot be caught** (G1, G2, G4). `e.printStackTrace()` inside a `catch` still prints TeaVM-style lines |
 | G13 | Library exception messages differ | `Integer.parseInt("x1")` says `String contains digits out of radix 10: x1`, real Java says `For input string: "x1"`. `ArrayList.get(3)`, `charAt(9)`, `Optional.get()` and others give `null` as the message, where real Java gives text such as `Index 3 out of bounds for length 0` |
 
 Also seen, smaller:
@@ -96,80 +99,79 @@ Also seen, smaller:
 
 ## 5. Rules for Java lessons on this runtime
 
-1. **Name the main class `Main`**, always, until E3 is done. Say why in lesson 2 in one honest line.
-2. **Never write `printf` or `String.format` with `%n` in the middle.** Use `\n`, or a single `%n` as the very last thing. Do not mention `%n` as "the right way" in the course until E7 is done.
-3. **Teach array and null errors as crashes the learner reads, not exceptions they catch.** The lesson shows
-   the program stopping at the bad line and teaches the cure: check `i < a.length`, check `s != null`.
-   Teach `try/catch` with exceptions that really do work: `NumberFormatException`, `ArithmeticException`
-   (divisor in a variable), `IndexOutOfBoundsException` from `ArrayList.get`, `StringIndexOutOfBoundsException`
-   from `charAt`, `NoSuchElementException`, `InputMismatchException`, and **custom exceptions that the program
-   throws itself** (the best teaching case anyway: `InsufficientFundsException`). Never write `10 / 0`.
-4. **Never print `e.getMessage()` of a library exception.** Print the exception's class (`e.getClass().getSimpleName()`)
-   or your own message. Your own exceptions' messages are always fine.
-5. **Recursion:** show a base case and a missing base case as a crash, never as a `catch`.
-6. **No `System.exit`, no GUI, no `ExecutorService`.** Exit by returning from `main`. Concurrency lessons use
-   `Thread`, `join` and `synchronized` only.
-7. **No `assert`.** The course writes its own tiny `check(...)` helper for self-testing (lesson 40).
-8. **File lessons say plainly that files live in memory for one run.** A lesson that "saves" a file must also
-   read it back in the same program.
-9. Outputs shown in lessons must be what the runtime prints, and the test suite checks that. Use seeded
-   `Random` when you need random numbers, so outputs are repeatable (compare with a real JDK before a lesson claims specific numbers are "what Java prints").
-10. Lessons that explain an error use real `javac` wording (`cannot find symbol`, `incompatible types`,
-    `';' expected`), because that is what the learner will see here and on a laptop.
-11. All `code` blocks that are only **read** (Maven, Spring Boot, Android, Swing, JDBC) have no `output`, so
-    the tests do not run them. Say "read only, this does not run in the app" in the lesson.
+1. **Any class name works.** The app finds the class that holds `main`. Lessons still use `Main` for the first
+   programs (it is the convention), then show `public class Shop` in lesson 2 or 16.
+2. **`%n` and `\n` both work** in `printf` and `String.format` (G6 is fixed in the app). Prefer `%n`: it is what real
+   Java programmers write.
+3. **`10 / 0` with literals is fine to teach** (G5 is fixed in the app): it throws `ArithmeticException`.
+4. **Teach array and null errors as crashes the learner reads, not exceptions they catch** (G1, G2).
+   The lesson shows the program stopping at the bad line and teaches the cure: check `i < a.length`, check
+   `s != null`. Teach `try/catch` with exceptions that really do work: `NumberFormatException`, `ArithmeticException`,
+   `IndexOutOfBoundsException` from `ArrayList.get`, `StringIndexOutOfBoundsException` from `charAt`,
+   `NoSuchElementException`, `InputMismatchException`, and **custom exceptions that the program throws itself**
+   (the best teaching case anyway: `InsufficientFundsException`). Do not write
+   `try { a[5] = 1; } catch (ArrayIndexOutOfBoundsException e)` in a runnable block: it would crash.
+5. **Never print `e.getMessage()` of a library exception** (G13). Print `e.getClass().getSimpleName()` or your own
+   message. Your own exceptions' messages are always fine.
+6. **Recursion:** show a base case and a missing base case as a crash, never as a `catch` (G4).
+7. **No `System.exit`, no GUI, no `ExecutorService`** (G7, G8, G9). Exit by returning from `main`. Concurrency
+   lessons use `Thread`, `join` and `synchronized` only.
+8. **No `assert`** (G10). The course writes its own tiny `check(...)` helper for self-testing (lesson 40).
+9. **File lessons say plainly that files live in memory for one run.** A lesson that "saves" a file must also read
+   it back in the same program.
+10. Outputs shown in lessons must be what the runtime prints, and the test suite checks that. Use seeded `Random`
+    when you need random numbers (compare with a real JDK before a lesson claims specific numbers are "what Java prints").
+11. Lessons that explain an error use real `javac` wording (`cannot find symbol`, `incompatible types`,
+    `';' expected`): the app prints it the way a laptop does (`Main.java:3: error: ';' expected`).
+12. All `code` blocks that are only **read** (Maven, Spring Boot, Android, Swing, JDBC) have no `output`, so the
+    tests do not run them. Say "read only, this does not run in the app" in the lesson.
+13. The first run of a program takes seconds (the build); later runs of the same program are instant. Lessons that
+    ask for several test inputs cost one build. Do not write exercises that need dozens of different programs per page.
 
-## 6. Engine requests (for the engine and app owner)
+## 6. What was built into the app (engine work, done by the Java account)
 
-This track does not edit engine files. Everything below is needed before Java lessons can be shown in the
-app or tested by `npm test`. Each item says what I proved and what I did not.
+| Piece | Where | What it does |
+|---|---|---|
+| Runtime package | `package.json` (pinned `@live-codes/java-wasm` 0.1.0) | The real `javac` + TeaVM, as WebAssembly |
+| Runtime preparation | `scripts/prepare-runtimes.mjs` (Java section) | Copies 6 runtime files into `public/java/`, writes the patched engine as `public/java/engine.js` with **three build-stopping patches**: (1) compile under the public class's name; (2) keep the last 8 built programs so another input reuses the build; (3) a `phase: run` message when the build is over, and a hook for the exception report. Records the pack in `pack-info.json` |
+| Worker | `public/workers/java.worker.js` | Translates between the engine and the app's `ready` / `chunk` / `result` messages; writes real-Java-style exception reports; tidies `javac` messages (adds `error:`, short type names, removes repeats); restarts the engine after a crash; friendly message when the pack is not downloaded |
+| Source preparation | `src/lib/javasource.js` | `%n` fix, literal-zero-divisor fix, main class and file name detection. Shared by the app and the tests |
+| Runner | `src/lib/runners.js` | `java` runner; 90 s allowance for the build, then the normal 8 s for the running program; stops and restarts on a runaway loop |
+| Download | `src/lib/packs.js`, `public/pack-sw.js`, `vite.config.js`, Settings screen | A second pack next to Python (7.8 MB raw). Not precached, so the app stays small. Settings has a Java card |
+| Editor | `src/lib/editor.js`, `src/lib/symbols.js`, playground | `@codemirror/lang-java`, a Java symbol bar, a Java tab with a starter program, a "Building your program..." note |
+| Errors | `src/lib/errors.js` | 21 `java-*` rules, English and Kiswahili, for `javac` messages and exceptions (Luganda falls back to English as for the other languages) |
+| Tests | `tests/java-node.mjs`, `tests/java-node-worker.mjs`, `tests/run.mjs` (Java sections), `tests/solutions-java.mjs` | The tests run the **shipped worker** in a Node thread that is killed on a runaway loop, and cache results on disk (keyed by the engine files) so an unchanged program is not rebuilt. `tests/run.mjs` now runs any Java course's examples and exercises exactly like C and Python |
 
-- **E1. Add the runtime.** Pin `@live-codes/java-wasm@0.1.0`. Its `worker-java.js` is written for both
-  browser and Node (my probe loads that exact file). It speaks `{cmd:'init', baseUrl}` and
-  `{cmd:'run', source, input, mainClass}` and answers with one `{type:'result', ok, stdout, stderr, exitCode, generateMs, compileMs, runMs}`,
-  not the `ready`/`chunk`/`result` messages in `runners.js`, so `runners.js` needs a small adapter.
-  Output arrives all at once at the end. Not tested: running it as a worker inside the app's Vite build.
-- **E2. Ship it as a pack** (like Python): `compiler.wasm`, `runtime-classlib-teavm.bin`, `compile-classlib-teavm.bin`,
-  `compiler.wasm-deobfuscator.wasm`, `compiler.wasm-runtime.js`, plus the licence notices. About 4.4 MB over the wire.
-  Add a Download button in Settings.
-- **E3. Find the class that has `main`** instead of assuming `Main`. The worker hardcodes `Main.java`; it
-  must add the source as `<PublicClass>.java` and pass that as `mainClass`. This removes G11.
-- **E4. Build once, run many.** The grader runs an exercise against several inputs, and the build is
-  1 to 8 s. Keep the built `.wasm` bytes for a given source and run them again for each test input. **Tested** with
-  a 30-line program: first run 7.6 s, the next four runs 14, 10, 10 and 16 ms. (The worker builds the
-  WebAssembly bytes and then starts them once per run; the change is to keep those bytes between calls. I
-  proved it on a patched copy of the worker in Node, not in the app.)
-- **E5. Restart the Java worker after any result with `error`** (a compiler crash such as G5, or a trap),
-  because the next run in the same worker failed after one (observed).
-- **E6. Separate build and run time limits.** `DEFAULT_TIMEOUT_MS` is 8 s; the *build* alone can exceed that
-  on a slow phone. Give Java a long build allowance (suggest 60 s) and the usual short limit for the run.
-  The worker's own 30 s check cannot interrupt a tight loop such as `while (true) {}`, so the `runners.js`
-  backstop that kills the worker must stay. Not tested in a browser; `Worker.terminate()` is how the app
-  already stops Python and C.
-- **E7. A `jsource.js`**, like `csource.js`, that rewrites `%n` inside string literals to `\n` (G6). Without it, any
-  student who writes `printf("...%n...%n")` (very common in Java) gets wrong output or a crash.
-- **E8. `errors.js` rules for Java.** `javac` messages have a fixed, well-known form, so they can be
-  translated the same way as the C ones. Also drop repeated identical diagnostics, and teach the runtime
-  to show `array element access out of bounds` and `dereferencing a null pointer` as friendly messages
-  ("index too big for this array", "this variable is null").
-- **E9. Editor.** `@codemirror/lang-java` 6.0.2 (MIT) exists. Add a symbol bar entry for `java`
-  (`{ } ( ) [ ] ; " < > = ! & |`). Not installed or tried here.
-- **E10. Tests.** `tests/run.mjs` needs a Java section that runs every `code` block, `try`, `predict`, `fill`,
-  `reorder`, `bug` fix and exercise solution through the same Node loader as `tests/java-probe.mjs`.
-  Cost: about 1 to 6 s per *distinct* program on this sandbox. A 50-lesson course has roughly 600 programs,
-  so a full run could take 15 to 60 minutes. Suggest a cache keyed by a hash of the source and the engine
-  version, so an unchanged program is not rebuilt. Until E1 to E10 exist, the Java account can verify its
-  lessons with its own script (`tests/java-verify.mjs`, to be written with the first lesson group) and will
-  **not** register the course in `src/content/index.js`.
-- **E11. No change to `blocks.js` is needed.** The existing block types are enough.
-- **E12. Browser support must be checked on real phones before committing the course.** The engine needs WebAssembly GC.
-  As far as I know current Chrome, Edge, Firefox and Safari have it, but I tested no browser, and an old Android WebView may
-  not. Test on the lowest phone you want to support. If it fails there, there is no fallback today.
+### Verified in a real browser
+
+Headless Chromium 153, driving the **built** app (`vite build` then `vite preview`), on 2026-11-15:
+- the worker starts in 0.8 s; the first program runs in about 5 s including the build; the same program with another input in 37 ms
+- Java tab in the playground: starter program runs
+- Settings: **Download 7.8 MB** stores the 7 files, and the card shows "Installed"
+- with the network switched off and the service worker in control, a Java program still builds and runs (2.3 s)
+- a missing `;` shows the translated card with `Line 3`; an index error shows the translated card; a runaway loop is stopped after about 9 s (build plus the 8 s limit) and Java works again straight after
+- the service worker precaches only the 6 KB worker wrapper, not the Java runtime
+
+### Still not verified (be honest in any report)
+
+- **A real phone.** All timings are from a cloud machine. A low-end phone may need 10 to 30 s for the first build.
+  Test on the lowest phone you want to support before launch.
+- **Firefox and Safari.** Only Chromium was run. The engine needs WebAssembly GC.
+- **Memory on small phones.** The compiler is 5.5 MB of WebAssembly plus a 2.4 MB class library, held in memory
+  while Java is open. Not measured.
+- **GitHub Pages serving the `.wasm` file with the right type.** `vite preview` does; Pages normally does too.
+- The CI build is cold (no result cache), so the Java tests will add a few minutes to each deploy once there are lessons.
+
+### Open work (all Java account)
+
+- Level 1 lessons (see the roadmap), then each level in order, a group at a time.
+- A parallel pool of engines for the test run, if the course tests become slow in CI.
+- Optional: remove `assert` statements before building so `assert` is off as in real Java (G10).
 
 ## 7. Roadmap
 
 `[x]` written and tested, `[ ]` still to write. Lesson ids never change once published. Exercise ids start with
-`j<lesson number>-`. This order is a proposal for the owner to approve, not a promise. **Nothing is written yet.**
+`j<lesson number>-`. This order is a proposal for the owner to approve, not a promise. **No lessons are written yet.**
 
 **Running project: the Village SACCO.** A savings and credit group (members, savings accounts, loans,
 interest, a monthly report). It is the most Ugandan example I can think of that also needs everything
@@ -225,7 +227,7 @@ Java course distinct.)
 - [ ] 36. `j-sacco-reports` Project: SACCO reports with collections and streams
 
 ### Level 5: Robust code
-- [ ] 37. `j-exceptions` Exceptions: `try`, `catch`, `finally`, checked or unchecked, `throw`, custom exceptions (see rule 3)
+- [ ] 37. `j-exceptions` Exceptions: `try`, `catch`, `finally`, checked or unchecked, `throw`, custom exceptions (see rule 4)
 - [ ] 38. `j-resources` try-with-resources and `AutoCloseable`
 - [ ] 39. `j-debug` Finding bugs: reading `javac` errors, trace tables, defensive checks
 - [ ] 40. `j-testing` Testing without a framework: a tiny `check()` helper and test cases
@@ -242,15 +244,16 @@ Java course distinct.)
 - [ ] 49. `j-api` Designing a clean API for your classes
 - [ ] 50. `j-capstone` Capstone: the full Village SACCO system
 
-### Read-only lessons (code shown, not run, see rule 11)
+### Read-only lessons (code shown, not run, see rule 12)
 - [ ] 51. `j-beyond-1` Beyond the app, part 1: Maven or Gradle, JUnit, packages and projects on a laptop
 - [ ] 52. `j-beyond-2` Beyond the app, part 2: Swing and JavaFX (G8), JDBC and SQL, Spring Boot, Android
 
 ## 8. Reproduce this note
 
 ```bash
-npm install --no-save @live-codes/java-wasm@0.1.0
-node tests/java-probe.mjs        # about 3 to 4 minutes
+npm install                      # the engine is now a normal dependency
+node tests/java-probe.mjs        # the raw engine, about 3 to 4 minutes
+npm test                         # the app's Java layer (results are cached after the first run)
 ```
 
 If the engine is upgraded, run the probe again. A "gap" that now passes means the engine got better:

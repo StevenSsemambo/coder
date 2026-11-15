@@ -12,7 +12,7 @@ This is the **Phase 0 prototype** described in the project document.
 | Feature | Status |
 |---|---|
 | Touch-first code editor (CodeMirror 6) with a symbol bar | Working |
-| Run **C** (built in, about 400 KB) and **Python** (separate 13 MB download) | Working |
+| Run **C** (built in, about 400 KB), **Python** (separate 13 MB download) and **Java** (separate 7.8 MB download, real `javac`) | Working |
 | Programs run in Web Workers with a time limit (infinite loops are stopped) | Working |
 | Auto-grader with visible and hidden test cases | Working |
 | Hint ladder (nudge, bigger hint, worked example) | Working |
@@ -50,8 +50,8 @@ One-time setup, in the repository on github.com:
    For this repository that is `https://stevenssemambo.github.io/coder/`.
 
 On the phone: open the link in Chrome, then menu > **Install app** (or **Add to Home screen**).
-Open **Settings** in the app and press **Download** for Python while on Wi-Fi. After that, turn on
-airplane mode and check that lessons, C and Python still run.
+Open **Settings** in the app and press **Download** for Python and for Java while on Wi-Fi. After that, turn on
+airplane mode and check that lessons, C, Python and Java still run.
 
 If the run fails at **Test**, a change broke an exercise; nothing is published until it is fixed.
 
@@ -62,8 +62,8 @@ src/lib/       grader, error translator, runners (Web Workers), storage, editor
 src/content/   the courses (plain JavaScript data: lessons, exercises, tests, hints)
 src/ui/        screens and components (no framework, to stay small on low-end phones)
 public/workers py.worker.js (module worker) and c.worker.js (classic worker)
-public/pack-sw.js   serves the downloaded Python files when offline
-scripts/prepare-runtimes.mjs   copies Pyodide, bundles and patches the C interpreter
+public/pack-sw.js   serves the downloaded Python and Java files when offline
+scripts/prepare-runtimes.mjs   copies Pyodide and the Java runtime, bundles and patches the C interpreter
 tests/         logic tests and reference solutions
 ```
 
@@ -79,6 +79,9 @@ lesson opens with a story and ends with a recap.
 
 * **Python** is [Pyodide](https://pyodide.org) (Python compiled to WebAssembly). It needs a *module*
   worker, so it works on Chrome 80+, Safari 15+ and Firefox 114+.
+* **Java** is the real OpenJDK `javac` plus [TeaVM](https://teavm.org), both compiled to WebAssembly (package
+  `@live-codes/java-wasm`). It builds the program in the browser, then runs it in a Web Worker. Details, limits and
+  the lesson rules are in `docs/JAVA-TRACK.md`.
 * **C** is [JSCPP](https://github.com/felixhao28/JSCPP), a C/C++ teaching-subset interpreter written
   in JavaScript. It is **not a real compiler**: it covers what a first module needs (variables,
   `printf`/`scanf`, `if`, loops, functions, arrays, pointers) but not everything in the C standard.
@@ -91,7 +94,7 @@ lesson opens with a story and ends with a recap.
 ### Offline design
 
 * The app shell, the C interpreter and the workers are precached on the first visit (about 1 MB).
-* Python is downloaded on purpose from **Settings** into the browser's Cache Storage and served by
+* Python and Java are downloaded on purpose from **Settings** into the browser's Cache Storage and served by
   `public/pack-sw.js`. The listener is registered synchronously inside the service worker, because
   the browser may restart an idle service worker to answer a single request.
 * If a pack file is ever missing, the service worker reports it to the page
@@ -100,7 +103,7 @@ lesson opens with a story and ends with a recap.
 ## Content and licences
 
 All lessons and exercises are original. Do not copy proprietary course material into the packs.
-Third-party runtimes keep their own licences (Pyodide: MPL-2.0, JSCPP: MIT, CodeMirror: MIT).
+Third-party runtimes keep their own licences (Pyodide: MPL-2.0, JSCPP: MIT, CodeMirror: MIT, Java runtime: Apache-2.0 with OpenJDK `javac` under GPLv2 with the Classpath Exception, notices in `public/java/THIRD-PARTY-NOTICES.md`).
 The C course is a **draft**: map its topics to the official module outline before using it for
 assessed work.
 

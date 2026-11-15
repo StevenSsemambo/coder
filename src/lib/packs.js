@@ -1,4 +1,4 @@
-// Optional runtime packs. The core app is small; heavy runtimes (Python) are downloaded once
+// Optional runtime packs. The core app is small; heavy runtimes (Python, Java) are downloaded once
 // and kept in the browser's Cache Storage so they work with no internet afterwards.
 import info from '../generated/pack-info.json';
 
@@ -8,12 +8,20 @@ export const PACKS = {
   python: {
     id: 'python',
     name: 'Python runtime',
+    dir: 'pyodide',
     files: info.python.files,
     bytes: info.python.totalBytes,
   },
+  java: {
+    id: 'java',
+    name: 'Java runtime',
+    dir: 'java',
+    files: info.java.files,
+    bytes: info.java.totalBytes,
+  },
 };
 
-const fileURL = (name) => new URL(`${import.meta.env.BASE_URL}pyodide/${name}`, document.baseURI).href;
+const fileURL = (pack, name) => new URL(`${import.meta.env.BASE_URL}${pack.dir}/${name}`, document.baseURI).href;
 export const cacheSupported = () => typeof caches !== 'undefined';
 
 export const formatBytes = (n) => (n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
@@ -23,7 +31,7 @@ export async function packStatus(id) {
   if (!cacheSupported()) return { supported: false, installed: false, have: 0, total: pack.files.length };
   const cache = await caches.open(PACK_CACHE);
   let have = 0;
-  for (const file of pack.files) if (await cache.match(fileURL(file.name))) have += 1;
+  for (const file of pack.files) if (await cache.match(fileURL(pack, file.name))) have += 1;
   return { supported: true, installed: have === pack.files.length, have, total: pack.files.length };
 }
 
@@ -33,7 +41,7 @@ export async function downloadPack(id, onProgress = () => {}) {
   const cache = await caches.open(PACK_CACHE);
   let done = 0;
   for (const file of pack.files) {
-    const url = fileURL(file.name);
+    const url = fileURL(pack, file.name);
     if (await cache.match(url)) {
       done += file.size;
       onProgress(Math.min(1, done / pack.bytes));
@@ -58,5 +66,5 @@ export async function downloadPack(id, onProgress = () => {}) {
 
 export async function removePack(id) {
   const cache = await caches.open(PACK_CACHE);
-  for (const file of PACKS[id].files) await cache.delete(fileURL(file.name));
+  for (const file of PACKS[id].files) await cache.delete(fileURL(PACKS[id], file.name));
 }
