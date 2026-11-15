@@ -22,7 +22,7 @@ It is built by several Claude accounts, one track each. **Contributors: read `do
 | **Web track** (HTML, CSS, JavaScript with a sandboxed live preview and auto-checker): 45 lessons, 136 exercises. Roadmap in `docs/WEB-TRACK.md` | Written |
 | **Python**: 35 lessons in 5 levels, 68 exercises | Written |
 | **C**: 29 lessons, 88 exercises, from `printf` to pointers, bits, macros, algorithms and sorting. Structs, `malloc` and files (Part B) wait for a real C runtime. Roadmap in `docs/C-TRACK.md` | Part A written |
-| **C++**: 13 lessons, 37 exercises (Part A, what C++ shares with C plus streams). Roadmap in `docs/CPP-TRACK.md` | In progress |
+| **C++**: 18 lessons, 54 exercises, from `cout` to pointers (Part A, what C++ shares with C plus streams). Strings, vectors, references, classes and templates (Part B) wait for a real C++ compiler. Roadmap in `docs/CPP-TRACK.md` | Part A written |
 | **SQL** (SQLite): 25 lessons, 75 exercises, one shop database throughout. Roadmap in `docs/SQL-TRACK.md` | Written |
 | Rich lessons: real-life stories, analogies, runnable examples, predict-the-output, fill-the-gaps, put-in-order, find-the-bug, mistake museum, recap cards | Working |
 

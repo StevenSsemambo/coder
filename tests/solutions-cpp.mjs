@@ -445,4 +445,63 @@ void showBalance(int balance) {
     } else {
         cout << "Access denied" << endl;
     }`),
+
+  // Lesson 18: pointers
+  'cpp18-swap': progFn(String.raw`void exchange(int *x, int *y) {
+    int temp = *x;
+    *x = *y;
+    *y = temp;
+}`, String.raw`    int a, b;
+    cin >> a >> b;
+    cout << "Before: " << a << " " << b << endl;
+    exchange(&a, &b);
+    cout << "After: " << a << " " << b << endl;`),
+  'cpp18-tax': progFn(String.raw`void addVat(int *price) {
+    *price = *price * 118 / 100;
+}`, String.raw`    int price;
+    cin >> price;
+    addVat(&price);
+    cout << "Price with VAT: " << price << endl;`),
+  'cpp18-minmax': progFn(String.raw`void minMax(int a[], int n, int *lowest, int *highest) {
+    *lowest = a[0];
+    *highest = a[0];
+    for (int i = 1; i < n; i++) {
+        if (a[i] < *lowest) {
+            *lowest = a[i];
+        }
+        if (a[i] > *highest) {
+            *highest = a[i];
+        }
+    }
+}`, String.raw`    int n;
+    int a[10];
+    cin >> n;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    int low, high;
+    minMax(a, n, &low, &high);
+    cout << "Min: " << low << endl;
+    cout << "Max: " << high << endl;`),
+  'cpp18-reverse': progFn(String.raw`void exchange(int *x, int *y) {
+    int temp = *x;
+    *x = *y;
+    *y = temp;
+}`, String.raw`    int n;
+    int a[10];
+    cin >> n;
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];
+    }
+    int *left = a;
+    int *right = a + n - 1;
+    while (left < right) {
+        exchange(left, right);
+        left++;
+        right--;
+    }
+    for (int i = 0; i < n; i++) {
+        cout << a[i] << " ";
+    }
+    cout << endl;`),
 };

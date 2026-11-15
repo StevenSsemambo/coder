@@ -3,7 +3,7 @@
 Course id `cpp-start`, language id `cpp`. Files: `src/content/cpp/` (lessons), `src/content/cpp-course.js`
 (the course list), `tests/solutions-cpp.mjs` (reference solutions). Owner: the C++ account.
 
-Files by lesson: `level1.js` (1 to 3), `level2.js` (4), `switch.js` (5), `loops.js` (6 to 8), `till.js` (9), `functions.js` (10 to 12), `momo.js` (13), `arrays.js` (14 to 16), `text.js` (17).
+Files by lesson: `level1.js` (1 to 3), `level2.js` (4), `switch.js` (5), `loops.js` (6 to 8), `till.js` (9), `functions.js` (10 to 12), `momo.js` (13), `arrays.js` (14 to 16), `text.js` (17), `pointers.js` (18).
 
 Running project: **Mama Rose's Rolex Stand**, a rolex (chapati rolled round an omelette) stall beside the
 campus gate. Learners meet it in lesson 1 (the chalkboard menu) and finish Part A by building its till.
@@ -19,7 +19,7 @@ The track has two parts because C++ has two very different halves:
 `[x]` written and tested, `[ ]` still to write. Lesson ids never change once published. Exercise ids
 start with `cpp<lesson number>-`.
 
-### Part A: runs today on the built-in interpreter
+### Part A: runs today on the built-in interpreter (**complete: 18 lessons, 54 exercises**)
 
 **Level 1: Getting started**
 - [x] 1. `cpp-first` Your first C++ program (`cout`, `endl`, escapes, comments)
@@ -47,7 +47,7 @@ start with `cpp<lesson number>-`.
 - [x] 17. `cpp-cstrings` Text as `char` arrays, `cin`/`getline`, `<cstring>`, `<cctype>`
 
 **Level 5: Pointers**
-- [ ] 18. `cpp-pointers` Addresses and pointers, pointers and arrays
+- [x] 18. `cpp-pointers` Addresses and pointers, pointers as function parameters, pointers and arrays
 
 ### Part B: blocked until a real compiler is in the app
 
@@ -106,6 +106,12 @@ Behaviours that differ from real C++ (say so honestly in lessons where they matt
 - `isdigit`, `isalpha` and friends print `1` here, but real C++ may print another non-zero number. Lessons use them
   only inside an `if` and say so.
 - A table parameter without its column size (`int t[][]`) stops with an error here, as in real C++.
+- **Pointers:** `&`, `*`, pointer parameters, pointer arithmetic (`p + 1`, `p++`, `p[i]`) and `char *` all work. A
+  pointer **cannot be printed** (`cout << p` fails) and **null pointers do not run** (`nullptr` and `NULL` do not
+  exist, and comparing a pointer with 0 fails), so lessons explain them in words only. A pointer to a pointer
+  (`int **`) crashes the interpreter. `*p++` without brackets is not understood (`(*p)++` is). There are no
+  references and no `std::swap`, so the pointer lesson writes its own `exchange` function. Using `*p` on a pointer
+  that never got an address stops the program, as does stepping past the end of an array.
 - A `const` **can be changed** here (no error). A real compiler refuses. Lesson 3 says so out loud.
 - Leaving out `using namespace std;` still works here when `<iostream>` is included. A real compiler refuses.
   Lessons always write it.
@@ -165,10 +171,10 @@ a big job and still not the real language.
 | `src/lib/runners.js` | `cpp` runner, using the same `c.worker.js` as C (its own worker instance) |
 | `src/lib/csource.js` | `prepareSource('cpp', ...)` normalises like C |
 | `src/lib/editor.js`, `src/lib/symbols.js` | C++ syntax colouring and a symbol bar with `<<` and `>>` |
-| `src/lib/errors.js` | new rules `cpp-missing-iostream` and `cpp-stack` (C++ only); C++ also uses the C rules; `timeout` covers `cpp` |
+| `src/lib/errors.js` | new C++-only rules `cpp-missing-iostream`, `cpp-stack`, `cpp-index`, `cpp-pointer-uninit` and `cpp-pointer-type`; C++ also uses the C rules; `timeout` covers `cpp` |
 | `src/ui/views/learn.js` | label `C++` |
 | `src/content/index.js` | one import and one entry in the registry |
-| `tests/run.mjs`, `tests/solutions.mjs` | C++ runs on the C runner; 6 new error-translator checks; `cppSolutions` merged |
+| `tests/run.mjs`, `tests/solutions.mjs` | C++ runs on the C runner; 10 new error-translator checks; `cppSolutions` merged |
 
 ## Lesson style for C++
 

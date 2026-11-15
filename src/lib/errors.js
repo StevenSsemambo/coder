@@ -466,6 +466,63 @@ const RULES = [
     }),
   },
 
+  {
+    id: 'cpp-index',
+    languages: ['cpp'],
+    match: /index out of bound (\d+) >= (\d+)|negative index (-?\d+)/,
+    build: (m) => {
+      const n = m[3] !== undefined
+        ? { en: `The index ${m[3]} is negative, and array positions start at 0.`, sw: `Kielezo ${m[3]} ni hasi, na nafasi za safu huanza 0.` }
+        : { en: `The program asked for position ${m[1]}, but the array only has ${m[2]} boxes. The last valid index is ${Number(m[2]) - 1}.`, sw: `Programu iliomba nafasi ${m[1]}, lakini safu ina masanduku ${m[2]} tu. Kielezo cha mwisho kinachofaa ni ${Number(m[2]) - 1}.` };
+      return {
+        en: {
+          title: 'Outside the array',
+          why: n.en + ' A real C++ program would not stop here: it would quietly read or change some other memory.',
+          fix: 'Indexes go from 0 to size - 1. Check your loop limit (use i < size, not i <= size) and any i + 1 or i - 1 you use.',
+        },
+        sw: {
+          title: 'Nje ya safu',
+          why: n.sw + ' Programu halisi ya C++ isingesimama hapa: ingesoma au kubadilisha kumbukumbu nyingine kimya kimya.',
+          fix: 'Viashiria huanzia 0 hadi ukubwa - 1. Angalia kikomo cha kitanzi (tumia i < ukubwa, si i <= ukubwa) na i + 1 au i - 1 yoyote unayotumia.',
+        },
+      };
+    },
+  },
+  {
+    id: 'cpp-pointer-uninit',
+    languages: ['cpp'],
+    match: /dereference an unitialized pointer/,
+    build: () => ({
+      en: {
+        title: 'This pointer has no address yet',
+        why: 'A pointer was used with * before it was given an address, so it points to nowhere in particular. A real C++ program would write to a random place in memory.',
+        fix: 'Give the pointer the address of a real variable first, for example int *p = &x;, and only then use *p.',
+      },
+      sw: {
+        title: 'Kielekezi hiki hakina anwani bado',
+        why: 'Kielekezi kilitumiwa na * kabla ya kupewa anwani, hivyo hakielekezi popote maalum. Programu halisi ya C++ ingeandika mahali popote kwenye kumbukumbu.',
+        fix: 'Kwanza mpe kielekezi anwani ya kigezo halisi, kwa mfano int *p = &x;, kisha tu tumia *p.',
+      },
+    }),
+  },
+  {
+    id: 'cpp-pointer-type',
+    languages: ['cpp'],
+    match: /is not a normal porinter/,
+    build: () => ({
+      en: {
+        title: 'A pointer needs an address, not a number',
+        why: 'A pointer variable holds the address of another variable. Here a plain number was given where an address was expected (or an address where a number was expected).',
+        fix: 'Use & to get an address (int *p = &x;) and * to reach the value (*p = 10;). When calling a function that takes pointers, pass addresses: exchange(&a, &b).',
+      },
+      sw: {
+        title: 'Kielekezi kinahitaji anwani, si nambari',
+        why: 'Kigezo cha kielekezi hushikilia anwani ya kigezo kingine. Hapa nambari ya kawaida ilitolewa pale anwani ilipotarajiwa (au kinyume chake).',
+        fix: 'Tumia & kupata anwani (int *p = &x;) na * kufikia thamani (*p = 10;). Unapoita function inayochukua vielekezi, tuma anwani: exchange(&a, &b).',
+      },
+    }),
+  },
+
   // ---- C ----------------------------------------------------------------------
   {
     id: 'c-missing-include',
