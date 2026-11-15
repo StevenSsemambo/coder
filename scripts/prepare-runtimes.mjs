@@ -235,6 +235,100 @@ const PATCHES = [
     find: '            destArray[return_value.length] = rt.val(rt.charTypeLiteral, 0);',
     replace: '            destArray[return_value.length] = rt.val(rt.charTypeLiteral, 0, true);',
   },
+  // Pointer operators in JSCPP's defaults.js: != and the comparisons returned the wrong kind of value or looked up a
+  // handler that does not exist, and += / -= called a missing one. Pointer loops (p != end, p < a + n) need them.
+  {
+    file: /JSCPP\/lib\/defaults\.js$/,
+    why: 'p != q on pointers must work (it looked up a handler that does not exist)',
+    find: '                return !rt.types["pointer"].handlers["=="].default(rt, l, r);',
+    replace: '                return rt.val(rt.boolTypeLiteral, !rt.types["pointer"].handlers["o(==)"].default(rt, l, r).v);',
+  },
+  {
+    file: /JSCPP\/lib\/defaults\.js$/,
+    why: 'p < q on pointers must give a value the program can test',
+    find: '                        return l.v.position < r.v.position;',
+    replace: '                        return rt.val(rt.boolTypeLiteral, l.v.position < r.v.position);',
+  },
+  {
+    file: /JSCPP\/lib\/defaults\.js$/,
+    why: 'p > q on pointers must give a value the program can test',
+    find: '                        return l.v.position > r.v.position;',
+    replace: '                        return rt.val(rt.boolTypeLiteral, l.v.position > r.v.position);',
+  },
+  {
+    file: /JSCPP\/lib\/defaults\.js$/,
+    why: 'p <= q on pointers must give a value the program can test',
+    find: '                        return l.v.position <= r.v.position;',
+    replace: '                        return rt.val(rt.boolTypeLiteral, l.v.position <= r.v.position);',
+  },
+  {
+    file: /JSCPP\/lib\/defaults\.js$/,
+    why: 'p >= q on pointers must give a value the program can test',
+    find: '                        return l.v.position >= r.v.position;',
+    replace: '                        return rt.val(rt.boolTypeLiteral, l.v.position >= r.v.position);',
+  },
+  {
+    file: /JSCPP\/lib\/defaults\.js$/,
+    why: 'q - p on pointers into the same array must give a number',
+    find: '                            return l.v.position - r.v.position;',
+    replace: '                            return rt.val(rt.intTypeLiteral, l.v.position - r.v.position);',
+  },
+  {
+    file: /JSCPP\/lib\/defaults\.js$/,
+    why: 'p += n on a pointer must move it',
+    find: '                r = rt.types["pointer_array"].handlers["o(+)"].default(rt, l, r);\n                return rt.types["pointer"].handlers["="].default(rt, l, r);',
+    replace: '                r = rt.types["pointer_array"].handlers["o(+)"].default(rt, l, r);\n                l.v = r.v;\n                return l;',
+  },
+  {
+    file: /JSCPP\/lib\/defaults\.js$/,
+    why: 'p -= n on a pointer must move it',
+    find: '                r = rt.types["pointer_array"].handlers["o(-)"].default(rt, l, r);\n                return rt.types["pointer"].handlers["="].default(rt, l, r);',
+    replace: '                r = rt.types["pointer_array"].handlers["o(-)"].default(rt, l, r);\n                l.v = r.v;\n                return l;',
+  },
+  {
+    file: /JSCPP\/lib\/defaults\.js$/,
+    why: 'p++ on a pointer must move only that pointer (it moved every pointer sharing the array, so int *p = a; p++ changed a)',
+    find:
+      '                    if (dummy) {\n' +
+      '                        return rt.val(l.t, rt.makeArrayPointerValue(l.v.target, l.v.position++));\n' +
+      '                    }\n' +
+      '                    else {\n' +
+      '                        l.v.position++;\n' +
+      '                        return l;\n' +
+      '                    }',
+    replace:
+      '                    if (dummy) {\n' +
+      '                        const before = rt.val(l.t, rt.makeArrayPointerValue(l.v.target, l.v.position));\n' +
+      '                        l.v = rt.makeArrayPointerValue(l.v.target, l.v.position + 1);\n' +
+      '                        return before;\n' +
+      '                    }\n' +
+      '                    else {\n' +
+      '                        l.v = rt.makeArrayPointerValue(l.v.target, l.v.position + 1);\n' +
+      '                        return l;\n' +
+      '                    }',
+  },
+  {
+    file: /JSCPP\/lib\/defaults\.js$/,
+    why: 'p-- on a pointer must move only that pointer (it moved every pointer sharing the array, so int *p = a; p++ changed a)',
+    find:
+      '                    if (dummy) {\n' +
+      '                        return rt.val(l.t, rt.makeArrayPointerValue(l.v.target, l.v.position--));\n' +
+      '                    }\n' +
+      '                    else {\n' +
+      '                        l.v.position--;\n' +
+      '                        return l;\n' +
+      '                    }',
+    replace:
+      '                    if (dummy) {\n' +
+      '                        const before = rt.val(l.t, rt.makeArrayPointerValue(l.v.target, l.v.position));\n' +
+      '                        l.v = rt.makeArrayPointerValue(l.v.target, l.v.position - 1);\n' +
+      '                        return before;\n' +
+      '                    }\n' +
+      '                    else {\n' +
+      '                        l.v = rt.makeArrayPointerValue(l.v.target, l.v.position - 1);\n' +
+      '                        return l;\n' +
+      '                    }',
+  },
 ];
 const countOf = (text, part) => text.split(part).length - 1;
 
@@ -255,7 +349,7 @@ await build({
         b.onResolve({ filter: /^(util|stream|fs|readline)$/ }, (a) => ({ path: a.path, namespace: 'shim' }));
         b.onLoad({ filter: /.*/, namespace: 'shim' }, (a) => ({ contents: SHIMS[a.path], loader: 'js' }));
 
-        b.onLoad({ filter: /JSCPP[\\/]lib[\\/](includes[\\/]cstdio|includes[\\/]cstring|includes[\\/]shared[\\/]cstring_strcpy|interpreter)\.js$/ }, (a) => {
+        b.onLoad({ filter: /JSCPP[\\/]lib[\\/](includes[\\/]cstdio|includes[\\/]cstring|includes[\\/]shared[\\/]cstring_strcpy|interpreter|defaults)\.js$/ }, (a) => {
           // The library ships with Windows (CRLF) line endings; normalise so patches match everywhere.
           let text = readFileSync(a.path, 'utf8').replace(/\r\n/g, '\n');
           for (const p of PATCHES.filter((x) => x.file.test(a.path.replace(/\\/g, '/')))) {

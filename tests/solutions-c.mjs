@@ -19,6 +19,118 @@ export const cSolutions = {
   'c4-sum': C('    int n, i, total = 0;\n    scanf("%d", &n);\n    for (i = 1; i <= n; i++) {\n        total = total + i;\n    }\n    printf("Sum: %d\\n", total);'),
   'c4-table': C('    int n, i;\n    scanf("%d", &n);\n    for (i = 1; i <= 12; i++) {\n        printf("%d x %d = %d\\n", n, i, n * i);\n    }'),
 
+  // Level 5: pointers (lessons 23 to 25)
+  'c23-double': C(String.raw`    int x;
+    int *p = &x;
+    scanf("%d", p);
+    *p = *p * 2;
+    printf("Doubled: %d\n", x);`),
+  'c23-bigger0': C(String.raw`    int x, y;
+    int *big;
+    scanf("%d %d", &x, &y);
+    if (y > x) {
+        big = &y;
+    } else {
+        big = &x;
+    }
+    *big = 0;
+    printf("%d %d\n", x, y);`),
+  'c23-vat': C(String.raw`    int price;
+    int *p = &price;
+    scanf("%d", p);
+    *p = *p + *p * 18 / 100;
+    printf("With VAT: %d\n", price);`),
+  'c24-swap': F(String.raw`void swap(int *a, int *b) {
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}`, String.raw`    int x, y;
+    scanf("%d %d", &x, &y);
+    swap(&x, &y);
+    printf("After: %d %d\n", x, y);`),
+  'c24-divmod': F(String.raw`void divide(int a, int b, int *q, int *r) {
+    *q = a / b;
+    *r = a % b;
+}`, String.raw`    int a, b, q, r;
+    scanf("%d %d", &a, &b);
+    divide(a, b, &q, &r);
+    printf("Quotient: %d\n", q);
+    printf("Remainder: %d\n", r);`),
+  'c24-minmax': F(String.raw`void min_max3(int a, int b, int c, int *small, int *big) {
+    *small = a;
+    *big = a;
+    if (b < *small) {
+        *small = b;
+    }
+    if (b > *big) {
+        *big = b;
+    }
+    if (c < *small) {
+        *small = c;
+    }
+    if (c > *big) {
+        *big = c;
+    }
+}`, String.raw`    int a, b, c, s, g;
+    scanf("%d %d %d", &a, &b, &c);
+    min_max3(a, b, c, &s, &g);
+    printf("Smallest: %d\n", s);
+    printf("Biggest: %d\n", g);`),
+  'c25-sumptr': C(String.raw`    int a[50];
+    int n, i, total = 0;
+    int *p = a;
+    int *end;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+    end = a + n;
+    while (p != end) {
+        total = total + *p;
+        p++;
+    }
+    printf("Total: %d\n", total);`),
+  'c25-strlen': F(String.raw`int my_strlen(char *s) {
+    int n = 0;
+    while (*s != '\0') {
+        n++;
+        s++;
+    }
+    return n;
+}`, String.raw`    char word[50];
+    scanf("%s", word);
+    printf("Length: %d\n", my_strlen(word));`),
+  'c25-flip': C(String.raw`    int a[50];
+    int n, i, temp;
+    int *left, *right;
+    scanf("%d", &n);
+    for (i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
+    }
+    left = a;
+    right = a + n - 1;
+    while (left < right) {
+        temp = *left;
+        *left = *right;
+        *right = temp;
+        left++;
+        right--;
+    }
+    for (i = 0; i < n; i++) {
+        printf("%d\n", a[i]);
+    }`),
+  'c25-copy': F(String.raw`void copy(char *dest, char *src) {
+    while (*src != '\0') {
+        *dest = *src;
+        dest++;
+        src++;
+    }
+    *dest = '\0';
+}`, String.raw`    char a[50], b[50];
+    scanf("%s", a);
+    copy(b, a);
+    printf("Copy: %s\n", b);`),
+
   // Level 4: strings (lessons 20 to 22)
   'c20-length': C(String.raw`    char s[50];
     int i = 0;

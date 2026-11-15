@@ -8,11 +8,12 @@ import { loopLessons } from './c/loops.js';
 import { functionLessons } from './c/functions.js';
 import { arrayLessons } from './c/arrays.js';
 import { stringLessons } from './c/strings.js';
+import { pointerLessons } from './c/pointers.js';
 
 export const cCourse = {
   id: 'c-structured',
   language: 'c',
   title: 'Structured Programming in C',
   subtitle: 'Draft pack for the Structured Programming module',
-  lessons: [...level1, ...level2, ...loopLessons, ...functionLessons, ...arrayLessons, ...stringLessons],
+  lessons: [...level1, ...level2, ...loopLessons, ...functionLessons, ...arrayLessons, ...stringLessons, ...pointerLessons],
 };

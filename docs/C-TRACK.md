@@ -51,9 +51,9 @@ progress is saved under them). Exercise ids start with `c<lesson number>-`.
 - [x] 22. `c-marks` Project: class marks processor
 
 **Level 5: Pointers**
-- [ ] 23. Addresses and pointers
-- [ ] 24. Pointers and functions (swap, several results)
-- [ ] 25. Pointers, arrays and strings
+- [x] 23. `c-pointers` Addresses and pointers
+- [x] 24. `c-ptr-fn` Pointers and functions (swap, several results)
+- [x] 25. `c-ptr-arrays` Pointers, arrays and strings
 
 ### Part B: blocked until the interpreter can run it
 
@@ -97,6 +97,8 @@ Behaviours that differ from real C (say so honestly in lessons where they matter
 - **Short array lists** (`int a[5] = {10, 20};`) left the missing boxes without a value, and `{5}` became `-1, 0, 0`. A new patch pads with zeros as C does, and cuts a flat list for a 2D array into rows. `{0}` now works for 2D arrays too.
 - **`strcmp` and `strncmp`** never stopped at the end of the text, so comparing two **equal** strings crashed, and `strncmp` ignored its length. Both are patched in `scripts/prepare-runtimes.mjs` (tests in `tests/run.mjs`).
 - **Characters stored by `scanf("%s")`, `gets` and `strcpy`** could not be changed afterwards (`s[0] = toupper(s[0]);` stopped with "not a left value"). Patched, with tests.
+- **Pointer fixes (Level 5).** `int *p = a; p++;` also moved `a` itself (every pointer copied from an array shared one position), so any pointer walk wrecked the array. `p != q`, `p < q`, `q - p` and `p += n` crashed. All patched in `scripts/prepare-runtimes.mjs` (tests in `tests/run.mjs`).
+- Pointer features that still do **not** work, so lessons avoid them: `NULL` (and `p = 0`), pointer to pointer (`int **`), arrays of pointers (`char *names[]`), `%p` and printing a pointer, and an inline end test such as `p < a + 3` (keep the end in its own variable: `int *end = a + 3;`).
 - Still not working: `strchr` (result cannot be printed), `strstr`, `fgets`. Reading or writing outside an array **stops with an error** here; real C carries on silently. `s = "abc";` on a char array is accepted here but is an error in real C. `strcat` past the end of the array silently cuts the text here. `scanf("%[^\n]")` and `%*s` are not supported; use `gets` for a line (real compilers removed it).
 
 ### The `scanf` patch
