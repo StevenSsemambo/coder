@@ -28,20 +28,20 @@ is run by `npm test`, so nothing is taught that does not work.
 - [x] 40 `py-regex`: regular expressions
 - [x] 41 `py-project-ledger`: Project: customer ledger with proper error handling
 
-### Level 7: Data and algorithms (lessons 42 to 46)
+### Level 7: Data and algorithms (lessons 42 to 46) - DONE
 - [x] 42 `py-bigo`: Big-O in plain words (steps are counted, never timed)
 - [x] 43 `py-search-hash`: binary search, hashing (a toy hash table), recursion and memoization
 - [x] 44 `py-structures`: stacks, queues (`deque`) and linked lists
-- [ ] 45 CSV and data cleaning
-- [ ] 46 Project: sales analyzer with a reusable data pipeline
+- [x] 45 `py-csv`: CSV and data cleaning
+- [x] 46 `py-project-analyzer`: Project: sales analyzer with a reusable data pipeline
 
-### Level 8: Building real products (lessons 47 to 52)
-- [ ] 47 Project structure, modules and packages
-- [ ] 48 Command-line apps (arguments, menus, config)
-- [ ] 49 SQLite from Python (links to the SQL track)
-- [ ] 50 APIs and JSON responses (simulated)
-- [ ] 51 Logging, debugging and profiling
-- [ ] 52 Project: Duuka Manager (SQLite + command line + tests)
+### Level 8: Building real products (lessons 47 to 52) - DONE
+- [x] 47 `py-packages`: project structure, modules and packages (files are written with Python, then imported)
+- [x] 48 `py-cli`: command-line apps with argparse (word lists passed in; SystemExit always caught), config, menus
+- [x] 49 `py-sqlite`: SQLite from Python (links to the SQL track)
+- [x] 50 `py-api`: APIs and JSON responses (a pretend server, `fake_api`, stands in for the network)
+- [x] 51 `py-logging`: logging, debugging, counting calls and timing
+- [x] 52 `py-project-duuka`: Project: Duuka Manager (SQLite + command line + logging + tests)
 
 ### Level 9: Capstones and the path forward (lessons 53 to 57)
 - [ ] 53 Concurrency basics (threads vs async, explained simply)
@@ -52,6 +52,14 @@ is run by `npm test`, so nothing is taught that does not work.
 
 Lesson 38 carries special methods and dataclasses together; if the exercises show it is too much, it is
 split and later lessons are renumbered here.
+
+## Runtime notes (found while testing)
+- Pyodide here runs Python 3.14. `urllib` network calls and `threading.Thread` raise `RuntimeError` in the browser.
+- An uncaught `SystemExit` (what `argparse` does on bad input) ends the whole test process. Always catch it.
+- `sys.modules` keeps imported modules between runs, so lessons write modules with a helper that forgets the old copy first.
+- The editor program has no `__name__ == "__main__"` of its own, so the main guard is taught inside module files (run with `runpy`).
+- `logging.disable(...)` and `basicConfig` state leak between runs, so examples start with `logging.disable(logging.NOTSET)` and `force=True`.
+- Print `Row` or `with con:` results only after `commit()`: a rollback also undoes uncommitted setup.
 
 ## Checklist for every lesson
 Story first, recap last, at least 2 interactive blocks, a mistake museum, every exercise with exactly 3

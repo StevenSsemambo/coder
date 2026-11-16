@@ -13,11 +13,14 @@ import { level5 } from './py/level5.js';
 import { level6a } from './py/level6a.js';
 import { level6b } from './py/level6b.js';
 import { level7a } from './py/level7a.js';
+import { level7b } from './py/level7b.js';
+import { level8a } from './py/level8a.js';
+import { level8b } from './py/level8b.js';
 
 export const pythonCourse = {
   id: 'py-start',
   language: 'python',
   title: 'Python: From Zero to Builder',
-  subtitle: 'No experience needed. Build a shop till in Level 1 and a stock manager in Level 2, and a shop that remembers in Level 3, a Mobile Money simulator in Level 4, a sales report in Level 5 and professional habits in Level 6.',
-  lessons: [...level1a, ...level1b, ...level1c, ...level2a, ...level2b, ...level3a, ...level3b, ...level4, ...level5, ...level6a, ...level6b, ...level7a],
+  subtitle: 'No experience needed. Build a shop till in Level 1 and a stock manager in Level 2, and a shop that remembers in Level 3, a Mobile Money simulator in Level 4, a sales report in Level 5 and professional habits in Level 6 data skills in Level 7 and a real shop manager in Level 8.',
+  lessons: [...level1a, ...level1b, ...level1c, ...level2a, ...level2b, ...level3a, ...level3b, ...level4, ...level5, ...level6a, ...level6b, ...level7a, ...level7b, ...level8a, ...level8b],
 };

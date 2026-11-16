@@ -1,4 +1,4 @@
-/* Offline runtime packs: serves /pyodide/* and /php/* from the "saymacoder-packs" cache (filled by Settings > Download).
+/* Offline runtime packs: serves /pyodide/*, /php/* and /java/* from the "saymacoder-packs" cache (filled by Settings > Download).
  *
  * This file is pulled into the generated service worker with importScripts(), so its fetch listener
  * is registered synchronously while the service worker starts. That matters: the browser may stop an
@@ -23,7 +23,7 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin || !/\/(pyodide|php)\/[^/]+$/.test(url.pathname)) return;
+  if (url.origin !== self.location.origin || !/\/(pyodide|php|java)\/[^/]+$/.test(url.pathname)) return;
 
   event.respondWith(
     (async () => {

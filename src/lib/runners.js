@@ -1,10 +1,14 @@
 // Runs student code in Web Workers so a bad program can never freeze the interface.
 // One worker per language. A program that runs past its time limit is stopped.
 import { prepareSource } from './csource.js';
+import { javaRunInfo } from './javasource.js';
 import { runConsoleJs } from './webrun.js';
 
-const WORKER_FILES = { python: 'py.worker.js', c: 'c.worker.js', cpp: 'c.worker.js', sql: 'sql.worker.js', php: 'php.worker.js' };
+const WORKER_FILES = { python: 'py.worker.js', c: 'c.worker.js', cpp: 'c.worker.js', sql: 'sql.worker.js', php: 'php.worker.js', java: 'java.worker.js' };
 export const DEFAULT_TIMEOUT_MS = 8000;
+// Java builds the program (javac, then TeaVM) before it runs it. That takes seconds on a phone, so the build gets its
+// own, long allowance; the program itself then gets the usual short one (the worker says when the build is over).
+const JAVA_BUILD_LIMIT_MS = 90000;
 
 const listeners = new Set();
 /** Subscribe to runtime status: { language, state: 'idle'|'loading'|'ready'|'running'|'failed', detail } */
@@ -64,20 +68,20 @@ class LanguageRunner {
     if (announce) emit(this.language, 'idle');
   }
 
-  run(code, stdin, timeoutMs) {
-    const job = () => this.#run(code, stdin, timeoutMs);
+  run(code, stdin, timeoutMs, extra) {
+    const job = () => this.#run(code, stdin, timeoutMs, extra);
     const result = this.queue.then(job, job);
     this.queue = result.catch(() => {});
     return result;
   }
 
-  async #run(code, stdin, timeoutMs) {
+  async #run(code, stdin, timeoutMs, extra) {
     const init = await this.start();
     if (!init.ok) {
       return { stdout: '', stderr: '', error: init.message || 'The runtime could not start.', timedOut: false, initFailed: true, truncated: false, ms: 0 };
     }
     const id = this.nextId++;
-    emit(this.language, 'running');
+    emit(this.language, 'running', this.language === 'java' ? 'building' : undefined);
     return new Promise((resolve) => {
       let stdout = '';
       let stderr = '';
@@ -90,11 +94,15 @@ class LanguageRunner {
         resolve({ stdout, stderr, truncated, error: null, timedOut: false, initFailed: false, ms: Math.round(performance.now() - started), ...extra });
       };
       // The C interpreter enforces its own limit; this timer is the backstop for everything else.
-      const backstop = timeoutMs + (this.language === 'c' || this.language === 'cpp' ? 1500 : 0);
-      const timer = setTimeout(() => {
-        this.kill();
-        finish({ error: 'Time limit exceeded.', timedOut: true });
-      }, backstop);
+      let timer;
+      const arm = (ms) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          this.kill();
+          finish({ error: 'Time limit exceeded.', timedOut: true });
+        }, ms);
+      };
+      arm(this.language === 'java' ? JAVA_BUILD_LIMIT_MS : timeoutMs + (this.language === 'c' || this.language === 'cpp' ? 1500 : 0));
       this.pending = {
         id,
         handle: (m) => {
@@ -103,17 +111,21 @@ class LanguageRunner {
             else stdout += m.text;
           } else if (m.type === 'truncated') {
             truncated = true;
+          } else if (m.type === 'phase') {
+            // Java: the build is over and the program is running now, so the short limit starts here.
+            emit(this.language, 'running', 'run');
+            arm(timeoutMs);
           } else if (m.type === 'result') {
             finish({ error: m.error || null, timedOut: /Time limit exceeded/i.test(m.error || '') });
           }
         },
       };
-      this.worker.postMessage({ type: 'run', id, code, stdin, timeoutMs });
+      this.worker.postMessage({ type: 'run', id, code, stdin, timeoutMs, ...extra });
     });
   }
 }
 
-const runners = { python: new LanguageRunner('python'), c: new LanguageRunner('c'), cpp: new LanguageRunner('cpp'), sql: new LanguageRunner('sql'), php: new LanguageRunner('php') };
+const runners = { python: new LanguageRunner('python'), c: new LanguageRunner('c'), cpp: new LanguageRunner('cpp'), sql: new LanguageRunner('sql'), php: new LanguageRunner('php'), java: new LanguageRunner('java') };
 
 /** Start loading a runtime early (for example while the student reads the lesson). */
 export function warmUp(language) {
@@ -124,5 +136,6 @@ export function warmUp(language) {
 export function runCode(language, code, stdin = '', { timeoutMs = DEFAULT_TIMEOUT_MS } = {}) {
   // JavaScript with no page: runs in a throw-away worker (console.log becomes the output).
   if (language === 'web') return runConsoleJs(typeof code === 'string' ? code : code.js || '', stdin, Math.min(timeoutMs, 5000));
-  return runners[language].run(prepareSource(language, code), stdin, timeoutMs);
+  const prepared = prepareSource(language, code);
+  return runners[language].run(prepared, stdin, timeoutMs, language === 'java' ? javaRunInfo(prepared) : undefined);
 }

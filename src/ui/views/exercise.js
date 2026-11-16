@@ -9,7 +9,7 @@ import { symbolBar, stdinField, outputView, testResultsView, dock } from '../com
 import { webExerciseView } from './web-exercise.js';
 
 const HINT_LABELS = ['Nudge', 'Bigger hint', 'Worked example'];
-const LANGUAGE_NAME = { c: 'C', python: 'Python', web: 'JavaScript', sql: 'SQLite', php: 'PHP' };
+const LANGUAGE_NAME = { c: 'C', python: 'Python', java: 'Java', web: 'JavaScript', sql: 'SQLite', php: 'PHP' };
 
 function promptBlocks(text) {
   return text.split('\n\n').map((para) => h('p', null, para.split('\n').map((line, i, all) => [richText(line), i < all.length - 1 ? h('br') : null])));
@@ -56,10 +56,10 @@ export function exerciseView(courseId, lessonId, exerciseId) {
   const hintBtn = h('button', { class: 'btn', type: 'button', onclick: showHint }, `Hint (0/${ex.hints.length})`);
   const resetBtn = h('button', { class: 'btn btn-ghost', type: 'button', onclick: reset }, 'Reset');
 
-  const stop = onRunnerStatus(({ language, state: s }) => {
+  const stop = onRunnerStatus(({ language, state: s, detail }) => {
     if (language !== ex.language) return;
     const name = LANGUAGE_NAME[language];
-    const text = { loading: `Starting ${name}… the first time can take a few seconds.`, ready: `${name} is ready.`, running: 'Running…', failed: `${name} could not start.`, idle: '' }[s];
+    const text = { loading: `Starting ${name}… the first time can take a few seconds.`, ready: `${name} is ready.`, running: detail === 'building' ? 'Building your program… the first run can take a few seconds.' : 'Running…', failed: `${name} could not start.`, idle: '' }[s];
     runtimeNote.textContent = text ?? '';
   });
 

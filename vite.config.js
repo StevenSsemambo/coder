@@ -27,10 +27,10 @@ export default defineConfig({
       },
       workbox: {
         // App shell, workers, the C interpreter and SQLite (sql.js, wasm) are cached on first visit (small).
-        // The big Python and PHP runtimes are NOT precached: students download it on purpose from Settings,
+        // The big Python, PHP and Java runtimes are NOT precached: students download them on purpose from Settings,
         // and it is then served from the "saymacoder-packs" cache by pack-sw.js.
         globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,wasm}'],
-        globIgnores: ['pyodide/**', 'php/**'],
+        globIgnores: ['pyodide/**', 'php/**', 'java/**'],
         // All courses live in one JavaScript file, which grew past the 2 MiB default when the PHP lessons were added.
         // A file over the limit is silently NOT precached, which would break offline use. 4 MiB gives every track room to grow.
         // Longer term: load each course on demand (dynamic import) instead of bundling all of them together.

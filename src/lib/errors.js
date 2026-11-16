@@ -30,7 +30,7 @@ const RULES = [
   // ---- both languages ------------------------------------------------------
   {
     id: 'timeout',
-    languages: ['python', 'c', 'cpp', 'web', 'sql', 'php'],
+    languages: ['python', 'c', 'cpp', 'java', 'web', 'sql', 'php'],
     match: /Time limit exceeded/i,
     build: () => ({
       en: {
@@ -1196,6 +1196,404 @@ const RULES = [
       },
     }),
   },
+  // ---- Java (javac messages and exception reports; see docs/JAVA-TRACK.md) -----------------------------
+  {
+    id: 'java-expected',
+    languages: ['java'],
+    match: /error: '([;)\]({}])' expected/,
+    build: (m) => ({
+      en: {
+        title: `A "${m[1]}" is missing`,
+        why: `Java expected a "${m[1]}" at that place. The most common cause is a forgotten ";" at the end of a statement, or a bracket that was opened and never closed.`,
+        fix: `Look at the end of the line that is shown, and at the line before it. Add the missing "${m[1]}". Every ( needs a ), every { needs a }, and most statements end with ;`,
+      },
+      sw: {
+        title: `Alama "${m[1]}" imekosekana`,
+        why: `Java ilitarajia alama "${m[1]}" mahali hapo. Sababu ya kawaida ni kusahau ";" mwishoni mwa amri, au mabano yaliyofunguliwa lakini hayakufungwa.`,
+        fix: `Angalia mwisho wa mstari ulioonyeshwa, na mstari uliotangulia. Ongeza "${m[1]}" inayokosekana. Kila ( inahitaji ), kila { inahitaji }, na amri nyingi huishia na ;`,
+      },
+    }),
+  },
+  {
+    id: 'java-quote',
+    languages: ['java'],
+    match: /error: unclosed (string|character) literal/,
+    build: (m) => ({
+      en: {
+        title: m[1] === 'string' ? 'A closing double quote is missing' : 'Single quotes hold only one character',
+        why: m[1] === 'string'
+          ? 'Text in Java starts with a double quote " and must end with another double quote " on the same line. Java did not find the closing one, so it kept reading to the end of the line.'
+          : 'Java saw a single quote \' and expected exactly one character and then another single quote. Text of several characters belongs in double quotes: "like this".',
+        fix: m[1] === 'string'
+          ? 'Add the missing " at the end of the text, before the ) and the ;'
+          : 'Use double quotes for text: System.out.println("Karibu"); Single quotes are only for one character, such as \'A\'.',
+      },
+      sw: {
+        title: m[1] === 'string' ? 'Nukuu ya kufunga inakosekana' : 'Nukuu moja hushika herufi moja tu',
+        why: m[1] === 'string'
+          ? 'Maandishi katika Java huanza na nukuu mbili " na lazima yaishie na nukuu mbili " kwenye mstari huo huo. Java haikupata ya kufunga, kwa hiyo iliendelea kusoma hadi mwisho wa mstari.'
+          : 'Java iliona nukuu moja \' na ilitarajia herufi moja kisha nukuu moja nyingine. Maandishi ya herufi nyingi yanawekwa ndani ya nukuu mbili: "hivi".',
+        fix: m[1] === 'string'
+          ? 'Ongeza " inayokosekana mwishoni mwa maandishi, kabla ya ) na ;'
+          : 'Tumia nukuu mbili kwa maandishi: System.out.println("Karibu"); Nukuu moja ni kwa herufi moja tu, mfano \'A\'.',
+      },
+    }),
+  },
+  {
+    id: 'java-syntax',
+    languages: ['java'],
+    match: /error: (reached end of file while parsing|illegal start of (?:expression|type)|not a statement|unclosed (?:string|character) literal|class, interface, enum, or record expected|<identifier> expected|illegal character|'else' without 'if'|orphaned \w+)/,
+    build: (m) => ({
+      en: {
+        title: 'Java cannot read this line',
+        why: `Java stopped because the code is not written in a form it understands ("${m[1]}"). Usually a bracket or quote is missing or extra, a word is misspelled, or a statement is outside a method.`,
+        fix: 'Check the shown line and the lines above it: do all { } ( ) and " " come in pairs? Is every statement inside a method inside a class? Fix the first problem and run again; later errors often disappear.',
+      },
+      sw: {
+        title: 'Java haiwezi kusoma mstari huu',
+        why: `Java imesimama kwa sababu msimbo haujaandikwa kwa umbo inalolielewa ("${m[1]}"). Mara nyingi bano au nukuu imekosekana au imezidi, neno limekosewa tahajia, au amri iko nje ya njia (method).`,
+        fix: 'Angalia mstari ulioonyeshwa na mistari iliyo juu yake: je, { } ( ) na " " viko kwa jozi? Je, kila amri iko ndani ya method ndani ya class? Rekebisha tatizo la kwanza kisha endesha tena; makosa mengine mara nyingi hupotea.',
+      },
+    }),
+  },
+  {
+    id: 'java-symbol',
+    languages: ['java'],
+    match: /cannot find symbol\s+symbol:\s+(variable|method|class)\s+([\w$]+)/,
+    build: (m) => ({
+      en: {
+        title: `Java does not know "${m[2]}"`,
+        why: `The program uses ${m[1] === 'class' ? 'a class' : `a ${m[1]}`} called "${m[2]}", but Java cannot find it. It may be misspelled (small and capital letters matter: String, not string), never created, created in a different place where it cannot be seen, or it needs an import line at the top.`,
+        fix: `Check the spelling of "${m[2]}". ${m[1] === 'variable' ? `Declare it before you use it, for example: int ${m[2]} = 0;` : m[1] === 'method' ? 'Make sure the method exists, has that exact name, and takes the arguments you give it.' : 'Check the class name, and add the import it needs, for example: import java.util.Scanner;'}`,
+      },
+      sw: {
+        title: `Java haijui "${m[2]}"`,
+        why: `Programu inatumia ${m[1] === 'class' ? 'class' : m[1] === 'method' ? 'method' : 'kigezo'} iitwayo "${m[2]}", lakini Java haiipati. Huenda imekosewa tahajia (herufi kubwa na ndogo zinajali: String, si string), haikuundwa kamwe, iko mahali isipoweza kuonekana, au inahitaji mstari wa import juu.`,
+        fix: `Angalia tahajia ya "${m[2]}". ${m[1] === 'variable' ? `Itangaze kabla ya kuitumia, mfano: int ${m[2]} = 0;` : m[1] === 'method' ? 'Hakikisha method ipo, ina jina hilo hasa, na inapokea vigezo unavyoipa.' : 'Angalia jina la class, na ongeza import inayohitajika, mfano: import java.util.Scanner;'}`,
+      },
+    }),
+  },
+  {
+    id: 'java-package',
+    languages: ['java'],
+    match: /error: package ([\w.$]+) does not exist/,
+    build: (m) => ({
+      en: {
+        title: `Java does not know "${m[1]}"`,
+        why: `Java looks for a package called "${m[1]}" and cannot find it. The usual cause is a small letter where a capital is needed: the class is called System (capital S), String (capital S), Math (capital M). Another cause is a missing import line at the top.`,
+        fix: `Check the capital letters (system.out.println should be System.out.println). If the name is right, add the import line it needs, for example: import java.util.Scanner;`,
+      },
+      sw: {
+        title: `Java haijui "${m[1]}"`,
+        why: `Java inatafuta package iitwayo "${m[1]}" na haiipati. Sababu ya kawaida ni herufi ndogo mahali panapohitaji herufi kubwa: class inaitwa System (S kubwa), String (S kubwa), Math (M kubwa). Sababu nyingine ni mstari wa import uliokosekana juu.`,
+        fix: `Angalia herufi kubwa (system.out.println inapaswa kuwa System.out.println). Kama jina ni sahihi, ongeza mstari wa import unaohitajika, mfano: import java.util.Scanner;`,
+      },
+    }),
+  },
+  {
+    id: 'java-lossy',
+    languages: ['java'],
+    match: /incompatible types: possible lossy conversion from (\w+) to (\w+)/,
+    build: (m) => ({
+      en: {
+        title: `A ${m[1]} will not fit in a ${m[2]}`,
+        why: `You are putting a ${m[1]} value into a ${m[2]} variable. That would lose information (for example the part after the decimal point), so Java refuses to do it silently.`,
+        fix: `Use a ${m[1]} variable instead, or say clearly that you accept the loss with a cast: (${m[2]}) value`,
+      },
+      sw: {
+        title: `${m[1]} haitoshi kwenye ${m[2]}`,
+        why: `Unaweka thamani ya ${m[1]} kwenye kigezo cha ${m[2]}. Hilo lingepoteza taarifa (mfano sehemu baada ya nukta ya desimali), kwa hiyo Java inakataa kufanya hivyo kimya kimya.`,
+        fix: `Tumia kigezo cha ${m[1]} badala yake, au sema wazi kuwa unakubali kupoteza kwa cast: (${m[2]}) thamani`,
+      },
+    }),
+  },
+  {
+    id: 'java-types',
+    languages: ['java'],
+    match: /incompatible types: (.+?) cannot be converted to (.+)/,
+    build: (m) => ({
+      en: {
+        title: 'Wrong type of value',
+        why: `A value of type ${m[1].trim()} was used where Java needs ${m[2].trim()}. Java checks types strictly: whole numbers are int, decimals are double, text is String (in double quotes), one character is char (in single quotes).`,
+        fix: `Use a value of type ${m[2].trim()}. To turn text into a number use Integer.parseInt("42") or Double.parseDouble("2.5"); to turn a number into text use String.valueOf(42).`,
+      },
+      sw: {
+        title: 'Aina ya thamani si sahihi',
+        why: `Thamani ya aina ${m[1].trim()} imetumika mahali Java inapohitaji ${m[2].trim()}. Java hukagua aina kwa ukali: nambari kamili ni int, desimali ni double, maandishi ni String (ndani ya nukuu mbili), herufi moja ni char (ndani ya nukuu moja).`,
+        fix: `Tumia thamani ya aina ${m[2].trim()}. Kubadilisha maandishi kuwa nambari tumia Integer.parseInt("42") au Double.parseDouble("2.5"); kubadilisha nambari kuwa maandishi tumia String.valueOf(42).`,
+      },
+    }),
+  },
+  {
+    id: 'java-return',
+    languages: ['java'],
+    match: /error: missing return statement/,
+    build: () => ({
+      en: {
+        title: 'This method must return a value',
+        why: 'The method promises to give back a value, but there is a way through it (an if without an else, or a loop) that reaches the end without a return.',
+        fix: 'Make sure every path ends with return. Often it means adding a final return after the if or the loop.',
+      },
+      sw: {
+        title: 'Method hii lazima irudishe thamani',
+        why: 'Method inaahidi kurudisha thamani, lakini kuna njia ndani yake (if bila else, au kitanzi) inayofika mwisho bila return.',
+        fix: 'Hakikisha kila njia inaishia na return. Mara nyingi inamaanisha kuongeza return ya mwisho baada ya if au kitanzi.',
+      },
+    }),
+  },
+  {
+    id: 'java-uninit',
+    languages: ['java'],
+    match: /error: variable ([\w$]+) might not have been initialized/,
+    build: (m) => ({
+      en: {
+        title: `"${m[1]}" has no value yet`,
+        why: `The variable "${m[1]}" is read before anything is stored in it, or it only gets a value on some paths (for example inside an if). Java does not give local variables a starting value.`,
+        fix: `Give it a value when you declare it, for example: int ${m[1]} = 0;`,
+      },
+      sw: {
+        title: `"${m[1]}" haina thamani bado`,
+        why: `Kigezo "${m[1]}" kinasomwa kabla ya kuwekewa chochote, au kinapata thamani kwenye baadhi ya njia tu (mfano ndani ya if). Java haipi vigezo vya ndani thamani ya kuanzia.`,
+        fix: `Kipe thamani unapokitangaza, mfano: int ${m[1]} = 0;`,
+      },
+    }),
+  },
+  {
+    id: 'java-duplicate',
+    languages: ['java'],
+    match: /error: variable ([\w$]+) is already defined in/,
+    build: (m) => ({
+      en: {
+        title: `"${m[1]}" is already used`,
+        why: `A variable called "${m[1]}" was already created in this method, and you declared it again.`,
+        fix: `Pick a different name, or drop the type to reuse the old variable: write ${m[1]} = 5; instead of int ${m[1]} = 5;`,
+      },
+      sw: {
+        title: `"${m[1]}" imeshatumika`,
+        why: `Kigezo kiitwacho "${m[1]}" tayari kiliundwa kwenye method hii, na umekitangaza tena.`,
+        fix: `Chagua jina tofauti, au acha aina ili utumie kigezo cha zamani: andika ${m[1]} = 5; badala ya int ${m[1]} = 5;`,
+      },
+    }),
+  },
+  {
+    id: 'java-checked',
+    languages: ['java'],
+    match: /error: unreported exception ([\w.$]+); must be caught or declared to be thrown/,
+    build: (m) => ({
+      en: {
+        title: `${m[1].split('.').pop()} must be handled`,
+        why: `This code can throw a "checked" exception (${m[1].split('.').pop()}). Java makes you decide what happens if it does: handle it, or pass the problem on.`,
+        fix: `Wrap the code in try { ... } catch (${m[1].split('.').pop()} e) { ... }, or add "throws ${m[1].split('.').pop()}" to the method.`,
+      },
+      sw: {
+        title: `${m[1].split('.').pop()} lazima ishughulikiwe`,
+        why: `Msimbo huu unaweza kutupa kosa la aina "checked" (${m[1].split('.').pop()}). Java inakulazimisha uamue kitakachofanyika likitokea: lishughulikie, au lipitishe.`,
+        fix: `Funga msimbo ndani ya try { ... } catch (${m[1].split('.').pop()} e) { ... }, au ongeza "throws ${m[1].split('.').pop()}" kwenye method.`,
+      },
+    }),
+  },
+  {
+    id: 'java-static',
+    languages: ['java'],
+    match: /error: non-static (method|variable) ([\w$]+(?:\([^)]*\))?) cannot be referenced from a static context/,
+    build: (m) => ({
+      en: {
+        title: 'main cannot use this directly',
+        why: `main is static: it belongs to the class, not to any object. The ${m[1]} ${m[2]} belongs to an object, so main cannot use it on its own.`,
+        fix: `Create an object first and use it through the object (for example: Shop shop = new Shop(); shop.open();), or mark the ${m[1]} as static.`,
+      },
+      sw: {
+        title: 'main haiwezi kutumia hii moja kwa moja',
+        why: `main ni static: inamilikiwa na class, si na kitu (object) chochote. ${m[1] === 'method' ? 'Method' : 'Kigezo'} ${m[2]} kinamilikiwa na object, kwa hiyo main haiwezi kukitumia peke yake.`,
+        fix: `Unda object kwanza na uitumie kupitia object (mfano: Shop shop = new Shop(); shop.open();), au weka ${m[1] === 'method' ? 'method' : 'kigezo'} kuwa static.`,
+      },
+    }),
+  },
+  {
+    id: 'java-final',
+    languages: ['java'],
+    match: /error: cannot assign a value to final variable ([\w$]+)/,
+    build: (m) => ({
+      en: {
+        title: `"${m[1]}" cannot change`,
+        why: `"${m[1]}" was declared final, which means it is a constant: it gets one value and keeps it.`,
+        fix: `Remove final if the value must change, or stop assigning to "${m[1]}".`,
+      },
+      sw: {
+        title: `"${m[1]}" haiwezi kubadilika`,
+        why: `"${m[1]}" ilitangazwa final, yaani ni thabiti: inapata thamani moja na kuibakiza.`,
+        fix: `Ondoa final kama thamani inapaswa kubadilika, au acha kuipa "${m[1]}" thamani mpya.`,
+      },
+    }),
+  },
+  {
+    id: 'java-abstract',
+    languages: ['java'],
+    match: /error: ([\w$]+) is abstract; cannot be instantiated/,
+    build: (m) => ({
+      en: {
+        title: `You cannot create a "${m[1]}" directly`,
+        why: `"${m[1]}" is abstract (or an interface): it describes what something can do, but it is not complete enough to make an object from.`,
+        fix: `Create an object of a class that extends or implements "${m[1]}" instead, for example: ${m[1]} item = new SomeSubclass();`,
+      },
+      sw: {
+        title: `Huwezi kuunda "${m[1]}" moja kwa moja`,
+        why: `"${m[1]}" ni abstract (au interface): inaeleza kitu kinaweza kufanya nini, lakini haijakamilika vya kutosha kutengeneza object kutoka kwake.`,
+        fix: `Unda object ya class inayoirithi au kuitekeleza "${m[1]}" badala yake, mfano: ${m[1]} item = new SomeSubclass();`,
+      },
+    }),
+  },
+  {
+    id: 'java-public-file',
+    languages: ['java'],
+    match: /error: class ([\w$]+) is public, should be declared in a file named/,
+    build: (m) => ({
+      en: {
+        title: 'Only one class can be public',
+        why: `"${m[1]}" is marked public, and another public class is in the same program. Java allows one public class per file.`,
+        fix: 'Remove the word public from all the classes except the one that holds main.',
+      },
+      sw: {
+        title: 'Class moja tu inaweza kuwa public',
+        why: `"${m[1]}" imewekwa public, na kuna class nyingine ya public kwenye programu hiyo hiyo. Java inaruhusu class moja ya public kwa kila faili.`,
+        fix: 'Ondoa neno public kwenye class zote isipokuwa ile yenye main.',
+      },
+    }),
+  },
+  {
+    id: 'java-array-index',
+    languages: ['java'],
+    match: /Exception in thread "main" java\.lang\.(?:ArrayIndexOutOfBounds|IndexOutOfBounds|StringIndexOutOfBounds)Exception/,
+    build: () => ({
+      en: {
+        title: 'You went past the end of the list',
+        why: 'The program asked for a position that does not exist (an array, a list or a string). Positions start at 0, so a list of 5 items has positions 0 to 4, and position 5 does not exist.',
+        fix: 'Check the number you use as the index. A loop should stop with i < length, not i <= length. Look at the method names in the report to see where it happened.',
+      },
+      sw: {
+        title: 'Umepita mwisho wa orodha',
+        why: 'Programu iliomba nafasi isiyokuwepo (safu, orodha au maandishi). Nafasi huanza 0, kwa hiyo orodha ya vitu 5 ina nafasi 0 hadi 4, na nafasi 5 haipo.',
+        fix: 'Angalia nambari unayotumia kama faharasa. Kitanzi kinapaswa kusimama kwa i < length, si i <= length. Angalia majina ya method kwenye ripoti kuona ilipotokea.',
+      },
+    }),
+  },
+  {
+    id: 'java-null',
+    languages: ['java'],
+    match: /Exception in thread "main" java\.lang\.NullPointerException/,
+    build: () => ({
+      en: {
+        title: 'Something was empty (null)',
+        why: 'The program tried to use a variable that points to nothing. An object variable that was never given an object, or a method that returned null, holds null, and you cannot call methods on null.',
+        fix: 'Find the variable used on the line in the report, and make sure it is given a real object first (for example with new), or check if (x != null) before using it.',
+      },
+      sw: {
+        title: 'Kuna kitu kitupu (null)',
+        why: 'Programu ilijaribu kutumia kigezo kisichoelekeza popote. Kigezo cha object ambacho hakikupewa object kamwe, au method iliyorudisha null, kinashikilia null, na huwezi kuita method kwenye null.',
+        fix: 'Tafuta kigezo kinachotumika kwenye mstari wa ripoti, na hakikisha kinapewa object halisi kwanza (mfano kwa new), au kagua if (x != null) kabla ya kukitumia.',
+      },
+    }),
+  },
+  {
+    id: 'java-stack',
+    languages: ['java'],
+    match: /Exception in thread "main" java\.lang\.StackOverflowError/,
+    build: () => ({
+      en: {
+        title: 'A method kept calling itself',
+        why: 'A method called itself again and again with no way to stop, until the computer ran out of room for the calls. This is recursion without a base case.',
+        fix: 'Add a base case: an if that returns without calling the method again, and make sure each call moves closer to it.',
+      },
+      sw: {
+        title: 'Method iliendelea kujiita yenyewe',
+        why: 'Method ilijiita tena na tena bila njia ya kusimama, hadi kompyuta ikaishiwa nafasi ya miito. Hii ni recursion isiyo na base case.',
+        fix: 'Ongeza base case: if inayorudi bila kuiita method tena, na hakikisha kila mwito unakaribia hiyo.',
+      },
+    }),
+  },
+  {
+    id: 'java-arith',
+    languages: ['java'],
+    match: /Exception in thread "main" java\.lang\.ArithmeticException/,
+    build: () => ({
+      en: {
+        title: 'Division by zero',
+        why: 'Whole-number division by 0 is impossible, so Java stops with an ArithmeticException.',
+        fix: 'Check the divisor first: if (b != 0) { ... } else { ... }.',
+      },
+      sw: {
+        title: 'Kugawanya kwa sifuri',
+        why: 'Kugawanya nambari kamili kwa 0 hakuwezekani, kwa hiyo Java inasimama na ArithmeticException.',
+        fix: 'Kagua kigawanyo kwanza: if (b != 0) { ... } else { ... }.',
+      },
+    }),
+  },
+  {
+    id: 'java-number-format',
+    languages: ['java'],
+    match: /Exception in thread "main" java\.lang\.NumberFormatException/,
+    build: () => ({
+      en: {
+        title: 'That text is not a number',
+        why: 'Integer.parseInt or Double.parseDouble was given text that cannot be turned into a number (letters, spaces, or an empty line).',
+        fix: 'Check the text before converting, or wrap the conversion in try { ... } catch (NumberFormatException e) { ... } and ask again.',
+      },
+      sw: {
+        title: 'Maandishi hayo si nambari',
+        why: 'Integer.parseInt au Double.parseDouble ilipewa maandishi yasiyoweza kugeuzwa kuwa nambari (herufi, nafasi, au mstari mtupu).',
+        fix: 'Kagua maandishi kabla ya kubadilisha, au funga ubadilishaji ndani ya try { ... } catch (NumberFormatException e) { ... } kisha uliza tena.',
+      },
+    }),
+  },
+  {
+    id: 'java-input',
+    languages: ['java'],
+    match: /Exception in thread "main" java\.util\.(InputMismatchException|NoSuchElementException)/,
+    build: (m) => ({
+      en: m[1] === 'InputMismatchException'
+        ? {
+            title: 'The input is not what the program asked for',
+            why: 'Scanner was asked for one kind of value (for example nextInt) but the input has another (for example letters).',
+            fix: 'Check the Input box: type what the program expects, one value after another. Use hasNextInt() to check before reading.',
+          }
+        : {
+            title: 'The program wanted more input',
+            why: 'Scanner tried to read a value, but the Input box has run out of values.',
+            fix: 'Type all the values the program asks for in the Input box (one per line, or separated by spaces), or check with hasNext() before reading.',
+          },
+      sw: m[1] === 'InputMismatchException'
+        ? {
+            title: 'Ingizo si lile ambalo programu iliomba',
+            why: 'Scanner iliombwa aina moja ya thamani (mfano nextInt) lakini ingizo lina nyingine (mfano herufi).',
+            fix: 'Angalia kisanduku cha Input: andika kile programu inachotarajia, thamani moja baada ya nyingine. Tumia hasNextInt() kukagua kabla ya kusoma.',
+          }
+        : {
+            title: 'Programu ilitaka ingizo zaidi',
+            why: 'Scanner ilijaribu kusoma thamani, lakini kisanduku cha Input kimeishiwa thamani.',
+            fix: 'Andika thamani zote ambazo programu inaomba kwenye kisanduku cha Input (moja kwa mstari, au zikitenganishwa na nafasi), au kagua kwa hasNext() kabla ya kusoma.',
+          },
+    }),
+  },
+  {
+    id: 'java-uncaught',
+    languages: ['java'],
+    match: /Exception in thread "main" ([\w.$]+)(?:: ([^\n]*))?/,
+    build: (m) => {
+      const name = m[1].split('.').pop();
+      return {
+        en: {
+          title: `The program stopped with ${name}`,
+          why: m[2] ? `An exception was thrown and nothing caught it. Its message says: ${m[2]}` : 'An exception was thrown and nothing caught it, so the program stopped.',
+          fix: 'Read the line that starts with "at": it names the methods that were running, from the one that failed back to main. Fix the cause there, or catch the exception with try / catch if it is expected.',
+        },
+        sw: {
+          title: `Programu ilisimama na ${name}`,
+          why: m[2] ? `Exception ilitupwa na hakuna aliyeishika. Ujumbe wake unasema: ${m[2]}` : 'Exception ilitupwa na hakuna aliyeishika, kwa hiyo programu ilisimama.',
+          fix: 'Soma mstari unaoanza na "at": unataja method zilizokuwa zikiendeshwa, kuanzia iliyofeli hadi main. Rekebisha chanzo hapo, au shika exception kwa try / catch kama inatarajiwa.',
+        },
+      };
+    },
+  },
 ];
 
 /** Line number mentioned by the raw error, if any. */
@@ -1213,6 +1611,10 @@ export function extractLine(raw, language) {
   if (language === 'python') {
     const all = [...raw.matchAll(/File "<exec>", line (\d+)/g)];
     return all.length ? Number(all[all.length - 1][1]) : null;
+  }
+  if (language === 'java') {
+    const j = raw.match(/\.java:(\d+):/);
+    return j ? Number(j[1]) : null;
   }
   const a = raw.match(/^(\d+):\d+/m);
   if (a) return Number(a[1]);

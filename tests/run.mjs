@@ -5,12 +5,16 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { courses, flatExercises } from '../src/content/index.js';
+import { courses as allCourses, flatExercises } from '../src/content/index.js';
+// While writing lessons, ONLY_COURSE=java-start node tests/run.mjs runs just that course's lessons and exercises.
+const courses = process.env.ONLY_COURSE ? allCourses.filter((c) => c.id === process.env.ONLY_COURSE) : allCourses;
 import { gradeExercise, normalizeOutput } from '../src/lib/grader.js';
 import { translateError, extractLine } from '../src/lib/errors.js';
 import { normalizeC, prepareSource } from '../src/lib/csource.js';
 import { dayKey } from '../src/lib/storage.js';
 import { solutions } from './solutions.mjs';
+import { runJava, closeJava, javaStats } from './java-node.mjs';
+import { normalizeJava, javaRunInfo } from '../src/lib/javasource.js';
 import { validateBlock, fillTemplate, reorderProgram, shuffleOrder } from '../src/content/blocks.js';
 import { JSDOM, VirtualConsole } from 'jsdom';
 import { SYMBOLS, editorLanguage } from '../src/lib/symbols.js';
@@ -111,7 +115,7 @@ async function runPhpTest(code, stdin = '') {
   const r = await runPhpCore(phpInstance, code, stdin);
   return { stdout: r.stdout, error: r.error, timedOut: false };
 }
-const runLang = (language, code, stdin) => (language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'sql' ? runSql(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : language === 'php' ? runPhpTest(code, stdin) : runPython(code, stdin));
+const runLang = (language, code, stdin) => (language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'java' ? runJava(code, stdin) : language === 'sql' ? runSql(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : language === 'php' ? runPhpTest(code, stdin) : runPython(code, stdin));
 
 // ---- 1. every exercise: solution passes, starter fails ----------------------------
 section('Exercises (reference solution must pass, untouched starter must fail)');
@@ -144,7 +148,8 @@ for (const ex of all) {
   const bad = await gradeExercise(ex, (input) => runLang(ex.language, ex.starter, input));
   check(`${ex.id}: untouched starter does not pass`, !bad.passed);
 }
-for (const id of Object.keys(solutions)) check(`solution ${id} belongs to a real exercise`, ids.has(id));
+const everyExerciseId = new Set(allCourses.flatMap((c) => flatExercises(c)).map((e) => e.id));
+for (const id of Object.keys(solutions)) check(`solution ${id} belongs to a real exercise`, everyExerciseId.has(id));
 console.log(`  ${all.length} exercises checked`);
 
 // ---- 1b. lessons: every example must run and show what the lesson says -------------------
@@ -287,7 +292,7 @@ section('Lessons (every interactive block is run on the real runtime)');
 section('Grader behaviour');
 const C_WRONG_PRODUCT = '#include <stdio.h>\nint main() { int a, b; scanf("%d %d", &a, &b); printf("Sum: %d\\n", a * b); return 0; }';
 {
-  const ex = all.find((e) => e.id === 'c2-sum');
+  const ex = allCourses.flatMap((c) => flatExercises(c)).find((e) => e.id === 'c2-sum');
   const wrong = await gradeExercise(ex, (input) => runC(C_WRONG_PRODUCT, input));
   check('wrong program fails', !wrong.passed && wrong.passedCount < wrong.total);
   const errored = await gradeExercise(ex, (input) => runC('int main() { int x = ; }', input));
@@ -365,6 +370,32 @@ section('Error translator (real messages from the runtimes)');
     ['python', 'input()', 'py-eof', 'EOFError (no input)'],
     ['python', 'x = 5\nx.append(1)', 'py-attribute', 'AttributeError'],
     ['python', 'x = = 3', 'py-syntax', 'generic SyntaxError'],
+    // ---- Java: real javac messages and real exception reports from the shipped engine
+    ['java', 'public class Main { public static void main(String[] a) { int x = 5\n System.out.println(x); } }', 'java-expected', 'Java missing semicolon'],
+    ['java', 'public class Main { public static void main(String[] a) {\n System.out.println("Karibu);\n } }', 'java-quote', 'Java missing closing quote'],
+    ['java', 'public class Main { public static void main(String[] a) {\n System.out.println(\'Karibu\');\n } }', 'java-quote', 'Java single quotes for text'],
+    ['java', 'public class Main { public static void main(String[] a) { System.out.println(total); } }', 'java-symbol', 'Java unknown variable'],
+    ['java', 'public class Main { public static void main(String[] a) { system.out.println("hi"); } }', 'java-package', 'Java lowercase system'],
+    ['java', 'public class Main { public static void main(String[] a) { int x = "hello"; } }', 'java-types', 'Java wrong type'],
+    ['java', 'public class Main { public static void main(String[] a) { int x = 3.5; } }', 'java-lossy', 'Java double into int'],
+    ['java', 'public class Main { static int f(int a) { if (a > 0) { return 1; } } public static void main(String[] a) { f(1); } }', 'java-return', 'Java missing return'],
+    ['java', 'public class Main { public static void main(String[] a) { int x; System.out.println(x); } }', 'java-uninit', 'Java uninitialised variable'],
+    ['java', 'public class Main { public static void main(String[] a) { int x = 1; int x = 2; } }', 'java-duplicate', 'Java variable declared twice'],
+    ['java', 'public class Main { public static void main(String[] a) { Thread.sleep(10); } }', 'java-checked', 'Java unhandled checked exception'],
+    ['java', 'public class Main { void hi() { } public static void main(String[] a) { hi(); } }', 'java-static', 'Java non-static from main'],
+    ['java', 'public class Main { public static void main(String[] a) { final int x = 1; x = 2; } }', 'java-final', 'Java assigning a final'],
+    ['java', 'abstract class Shape { } public class Main { public static void main(String[] a) { Shape s = new Shape(); } }', 'java-abstract', 'Java new on abstract class'],
+    ['java', 'public class Main { public static void main(String[] a) { System.out.println("hi"); }', 'java-syntax', 'Java missing closing brace'],
+    ['java', 'public class Main { public static void main(String[] a) { int[] x = new int[2]; x[5] = 1; } }', 'java-array-index', 'Java index out of bounds'],
+    ['java', 'public class Main { public static void main(String[] a) { java.util.List<Integer> l = new java.util.ArrayList<>(); l.get(3); } }', 'java-array-index', 'Java list index out of bounds'],
+    ['java', 'public class Main { public static void main(String[] a) { String s = null; s.length(); } }', 'java-null', 'Java null pointer'],
+    ['java', 'public class Main { static int r(int n) { return r(n + 1) + 1; } public static void main(String[] a) { r(1); } }', 'java-stack', 'Java endless recursion'],
+    ['java', 'public class Main { public static void main(String[] a) { int z = Integer.parseInt("0"); System.out.println(5 / z); } }', 'java-arith', 'Java divide by zero'],
+    ['java', 'public class Main { public static void main(String[] a) { Integer.parseInt("abc"); } }', 'java-number-format', 'Java NumberFormatException'],
+    ['java', 'public class Main { public static void main(String[] a) { new java.util.Scanner(System.in).nextInt(); } }', 'java-input', 'Java wrong kind of input', 'abc\n'],
+    ['java', 'public class Main { public static void main(String[] a) { new java.util.Scanner(System.in).nextInt(); } }', 'java-input', 'Java no input left', ''],
+    ['java', 'public class Main { public static void main(String[] a) { throw new IllegalStateException("boom"); } }', 'java-uncaught', 'Java uncaught exception'],
+    ['java', 'public class Main { public static void main(String[] a) { while (true) { } } }', 'timeout', 'Java infinite loop'],
     ['php', '<?php\necho "a"\necho "b";', 'php-missing-semicolon', 'PHP missing semicolon'],
     ['php', '<?php\nif (true {\n}', 'php-parse', 'PHP generic parse error'],
     ['php', '<?php\ntotl(1);', 'php-undefined-function', 'PHP undefined function'],
@@ -379,8 +410,8 @@ section('Error translator (real messages from the runtimes)');
     ['php', '<?php\nfunction a() {}\nfunction a() {}', 'php-redeclare', 'PHP function defined twice'],
     ['php', '<?php\nthrow new Exception("boom");', 'php-uncaught', 'PHP uncaught exception'],
   ];
-  for (const [language, code, expectedId, label] of cases) {
-    const res = await runLang(language, code, language === 'sql' ? 'CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT NOT NULL); CREATE TABLE u (id INTEGER, name TEXT); INSERT INTO t VALUES (1, \'Amina\');' : '');
+  for (const [language, code, expectedId, label, caseInput = ''] of cases) {
+    const res = await runLang(language, code, language === 'sql' ? 'CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT NOT NULL); CREATE TABLE u (id INTEGER, name TEXT); INSERT INTO t VALUES (1, \'Amina\');' : caseInput);
     const raw = res.error || '';
     const en = translateError(raw, { language, lang: 'en' });
     check(`${label}: rule ${expectedId}`, en?.id === expectedId, `got ${en?.id ?? 'no match'} for: ${raw.split('\n').slice(-2).join(' | ').slice(0, 140)}`);
@@ -412,7 +443,7 @@ for (const course of courses) {
   const lang = editorLanguage(course.language);
   check(`${course.id}: symbol bar exists for "${lang}"`, Array.isArray(SYMBOLS[lang]) && SYMBOLS[lang].length > 5);
 }
-for (const l of ['html', 'css', 'js']) check(`web file type "${l}" has a symbol bar`, Array.isArray(SYMBOLS[l]) && SYMBOLS[l].length > 5);
+for (const l of ['html', 'css', 'js', 'java']) check(`file type "${l}" has a symbol bar`, Array.isArray(SYMBOLS[l]) && SYMBOLS[l].length > 5);
 section('Web engine (loop guard, linters, line numbers, pretend server, checker)');
 {
   const G = SMEngine.guardLoops;
@@ -572,6 +603,76 @@ section('C source preparation');
   check('char literal comma is untouched', normalizeC("char c = ',';") === "char c = ',';");
 }
 
+// ---- 6. Java (source preparation, then the real engine run through the shipped worker) -----------------
+section('Java source preparation');
+{
+  const TB = '"'.repeat(3);
+  check('%n in a format string becomes \\n', normalizeJava('System.out.printf("A=%d%nB=%d%n", 1, 2);') === 'System.out.printf("A=%d\\nB=%d\\n", 1, 2);');
+  check('%%n (a real percent sign and an n) is untouched', normalizeJava('printf("100%%n")') === 'printf("100%%n")');
+  check('%n inside a text block is fixed too', normalizeJava(`String t = ${TB}\n a %n b${TB};`).includes('a \\n b'));
+  check('%n in a comment is untouched', normalizeJava('// use %n here\nint x;') === '// use %n here\nint x;');
+  check('a literal zero divisor is hidden from the compiler', normalizeJava('int a = 10 / 0;') === 'int a = 10 / Integer.parseInt("0");');
+  check('a literal zero modulus is hidden too', normalizeJava('int a = 10 % 0;') === 'int a = 10 % Integer.parseInt("0");');
+  check('other divisors are untouched', normalizeJava('a / 10; b /100; c / 0.5; d / 0x10; e / 05; f / x;') === 'a / 10; b /100; c / 0.5; d / 0x10; e / 05; f / x;');
+  check('a divide in a comment or string is untouched', normalizeJava('// 5/0\nString s = "5/0";') === '// 5/0\nString s = "5/0";');
+  const info = (src) => javaRunInfo(src);
+  check('main class: public class Main', info('public class Main { public static void main(String[] a) {} }').mainClass === 'Main');
+  check('main class: public class with another name', JSON.stringify(info('public class Shop { public static void main(String[] a) {} }')) === '{"mainClass":"Shop","fileName":"Shop.java"}');
+  check('main class: not public', JSON.stringify(info('class Shop { public static void main(String[] a) {} }')) === '{"mainClass":"Shop","fileName":"Main.java"}');
+  check('main class: helper classes first', info('class Helper {}\npublic class Main { public static void main(String[] a) {} }').mainClass === 'Main');
+  check('main class: a nested class with main is not chosen', info('public class Main { static class A { static void main(String[] a) {} } public static void main(String[] a) {} }').mainClass === 'Main');
+  check('main class: public class without main, another class has it', JSON.stringify(info('public class Lib {}\nclass App { public static void main(String[] a) {} }')) === '{"mainClass":"App","fileName":"Lib.java"}');
+  check('main class: class names in comments and strings are ignored', info('// public class Fake { static void main(\nclass Real { String s = "class Q {"; public static void main(String... a) {} }').mainClass === 'Real');
+  check('main class: records and enums before it', info('record P(int x) {}\nenum E { A }\npublic class Run { public static void main(String[] a) {} }').mainClass === 'Run');
+}
+
+section('Java engine (real javac and TeaVM through the shipped worker)');
+{
+  const J = (body, pre = '') => `${pre}\npublic class Main { public static void main(String[] args) throws Exception { ${body} } }`;
+  const same = (r, out) => !r.error && r.stdout === out;
+
+  let r = await runJava(J('java.util.Scanner s = new java.util.Scanner(System.in); System.out.println("Sum = " + (s.nextInt() + s.nextInt()));'), '12 30\n');
+  check('hello with Scanner input', same(r, 'Sum = 42\n'), JSON.stringify(r));
+  r = await runJava(J('java.util.Scanner s = new java.util.Scanner(System.in); System.out.println("Sum = " + (s.nextInt() + s.nextInt()));'), '1 2\n');
+  check('same program, other input (build reused)', same(r, 'Sum = 3\n'), JSON.stringify(r));
+  r = await runJava('public class Shop { public static void main(String[] a) { System.out.println("shop"); } }');
+  check('a public class that is not called Main runs', same(r, 'shop\n'), JSON.stringify(r));
+  r = await runJava('class Shop { public static void main(String[] a) { System.out.println("shop2"); } }');
+  check('a class with main that is not public runs', same(r, 'shop2\n'), JSON.stringify(r));
+  r = await runJava(J('System.out.printf("A=%d%nB=%d%nC=%d%n", 1, 2, 3);'));
+  check('%n in the middle of a format string keeps every argument', same(r, 'A=1\nB=2\nC=3\n'), JSON.stringify(r));
+  r = await runJava(J('try { System.out.println(10 / 0); } catch (ArithmeticException e) { System.out.println("AE " + e.getMessage()); } System.out.println(5.0 / 0);'));
+  check('10 / 0 with literals is caught as ArithmeticException (and 5.0 / 0 is Infinity)', same(r, 'AE / by zero\nInfinity\n'), JSON.stringify(r));
+  r = await runJava(J('System.err.println("to stderr"); System.out.println("ok");'));
+  check('System.err output is kept apart from the answer', !r.error && r.stdout === 'ok\n' && r.stderr === 'to stderr\n', JSON.stringify(r));
+  r = await runJava(J('System.out.println("UGX 5,000 \u2014 M\u00fcller \u2713");'));
+  check('unicode output', same(r, 'UGX 5,000 \u2014 M\u00fcller \u2713\n'), JSON.stringify(r));
+
+  r = await runJava(J('int x = "hello";\nString s = 5;\nundefinedVar++;\nSystem.out.println(x)'));
+  check('a compile error is reported like javac (file, line, "error:")', /^Main\.java:5: error: ';' expected$/.test(r.error || ''), JSON.stringify(r.error));
+  r = await runJava(J('Foo f = new Foo();'));
+  check('the same compile error is not repeated', ((r.error || '').match(/cannot find symbol/g) || []).length === 1, JSON.stringify(r.error));
+  check('simple type names in messages (String, not java.lang.String)', /String cannot be converted to int/.test((await runJava(J('int x = "a";'))).error || ''));
+
+  r = await runJava(J('System.out.println("before"); throw new IllegalStateException("boom");'));
+  check('an uncaught exception is reported like Java', r.error === 'Exception in thread "main" java.lang.IllegalStateException: boom\n\tat Main.main(Main.java)' && r.stdout === 'before\n', JSON.stringify(r));
+  r = await runJava(J('new Bank().draw(5);', 'class LowFunds extends RuntimeException { LowFunds(String m) { super(m); } } class Bank { void draw(int n) { throw new LowFunds("Need " + n); } }'));
+  check('the report names our own exception class and the calls that led to it', r.error === 'Exception in thread "main" LowFunds: Need 5\n\tat Bank.draw(Main.java)\n\tat Main.main(Main.java)', JSON.stringify(r.error));
+  r = await runJava(J('throw new RuntimeException();'));
+  check('an exception without a message shows only its class', (r.error || '').startsWith('Exception in thread "main" java.lang.RuntimeException\n'), JSON.stringify(r.error));
+  r = await runJava(J('int[] x = new int[2]; x[5] = 1;'));
+  check('array index out of bounds is named like Java names it', /^Exception in thread "main" java\.lang\.ArrayIndexOutOfBoundsException/.test(r.error || ''), JSON.stringify(r.error));
+  r = await runJava(J('String s = null; s.length();'));
+  check('a null pointer is named like Java names it', /^Exception in thread "main" java\.lang\.NullPointerException/.test(r.error || ''), JSON.stringify(r.error));
+
+  const before = javaStats.restarts;
+  r = await runJava('public class Main { public static void main(String[] a) { while (true) { } } }');
+  check('a runaway loop is stopped by the time limit', r.timedOut === true && r.error === 'Time limit exceeded.', JSON.stringify(r));
+  check('the engine was restarted after the stop', javaStats.restarts === before + 1);
+  r = await runJava(J('System.out.println("alive");'));
+  check('Java runs again after a runaway loop was stopped', same(r, 'alive\n'), JSON.stringify(r));
+}
+
 // ---- 5. dates and streak keys --------------------------------------------------------
 section('SQL engine (SQLite via sql.js: the same core file the worker uses)');
 {
@@ -646,6 +747,7 @@ section('Dates');
   check('dayKey pads month and day', dayKey(new Date(2026, 0, 5)) === '2026-01-05');
 }
 
+closeJava();
 console.log(`\n${passed} checks passed, ${failures.length} failed`);
 // the PHP runtime keeps Node alive after the last check, so end the process explicitly
 if (!failures.length) process.exit(0);

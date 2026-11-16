@@ -123,6 +123,30 @@ SYMBOLS.cpp = [
   { label: ',', text: ',' },
 ];
 
+// Java: the keys a phone keyboard hides (braces, brackets, quotes, <>, && ||, %), plus a tab.
+SYMBOLS.java = [
+  { label: 'Tab', text: '    ' },
+  { label: ';', text: ';' },
+  { label: '{ }', text: '{}', back: 1 },
+  { label: '( )', text: '()', back: 1 },
+  { label: '[ ]', text: '[]', back: 1 },
+  { label: '\" \"', text: '\"\"', back: 1 },
+  { label: '<>', text: '<>', back: 1 },
+  { label: '=', text: '=' },
+  { label: '==', text: '==' },
+  { label: '!', text: '!' },
+  { label: '&&', text: '&&' },
+  { label: '||', text: '||' },
+  { label: '.', text: '.' },
+  { label: ',', text: ',' },
+  { label: '+', text: '+' },
+  { label: '-', text: '-' },
+  { label: '*', text: '*' },
+  { label: '/', text: '/' },
+  { label: '%', text: '%' },
+  { label: '\\n', text: '\\n' },
+];
+
 SYMBOLS.html = [
   { label: '<', text: '<' },
   { label: '>', text: '>' },

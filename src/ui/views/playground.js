@@ -15,7 +15,13 @@ int main() {
 }
 `,
 };
-const NAMES = { python: 'Python', c: 'C', web: 'Web' };
+const NAMES = { python: 'Python', c: 'C', java: 'Java', web: 'Web' };
+STARTERS.java = `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello from SayMaCoder!");
+    }
+}
+`;
 const WEB_STARTER = {
   html: '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1">\n  <title>My page</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <h1>Hello, Uganda!</h1>\n  <p>Edit me and watch the page change.</p>\n  <button id="hi">Say hi</button>\n  <script src="script.js"></script>\n</body>\n</html>\n',
   css: 'body {\n  font-family: system-ui, sans-serif;\n  text-align: center;\n  padding: 24px;\n}\nh1 {\n  color: tomato;\n}\n',
@@ -25,7 +31,7 @@ const WEB_STARTER = {
 export async function playgroundView() {
   let language = await kvGet('play:lang', 'python');
   if (!NAMES[language]) language = 'python';
-  const drafts = { python: await kvGet('draft:play:python', STARTERS.python), c: await kvGet('draft:play:c', STARTERS.c) };
+  const drafts = { python: await kvGet('draft:play:python', STARTERS.python), c: await kvGet('draft:play:c', STARTERS.c), java: await kvGet('draft:play:java', STARTERS.java) };
   const webDraft = await kvGet('draft:play:web', WEB_STARTER);
   let webWorkspace = null;
   const webBox = h('div', { class: 'web-box' });
@@ -53,9 +59,9 @@ export async function playgroundView() {
     h('button', { type: 'button', class: `seg ${lang === language ? 'active' : ''}`, 'data-lang': lang, onclick: () => switchTo(lang) }, NAMES[lang]),
   );
 
-  const stop = onRunnerStatus(({ language: l, state: s }) => {
+  const stop = onRunnerStatus(({ language: l, state: s, detail }) => {
     if (l !== language) return;
-    runtimeNote.textContent = { loading: `Starting ${NAMES[l]}… the first time can take a few seconds.`, ready: `${NAMES[l]} is ready.`, failed: `${NAMES[l]} could not start.` }[s] ?? '';
+    runtimeNote.textContent = { loading: `Starting ${NAMES[l]}… the first time can take a few seconds.`, ready: `${NAMES[l]} is ready.`, running: detail === 'building' ? 'Building your program… the first run can take a few seconds.' : '', failed: `${NAMES[l]} could not start.` }[s] ?? '';
   });
 
   function showWeb(on) {

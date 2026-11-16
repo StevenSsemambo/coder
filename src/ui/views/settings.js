@@ -34,11 +34,12 @@ export async function settingsView() {
     },
   });
 
-  // ---- runtime packs (Python, PHP): each is a separate download so the app stays small
-  const packRows = ['python', 'php'].map((id) => makePackRow(id));
+  // ---- runtime packs (Python, PHP, Java): each is a separate download so the app stays small
+  const packRows = ['python', 'php', 'java'].map((id) => makePackRow(id));
   function makePackRow(id) {
     const pack = PACKS[id];
-    const label = id === 'python' ? 'Needed for Python' : 'Needed for PHP';
+    const NAME = { python: 'Python', php: 'PHP', java: 'Java' };
+    const label = `Needed for ${NAME[id]}`;
     const row = h('div', { class: 'card pack' });
     const progress = h('div', { class: 'bar hidden' }, h('span', { style: 'width:0%' }));
 
@@ -65,7 +66,7 @@ export async function settingsView() {
       progress.classList.remove('hidden');
       try {
         await downloadPack(id, (f) => { progress.firstChild.style.width = `${Math.round(f * 100)}%`; });
-        toast(`${id === 'python' ? 'Python' : 'PHP'} is ready to use offline.`);
+        toast(`${NAME[id]} is ready to use offline.`);
       } catch (err) {
         toast(`Download failed. Check your connection and try again. (${err.message})`);
       }
@@ -100,7 +101,7 @@ export async function settingsView() {
     { class: 'view' },
     h('h1', null, 'Settings'),
     h('h2', { class: 'section-title' }, 'Downloads'),
-    h('p', { class: 'muted' }, `C and SQL are built in. Python and PHP are separate downloads so the app stays small.`),
+    h('p', { class: 'muted' }, `C and SQL are built in. Python, PHP and Java are separate downloads so the app stays small.`),
     packRows.map((p) => p.row),
     h('h2', { class: 'section-title' }, 'Reading and language'),
     h('label', { class: 'field' }, h('span', null, 'Explain errors in'), langSelect),

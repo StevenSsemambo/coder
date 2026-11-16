@@ -1,11 +1,12 @@
 import { cCourse } from './c-course.js';
+import { javaCourse } from './java-course.js';
 import { cppCourse } from './cpp-course.js';
 import { phpCourse } from './php-course.js';
 import { pythonCourse } from './python-course.js';
 import { sqlCourse } from './sql-course.js';
 import { webCourse } from './web-course.js';
 
-export const courses = [cCourse, cppCourse, pythonCourse, webCourse, sqlCourse, phpCourse];
+export const courses = [cCourse, cppCourse, pythonCourse, javaCourse, webCourse, sqlCourse, phpCourse];
 
 export const getCourse = (id) => courses.find((c) => c.id === id);
 export const getLesson = (courseId, lessonId) => getCourse(courseId)?.lessons.find((l) => l.id === lessonId);

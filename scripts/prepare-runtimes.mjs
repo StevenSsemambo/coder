@@ -1,6 +1,7 @@
 // Prepares the offline runtimes that SayMaCoder ships:
 //   - Pyodide (Python on WebAssembly) copied into public/pyodide
 //   - JSCPP (C interpreter) bundled for the browser into public/vendor/jscpp.js
+//   - Java (OpenJDK javac + TeaVM compiled to WebAssembly) copied into public/java, with the engine file patched
 //   - sql.js (SQLite on WebAssembly, about 0.7 MB) copied into public/vendor/sqljs
 // Also writes src/generated/pack-info.json so the UI can show real pack sizes.
 import { build } from 'esbuild';
@@ -365,6 +366,67 @@ await build({
 });
 const cSize = statSync(join(root, 'public/vendor/jscpp.js')).size;
 
+// ---- Java (javac + TeaVM in WebAssembly, package @live-codes/java-wasm) ----------------------
+// The engine's own worker file is patched (same approach as JSCPP above: each patch must match exactly once,
+// otherwise the build stops loudly). The patches are what the Java lessons rely on:
+//   1. the source file is named after the student's public class (the engine always used Main.java)
+//   2. the built WebAssembly is kept (last 8 programs), so running the same program again with another input takes
+//      milliseconds instead of seconds. The grader runs every exercise against several inputs.
+//   3. a "phase: run" message is sent once the build is finished, so the app can give the build a long time limit and
+//      the running program a short one.
+//   4. an exception that ends the program is reported the way real Java does (class, message, where), not just its message.
+const JAVA_FILES = [
+  'teavm/compiler.wasm',
+  'teavm/runtime-classlib-teavm.bin',
+  'teavm/compile-classlib-teavm.bin',
+  'teavm/compiler.wasm-deobfuscator.wasm',
+  'teavm/compiler.wasm-runtime.js',
+  'THIRD-PARTY-NOTICES.md',
+];
+const JAVA_PATCHES = [
+  {
+    why: 'compile the source under the name of its public class, and reuse a program that was already built',
+    find: 'async function pt(t,e,r,s="posix"){let o=z,c=performance.now();o.clearSourceFiles(),o.addSourceFile("Main.java",t),B=[];',
+    replace:
+      'async function pt(t,e,r,s="posix"){let K=(globalThis.__javaFile||"Main.java")+"|"+e+"|"+t,W=globalThis.__javaBuilt||(globalThis.__javaBuilt=new Map());' +
+      'if(W.has(K)){let C=W.get(K);self.postMessage({type:"phase",phase:"run"});let{stdout:x,stderr:k,runMs:b,error:v}=await mt(C,r,s);' +
+      'return{ok:v==null,cached:!0,compileMs:0,generateMs:0,runMs:b,exitCode:v==null?0:1,stdout:x,stderr:k,diagnostics:[]}}' +
+      'let o=z,c=performance.now();o.clearSourceFiles(),o.addSourceFile(globalThis.__javaFile||"Main.java",t),B=[];',
+  },
+  {
+    why: 'remember the built program and tell the app that the build is over',
+    find: 'let{stdout:x,stderr:k,runMs:b,error:v}=await mt(g,r,s);return{ok:v==null,compileMs:p,',
+    replace:
+      'if(W.size>=8)W.delete(W.keys().next().value);W.set(K,g);self.postMessage({type:"phase",phase:"run"});' +
+      'let{stdout:x,stderr:k,runMs:b,error:v}=await mt(g,r,s);return{ok:v==null,compileMs:p,',
+  },
+  {
+    why: 'let the app write the report for an exception that ends the program (java.worker.js defines __javaFormatError)',
+    find: 'catch(b){x=String((b==null?void 0:b.message)||b)}let k=p.instance',
+    replace: 'catch(b){x=globalThis.__javaFormatError?globalThis.__javaFormatError(b):String((b==null?void 0:b.message)||b)}let k=p.instance',
+  },
+];
+const javaDist = nm('@live-codes/java-wasm/dist');
+mkdirSync(join(root, 'public/java'), { recursive: true });
+const javaFiles = [];
+for (const rel of JAVA_FILES) {
+  const from = rel === 'THIRD-PARTY-NOTICES.md' ? nm('@live-codes/java-wasm/THIRD-PARTY-NOTICES.md') : join(javaDist, rel);
+  const name = rel.split('/').pop();
+  copyFileSync(from, join(root, 'public/java', name));
+  javaFiles.push({ name, size: statSync(from).size });
+}
+{
+  let engine = readFileSync(join(javaDist, 'worker-java.js'), 'utf8');
+  for (const p of JAVA_PATCHES) {
+    const n = countOf(engine, p.find);
+    if (n !== 1) throw new Error(`Java engine patch no longer applies (${n} matches): ${p.why}`);
+    engine = engine.replace(p.find, () => p.replace);
+  }
+  writeFileSync(join(root, 'public/java/engine.js'), engine);
+  javaFiles.push({ name: 'engine.js', size: Buffer.byteLength(engine) });
+}
+const javaVersion = JSON.parse(readFileSync(nm('@live-codes/java-wasm/package.json'), 'utf8')).version;
+
 // ---- sql.js (SQLite) ---------------------------------------------------------
 // Small enough to ship with the app (cached on first visit, like the C interpreter).
 mkdirSync(join(root, 'public/vendor/sqljs'), { recursive: true });
@@ -435,6 +497,11 @@ const info = {
     files: pyFiles,
     totalBytes: pyFiles.reduce((n, f) => n + f.size, 0),
   },
+  java: {
+    version: javaVersion,
+    files: javaFiles,
+    totalBytes: javaFiles.reduce((n, f) => n + f.size, 0),
+  },
   c: { bundledBytes: cSize },
   sql: { bundledBytes: sqlBytes },
   php: {
@@ -445,4 +512,4 @@ const info = {
   },
 };
 writeFileSync(join(root, 'src/generated/pack-info.json'), JSON.stringify(info, null, 2));
-console.log(`runtimes ready: python ${(info.python.totalBytes / 1048576).toFixed(1)} MB, c ${(cSize / 1024).toFixed(0)} KB, sql ${(sqlBytes / 1024).toFixed(0)} KB, php ${(phpWasmSize / 1048576).toFixed(1)} MB (+ worker ${(phpWorkerSize / 1024).toFixed(0)} KB)`);
+console.log(`runtimes ready: python ${(info.python.totalBytes / 1048576).toFixed(1)} MB, java ${(info.java.totalBytes / 1048576).toFixed(1)} MB, c ${(cSize / 1024).toFixed(0)} KB, sql ${(sqlBytes / 1024).toFixed(0)} KB, php ${(phpWasmSize / 1048576).toFixed(1)} MB (+ worker ${(phpWorkerSize / 1024).toFixed(0)} KB)`);

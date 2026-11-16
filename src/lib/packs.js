@@ -1,4 +1,4 @@
-// Optional runtime packs. The core app is small; heavy runtimes (Python, PHP) are downloaded once
+// Optional runtime packs. The core app is small; heavy runtimes (Python, PHP, Java) are downloaded once
 // and kept in the browser's Cache Storage so they work with no internet afterwards.
 import info from '../generated/pack-info.json';
 
@@ -8,9 +8,9 @@ export const PACKS = {
   python: {
     id: 'python',
     name: 'Python runtime',
+    dir: 'pyodide',
     files: info.python.files,
     bytes: info.python.totalBytes,
-    dir: 'pyodide',
   },
   php: {
     id: 'php',
@@ -18,6 +18,13 @@ export const PACKS = {
     files: info.php.files,
     bytes: info.php.totalBytes,
     dir: 'php',
+  },
+  java: {
+    id: 'java',
+    name: 'Java runtime',
+    dir: 'java',
+    files: info.java.files,
+    bytes: info.java.totalBytes,
   },
 };
 
