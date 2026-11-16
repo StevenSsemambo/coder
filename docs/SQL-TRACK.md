@@ -1,5 +1,9 @@
 # The SQL track: SQL from Zero (SQLite)
 
+**Status: COMPLETE. All 33 lessons and 99 exercises are written and tested.** Lessons live in `src/content/sql/`
+(`level1.js`, `level1b.js`, `level2.js`, `level3.js`, `level4a.js`, `level4b.js`, `level5a.js`, `level5b.js`).
+What remains is review and polish, not new lessons: see "Engine requests" at the end.
+
 Course id `sql-start`, language id `sql`. Files: `src/content/sql/` (lessons and practice data),
 `src/content/sql-course.js` (the course list), `tests/solutions-sql.mjs` (reference solutions).
 Owner: the SQL account.
@@ -51,10 +55,10 @@ progress is saved under them). Exercise ids start with `sql<lesson number>-`.
 - [x] 27. `sql-indexes` Indexes and `EXPLAIN QUERY PLAN`
 - [x] 28. `sql-views` Views
 - [x] 29. `sql-transactions` Transactions (`BEGIN`, `COMMIT`, `ROLLBACK`) with a Mobile Money transfer
-- [ ] 30. `sql-cte-window` `WITH` (CTEs), window functions (`ROW_NUMBER`, running totals)
-- [ ] 31. `sql-triggers-upsert` Triggers, `INSERT ... ON CONFLICT`, `RETURNING`
-- [ ] 32. `sql-from-apps` Using SQL from an app (SQL injection and parameters, in plain words; no runtime needed)
-- [ ] 33. `sql-capstone` Capstone: the Mobile Money ledger
+- [x] 30. `sql-cte-window` `WITH` (CTEs), window functions (`ROW_NUMBER`, running totals)
+- [x] 31. `sql-triggers-upsert` Triggers, `INSERT ... ON CONFLICT`, `RETURNING`
+- [x] 32. `sql-from-apps` Using SQL from an app (SQL injection and parameters, in plain words; no runtime needed)
+- [x] 33. `sql-capstone` Capstone: the Mobile Money ledger
 
 ## How SQL runs in the app (tested, not assumed)
 
@@ -178,3 +182,22 @@ Same rules as every track (`docs/TRACKS.md`), plus:
 - `x = (SELECT ...)` that returns many rows silently uses the first row; `x NOT IN (list with a NULL)` finds nothing.
 - Join output order is not promised: every Level 4 solution has an explicit `ORDER BY`, and expected answers are
   sorted in JavaScript the same way (`cmp` puts NULL first, like SQLite).
+
+## Facts learnt while writing Level 5 (tested)
+
+- `INSERT OR REPLACE` deletes the old row and inserts a new one, so an auto-numbered id changes (Sugar 1 becomes 3).
+  `ON CONFLICT(col) DO UPDATE` changes the row in place. `ON CONFLICT(col)` needs `col` to be PRIMARY KEY or UNIQUE.
+- A trigger body without `END;` reports `incomplete input`. A view cannot take INSERT, UPDATE or DELETE.
+- `BEGIN` inside a transaction, and `COMMIT` or `ROLLBACK` without one, are errors. A statement that fails inside a
+  transaction ends the whole run (the practice database is discarded), so `ROLLBACK` is shown with an explicit call.
+- A window function in `WHERE` is an error, also through an alias (`misuse of aliased window function`).
+  `SUM(x) OVER ()` with no `ORDER BY` repeats the grand total on every row. `RANK` ties skip numbers, `ROW_NUMBER` never ties.
+- `x NOT IN (list containing NULL)` finds nothing. `'x' || NULL` is NULL.
+- Lesson 32 (SQL injection) cannot run app code. It shows the glued text with `||`, runs the injected query as plain
+  SQL, and teaches parameters in words. Python's `sqlite3` placeholder `?` is the only code from another language shown.
+
+## Open review items
+
+- Level 5 expected plans (`SEARCH ... USING INDEX ...`) are exact text for the bundled SQLite. If `sql.js` is upgraded
+  and the tests fail on a plan line, update the expected text in `level5a.js` (`plan(...)`).
+- No lesson has been run on a real phone yet (see "Engine requests").
