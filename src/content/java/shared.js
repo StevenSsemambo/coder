@@ -18,3 +18,9 @@ export const HEAD_SCAN = 'import java.util.Scanner;\n\npublic class Main {\n    
 
 /** The two closing lines of main and of the class. */
 export const TAIL = ['    }', '}'];
+
+/**
+ * A complete program with extra static methods. `methods` goes inside the class before main (indent it by 4 spaces);
+ * `body` goes inside main (indent it by 8 spaces).
+ */
+export const progM = (methods, body, imports = '') => `${imports ? `${imports}\n\n` : ''}public class Main {\n${methods}\n\n    public static void main(String[] args) {\n${body}\n    }\n}\n`;

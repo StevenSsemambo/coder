@@ -7,11 +7,15 @@ import { variablesLesson } from './java/variables.js';
 import { operatorsLesson } from './java/operators.js';
 import { inputLesson } from './java/input.js';
 import { decisionsLesson } from './java/decisions.js';
+import { loopsLesson } from './java/loops.js';
+import { nestedLesson } from './java/nested.js';
+import { methodsLesson } from './java/methods.js';
+import { recursionLesson } from './java/recursion.js';
 
 export const javaCourse = {
   id: 'java-start',
   language: 'java',
   title: 'Java from Zero to Market-Ready',
   subtitle: 'Learn real Java offline, and build the Village SACCO system step by step',
-  lessons: [whatLesson, firstLesson, variablesLesson, operatorsLesson, inputLesson, decisionsLesson],
+  lessons: [whatLesson, firstLesson, variablesLesson, operatorsLesson, inputLesson, decisionsLesson, loopsLesson, nestedLesson, methodsLesson, recursionLesson],
 };

@@ -156,7 +156,7 @@ export const inputLesson = {
     {
       t: 'reorder',
       stdin: '3500 5000',
-      prompt: 'The input is the price (3500) and then the money paid (5000). Put the lines in the right order so the program prints the change. The first lines (the import, the class and `main`) and the last two (the closing brackets) are in the right place for you to find.',
+      prompt: 'The input is the price (3500) and then the money paid (5000). Put the lines in the right order so the program prints the change. Tap the lines in order, from the first line of the file to the last closing bracket.',
       lines: [
         HEAD_SCAN,
         String.raw`        Scanner in = new Scanner(System.in);`,

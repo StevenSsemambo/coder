@@ -4,8 +4,8 @@ Course id `java-start` (proposed), language `java`. The Java account owns the le
 `src/content/java-course.js`, `tests/solutions-java.mjs`) **and the Java engine and app code** (see the Java row in
 `docs/TRACKS.md`, decision of the project owner on 2026-11-15).
 
-Last updated: 2026-11-15. Status: **the runtime is built into the app and verified in a real browser. Level 1 (lessons 1 to 6) is written
-and tested. Level 2 is next.**
+Last updated: 2026-11-15. Status: **the runtime is built into the app and verified in a real browser. Level 1 (lessons 1 to 6) and Level 2
+lessons 7 to 10 are written and tested. Lessons 11 to 15 are next.**
 
 ## 1. Verdict
 
@@ -172,7 +172,7 @@ Headless Chromium 153, driving the **built** app (`vite build` then `vite previe
 ## 7. Roadmap
 
 `[x]` written and tested, `[ ]` still to write. Lesson ids never change once published. Exercise ids start with
-`j<lesson number>-`. This order is a proposal for the owner to approve, not a promise. **Level 1 is written and tested; the rest is still to write.**
+`j<lesson number>-`. This order is a proposal for the owner to approve, not a promise. **Lessons 1 to 10 are written and tested; the rest is still to write.**
 
 **Running project: the Village SACCO.** A savings and credit group (members, savings accounts, loans,
 interest, a monthly report). It is the most Ugandan example I can think of that also needs everything
@@ -192,10 +192,10 @@ Java course distinct.)
 - [x] 6. `j-decisions` Decisions: `if`, `else if`, comparisons, `&&` `||` `!`, `switch`, `?:`
 
 ### Level 2: Loops, methods and arrays
-- [ ] 7. `j-loops` Repeating: `for`, `while`, `do while`, `break`, `continue`
-- [ ] 8. `j-nested` Loops inside loops: patterns and tables
-- [ ] 9. `j-methods` Methods: parameters, return values, scope, overloading, varargs
-- [ ] 10. `j-recursion` Recursion (and what a missing base case looks like)
+- [x] 7. `j-loops` Repeating: `for`, `while`, `do while`, `break`, `continue`
+- [x] 8. `j-nested` Loops inside loops: patterns and tables
+- [x] 9. `j-methods` Methods: parameters, return values, scope, overloading, varargs
+- [x] 10. `j-recursion` Recursion (and what a missing base case looks like)
 - [ ] 11. `j-arrays` Arrays and the enhanced `for`
 - [ ] 12. `j-array-algos` Array algorithms: search, minimum, maximum, sorting
 - [ ] 13. `j-2d` Two-dimensional arrays

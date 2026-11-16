@@ -162,7 +162,7 @@ export const operatorsLesson = {
     },
     {
       t: 'reorder',
-      prompt: 'Put the lines in the only order that works: each calculation needs the variable made by the line before it. The first line and the last two (the closing brackets) are in the right place for you to find.',
+      prompt: 'Put the lines in the only order that works: each calculation needs the variable made by the line before it. Tap the lines in order, from the first line of the file to the last closing bracket.',
       lines: [
         HEAD,
         String.raw`        int amount = 37500;`,

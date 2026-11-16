@@ -115,7 +115,7 @@ export const firstLesson = {
     },
     {
       t: 'reorder',
-      prompt: 'Put the lines in the right order so the program prints the agenda of a SACCO meeting from 1 to 4. The first line (the class and `main`) and the last two (the closing brackets) are in the right place for you to find.',
+      prompt: 'Put the lines in the right order so the program prints the agenda of a SACCO meeting from 1 to 4. Tap the lines in order, from the first line of the file to the last closing bracket.',
       lines: [
         HEAD,
         String.raw`        System.out.println("1. Call the meeting to order");`,

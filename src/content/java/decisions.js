@@ -229,7 +229,7 @@ export const decisionsLesson = {
     {
       t: 'reorder',
       stdin: '40',
-      prompt: 'Put the lines in the right order to make a pass-or-fail program. The first lines (the import, the class and `main`) and the last two (the closing brackets) are in the right place for you to find.',
+      prompt: 'Put the lines in the right order to make a pass-or-fail program. Tap the lines in order, from the first line of the file to the last closing bracket.',
       lines: [
         HEAD_SCAN,
         String.raw`        Scanner in = new Scanner(System.in);`,

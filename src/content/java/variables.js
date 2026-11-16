@@ -111,7 +111,7 @@ export const variablesLesson = {
     },
     {
       t: 'reorder',
-      prompt: 'Each line uses a variable that an earlier line created. Put the lines in the only order that works. The first line and the last two (the closing brackets) are in the right place for you to find.',
+      prompt: 'Each line uses a variable that an earlier line created. Put the lines in the only order that works. Tap the lines in order, from the first line of the file to the last closing bracket.',
       lines: [
         HEAD,
         String.raw`        int price = 5000;`,

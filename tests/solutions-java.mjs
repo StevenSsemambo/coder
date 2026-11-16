@@ -1,8 +1,10 @@
 // Reference solutions for the Java course (Java track). Every Java exercise must have one here.
-import { prog } from '../src/content/java/shared.js';
+import { prog, progM } from '../src/content/java/shared.js';
 
 const J = (body) => prog(body);
 const S = (body) => prog(body, 'import java.util.Scanner;');
+const MS = (methods, body) => progM(methods, body, 'import java.util.Scanner;');
+const M = (methods, body) => progM(methods, body);
 
 export const javaSolutions = {
   // Level 1, lesson 1: j-what
@@ -111,4 +113,189 @@ export const javaSolutions = {
             case 7 -> System.out.println("Sunday");
             default -> System.out.println("Invalid day");
         }`),
+
+  // Level 2, lesson 7: j-loops
+  'j7-countdown': J(String.raw`        for (int i = 5; i >= 1; i--) {
+            System.out.println(i);
+        }
+        System.out.println("Go!");`),
+  'j7-sum-n': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int sum = 0;
+        for (int i = 1; i <= n; i++) {
+            sum += i;
+        }
+        System.out.println("Sum: " + sum);`),
+  'j7-table': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        for (int i = 1; i <= 10; i++) {
+            System.out.println(n + " x " + i + " = " + (n * i));
+        }`),
+  'j7-deposits': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int sum = 0;
+        int largest = 0;
+        for (int i = 0; i < n; i++) {
+            int amount = in.nextInt();
+            sum += amount;
+            if (amount > largest) {
+                largest = amount;
+            }
+        }
+        System.out.println("Total: " + sum);
+        System.out.println("Largest: " + largest);`),
+  'j7-pin': S(String.raw`        Scanner in = new Scanner(System.in);
+        int attempts = 0;
+        int pin;
+        do {
+            pin = in.nextInt();
+            attempts++;
+        } while (pin != 1234);
+        System.out.println("Attempts: " + attempts);`),
+
+  // Level 2, lesson 8: j-nested
+  'j8-rectangle': S(String.raw`        Scanner in = new Scanner(System.in);
+        int rows = in.nextInt();
+        int cols = in.nextInt();
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                System.out.print("#");
+            }
+            System.out.println();
+        }`),
+  'j8-triangle': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        for (int row = 1; row <= n; row++) {
+            for (int col = 1; col <= row; col++) {
+                System.out.print("*");
+            }
+            System.out.println();
+        }`),
+  'j8-table': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        for (int i = 1; i <= n; i++) {
+            for (int j = 1; j <= n; j++) {
+                System.out.printf("%3d", i * j);
+            }
+            System.out.println();
+        }`),
+  'j8-sacco-totals': S(String.raw`        Scanner in = new Scanner(System.in);
+        int members = in.nextInt();
+        int months = in.nextInt();
+        int groupTotal = 0;
+        for (int m = 1; m <= members; m++) {
+            int total = 0;
+            for (int k = 1; k <= months; k++) {
+                total += in.nextInt();
+            }
+            System.out.println("Member " + m + ": " + total);
+            groupTotal += total;
+        }
+        System.out.println("Group total: " + groupTotal);`),
+
+  // Level 2, lesson 9: j-methods
+  'j9-max3': MS(String.raw`    static int largest(int a, int b, int c) {
+        int best = a;
+        if (b > best) {
+            best = b;
+        }
+        if (c > best) {
+            best = c;
+        }
+        return best;
+    }`, String.raw`        Scanner in = new Scanner(System.in);
+        int a = in.nextInt();
+        int b = in.nextInt();
+        int c = in.nextInt();
+        System.out.println("Largest: " + largest(a, b, c));`),
+  'j9-leap': MS(String.raw`    static boolean isLeap(int year) {
+        return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+    }`, String.raw`        Scanner in = new Scanner(System.in);
+        int year = in.nextInt();
+        if (isLeap(year)) {
+            System.out.println("Leap year");
+        } else {
+            System.out.println("Not a leap year");
+        }`),
+  'j9-compound': MS(String.raw`    static double compound(double principal, double ratePercent, int years) {
+        double balance = principal;
+        for (int y = 1; y <= years; y++) {
+            balance += balance * ratePercent / 100;
+        }
+        return balance;
+    }`, String.raw`        Scanner in = new Scanner(System.in);
+        double principal = in.nextDouble();
+        double rate = in.nextDouble();
+        int years = in.nextInt();
+        System.out.printf("Amount: %.2f%n", compound(principal, rate, years));`),
+  'j9-grade-method': MS(String.raw`    static char gradeOf(int marks) {
+        if (marks >= 80) {
+            return 'A';
+        }
+        if (marks >= 70) {
+            return 'B';
+        }
+        if (marks >= 60) {
+            return 'C';
+        }
+        if (marks >= 50) {
+            return 'D';
+        }
+        return 'F';
+    }`, String.raw`        Scanner in = new Scanner(System.in);
+        int marks = in.nextInt();
+        System.out.println("Grade: " + gradeOf(marks));`),
+  'j9-sum-varargs': M(String.raw`    static int sum(int... numbers) {
+        int total = 0;
+        for (int n : numbers) {
+            total += n;
+        }
+        return total;
+    }`, String.raw`        System.out.println(sum(1, 2, 3));
+        System.out.println(sum());
+        System.out.println(sum(5, 5, 5));`),
+
+  // Level 2, lesson 10: j-recursion
+  'j10-sum-rec': MS(String.raw`    static int sumTo(int n) {
+        if (n == 0) {
+            return 0;
+        }
+        return n + sumTo(n - 1);
+    }`, String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        System.out.println("Sum: " + sumTo(n));`),
+  'j10-power': MS(String.raw`    static int power(int base, int exp) {
+        if (exp == 0) {
+            return 1;
+        }
+        return base * power(base, exp - 1);
+    }`, String.raw`        Scanner in = new Scanner(System.in);
+        int base = in.nextInt();
+        int exp = in.nextInt();
+        System.out.println(base + "^" + exp + " = " + power(base, exp));`),
+  'j10-digits': MS(String.raw`    static int countDigits(int n) {
+        if (n < 10) {
+            return 1;
+        }
+        return 1 + countDigits(n / 10);
+    }`, String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        System.out.println("Digits: " + countDigits(n));`),
+  'j10-fib': MS(String.raw`    static int fib(int n) {
+        if (n <= 1) {
+            return n;
+        }
+        return fib(n - 1) + fib(n - 2);
+    }`, String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        System.out.println("Fib: " + fib(n));`),
+  'j10-gcd': MS(String.raw`    static int gcd(int a, int b) {
+        if (b == 0) {
+            return a;
+        }
+        return gcd(b, a % b);
+    }`, String.raw`        Scanner in = new Scanner(System.in);
+        int a = in.nextInt();
+        int b = in.nextInt();
+        System.out.println("GCD: " + gcd(a, b));`),
 };
