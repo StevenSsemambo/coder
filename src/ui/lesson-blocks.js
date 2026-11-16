@@ -244,7 +244,14 @@ function seeBlock(block, ctx) {
 }
 
 // ---- the block switch ----------------------------------------------------------------------
-export function renderBlock(block, { language, index = 0, ctx }) {
+export function renderBlock(block, opts) {
+  const node = renderBlockInner(block, opts);
+  // SQL results are tables aligned with spaces: the `lang-sql` class lets the CSS scroll them sideways on a phone.
+  if (opts.language === 'sql' && node && node.classList) node.classList.add('lang-sql');
+  return node;
+}
+
+function renderBlockInner(block, { language, index = 0, ctx }) {
   switch (block.t) {
     case 'p':
       return h('p', null, richText(block.text));

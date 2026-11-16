@@ -40,7 +40,7 @@ export const level4b = [
         code: 'SELECT name, price\nFROM products\nWHERE price > (SELECT AVG(price) FROM products)\nORDER BY price DESC;\n',
         output: tbl(['name', 'price'], WA.P.filter((p) => p[3] > avgPrice(WA)).map((p) => [p[1], p[3]]).sort((a, b) => b[1] - a[1])),
       },
-      { t: 'analogy', text: "A subquery is a sticky note inside a recipe: “use 2 cups (see the note: work out how much rice a person eats).” SQL reads the note first, gets one answer, and uses it where the brackets are." },
+      { t: 'analogy', text: "A subquery is a sticky note inside a recipe. The recipe says “use the amount on the note”, and the note says how much rice one person eats. SQL reads the note first, gets one answer, and uses it where the brackets are." },
       { t: 'h', text: 'IN and NOT IN with a list from another table' },
       { t: 'p', text: 'A subquery can return a whole column of values, and `IN` checks whether a value is in that list. No join needed.' },
       {
@@ -391,7 +391,7 @@ export const level4b = [
         hints: [
           'Join orders, order_items and products, then keep only customer 3.',
           '`WHERE o.customer_id = 3 ORDER BY o.order_date, i.id`',
-          'A similar example: the project lesson\'s first query does exactly this for the same customer. Write it yourself without looking, then compare.',
+          "A similar example: the courses of student 5 with the year: `SELECT e.year, c.title FROM enrolments e JOIN courses c ON c.id = e.course_id WHERE e.student_id = 5 ORDER BY e.year;` Yours has one more link in the chain and also needs quantity times price.",
         ],
       },
       {
@@ -405,7 +405,7 @@ export const level4b = [
         hints: [
           'Start at customers and LEFT JOIN orders, order_items and products so nobody disappears.',
           '`COUNT(DISTINCT o.id) AS orders` and `COALESCE(SUM(i.qty * p.price), 0) AS spent`, then `GROUP BY c.id`.',
-          'A similar example: Report 2 of the project lesson is exactly this query. Write it from memory.',
+          "A similar example: every class with its number of pupils, even an empty class: `SELECT c.name, COUNT(p.id) AS pupils FROM classes c LEFT JOIN pupils p ON p.class_id = c.id GROUP BY c.id;` Yours does this over four tables and adds a total with COALESCE.",
         ],
       },
       {

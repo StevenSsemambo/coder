@@ -91,7 +91,7 @@ export function outputView(res, language) {
   if (res.truncated) parts.push(h('p', { class: 'muted small' }, 'Output was cut off because it was very long.'));
   if (res.error) parts.push(errorCard(res.error, language));
   parts.push(h('p', { class: 'muted small' }, `${res.ms} ms`));
-  return h('div', { class: 'output-view' }, parts);
+  return h('div', { class: language === 'sql' ? 'output-view lang-sql' : 'output-view' }, parts);
 }
 
 export function testResultsView(result, language) {
@@ -119,7 +119,7 @@ export function testResultsView(result, language) {
   });
   return h(
     'div',
-    { class: 'results' },
+    { class: language === 'sql' ? 'results lang-sql' : 'results' },
     h('div', { class: `results-head ${result.passed ? 'pass' : 'fail'}` }, result.passed ? 'All tests passed' : `${result.passedCount} of ${result.total} tests passed`),
     h('ul', { class: 'tests' }, rows),
     result.firstError ? errorCard(result.firstError, language) : null,

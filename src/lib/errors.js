@@ -812,11 +812,15 @@ const RULES = [
         why: `You tried to create a ${m[1]} with a name that is already taken in this database.`,
         fix: `Choose a different name, or write CREATE ${m[1].toUpperCase()} IF NOT EXISTS ${m[2]} ... so SQL skips it when it is already there.`,
       },
-      sw: {
-        title: `"${m[2]}" (${m[1]}) tayari ipo`,
-        why: `Ulijaribu kuunda ${m[1]} kwa jina ambalo tayari limetumika kwenye hifadhidata hii.`,
-        fix: `Chagua jina tofauti, au andika CREATE ${m[1].toUpperCase()} IF NOT EXISTS ${m[2]} ... ili SQL iruke kama tayari ipo.`,
-      },
+      sw: (() => {
+        // Kiswahili noun and its "is there" form (the ending follows the noun class)
+        const k = { table: ['jedwali', 'lipo'], index: ['faharasa (index)', 'ipo'], view: ['mwonekano (view)', 'upo'], trigger: ['kichochezi (trigger)', 'kipo'] }[m[1]];
+        return {
+          title: `${k[0][0].toUpperCase()}${k[0].slice(1)} "${m[2]}" tayari ${k[1]}`,
+          why: `Ulijaribu kuunda ${k[0]} kwa jina ambalo tayari limetumika kwenye hifadhidata hii.`,
+          fix: `Chagua jina tofauti, au andika CREATE ${m[1].toUpperCase()} IF NOT EXISTS ${m[2]} ... ili SQL iruke kama tayari ${k[1]}.`,
+        };
+      })(),
     }),
   },
   {

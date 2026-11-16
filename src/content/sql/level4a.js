@@ -352,6 +352,7 @@ export const level4a = [
         code: 'SELECT c.name, COUNT(o.id) AS orders\nFROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id\nGROUP BY c.id\nORDER BY c.id;\n',
         output: tbl(['name', 'orders'], WA.C.map((c) => [c[1], WA.O.filter((o) => o[1] === c[0]).length])),
       },
+      { t: 'tip', text: 'Why `GROUP BY c.id` and not `GROUP BY c.name`? The id is unique, so each group is exactly one customer, and a customer has only one name, so showing `c.name` is safe. Two different customers can share a name, and grouping by name would merge them into one.' },
       {
         t: 'predict',
         stdin: DUUKA_R,

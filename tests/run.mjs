@@ -796,6 +796,30 @@ section('PHP engine (the shared core, on real PHP 8.3 WebAssembly)');
   check('a fatal error does not break the next run', (await r('<?php echo 1 / 0;')).error !== null && (await r('<?php echo "ok";')).stdout === 'ok');
 }
 
+section('SQL lessons: the right answer is not always in the same place');
+{
+  const { sqlCourse } = await import('../src/content/sql-course.js');
+  const spots = { 2: {}, 3: {}, 4: {}, 5: {} };
+  let first = 0;
+  let total = 0;
+  const fillSpots = [0, 0, 0];
+  for (const lesson of sqlCourse.lessons) {
+    for (const b of lesson.blocks) {
+      if (['quiz', 'predict', 'bug'].includes(b.t)) {
+        total += 1;
+        if (b.answer === 0) first += 1;
+        (spots[b.options.length] ||= {})[b.answer] = ((spots[b.options.length] || {})[b.answer] || 0) + 1;
+      }
+      if (b.t === 'fill') b.blanks.forEach((bl) => { if (bl.options.length === 3) fillSpots[bl.options.indexOf(bl.answer)] += 1; });
+    }
+  }
+  check('at most 40 percent of SQL questions have the right answer first', first / total <= 0.4, `${first} of ${total}`);
+  const four = Object.values(spots[4]);
+  const fourTotal = four.reduce((a, b) => a + b, 0);
+  check('every position of a 4-option SQL question is used about equally', Object.keys(spots[4]).length === 4 && Math.max(...four) / fourTotal <= 0.32, JSON.stringify(spots[4]));
+  check('SQL fill dropdowns do not always list the right answer first', Math.max(...fillSpots) / fillSpots.reduce((a, b) => a + b, 0) <= 0.45, JSON.stringify(fillSpots));
+}
+
 section('Dates');
 {
   check('dayKey format', dayKey(new Date(2026, 10, 9)) === '2026-11-09');

@@ -261,6 +261,10 @@ input[type='range'] { width: 100%; min-height: 36px; accent-color: var(--accent)
 .choices { display: grid; gap: 8px; }
 .choice { min-height: 48px; padding: 10px 14px; text-align: left; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font: inherit; cursor: pointer; touch-action: manipulation; }
 .choice-text { white-space: pre-wrap; font-family: var(--mono); font-size: 0.92rem; }
+/* SQL results are tables aligned with spaces. On a phone, scroll them sideways instead of wrapping the lines. */
+.lang-sql pre, .lang-sql .choice-text { white-space: pre; word-break: normal; overflow-wrap: normal; }
+.lang-sql pre { overflow-x: auto; }
+.lang-sql .choice { max-width: 100%; overflow-x: auto; }
 .choice.ok { border-color: var(--ok); background: var(--ok-soft); }
 .choice.wrong { border-color: var(--bad); background: var(--bad-soft); opacity: 0.8; }
 .feedback-ok { padding: 10px 12px; border-radius: 12px; background: var(--ok-soft); display: grid; gap: 6px; }
