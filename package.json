@@ -8,6 +8,7 @@
     "postinstall": "node scripts/prepare-runtimes.mjs",
     "dev": "vite",
     "build": "node scripts/prepare-runtimes.mjs && vite build",
+    "postbuild": "node scripts/fetch-cpp-compiler.mjs",
     "preview": "vite preview --host",
     "test": "node scripts/prepare-runtimes.mjs && node tests/run.mjs && node tests/render.mjs"
   },

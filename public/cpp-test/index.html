@@ -42,7 +42,7 @@
 <div class="card">
   <strong>Before you start</strong>
   <ul>
-    <li>Use <strong>Wi-Fi</strong>. The first run downloads about <strong>105 MB</strong> (about 27 MB if your network compresses it).</li>
+    <li>Use <strong>Wi-Fi</strong> if you can. The first run downloads about <strong>27 MB</strong> from this website (about 105 MB if you pick a CDN below). On a slow network it can take several minutes, and the page shows the speed and time left.</li>
     <li>Open this page in a <strong>private / incognito tab</strong> in the phone’s normal browser (Chrome or Safari), not inside the installed app.</li>
     <li>Close other apps. Keep the screen on and stay on this page until it finishes. It can take a few minutes.</li>
     <li>If the page <strong>crashes or the browser closes</strong>, open it again. That is an important result too, and the page will tell you which step it stopped at.</li>
@@ -54,11 +54,15 @@
 <div class="card">
   <label for="source"><strong>Where to load the compiler from</strong></label>
   <select id="source">
-    <option value="unpkg">unpkg.com (default)</option>
-    <option value="jsdelivr">cdn.jsdelivr.net</option>
+    <option value="site">This website (recommended, about 27 MB)</option>
+    <option value="unpkg">unpkg.com (about 105 MB)</option>
+    <option value="jsdelivr">cdn.jsdelivr.net (about 105 MB)</option>
     <option value="custom">Custom address</option>
   </select>
   <input id="custom" type="text" placeholder="https://.../gen/  (folder that contains bundle.js)" hidden style="margin-top:8px">
+  <div class="muted" id="siteNote"></div>
+  <div class="row"><button id="check">Check my connection (small)</button></div>
+  <div class="detail" id="checkOut" style="margin-left:0"></div>
 </div>
 
 <div class="row">
