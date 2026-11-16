@@ -40,7 +40,7 @@ const theme = EditorView.theme({
 });
 
 const languageExtension = (language) => {
-  if (language === 'c' || language === 'cpp') return cpp();
+  if (language === 'c' || language === 'cpp' || language === 'cx') return cpp();
   if (language === 'java') return java();
   if (language === 'sql') return sql({ dialect: SQLite, upperCaseKeywords: false });
   if (language === 'php') return php();

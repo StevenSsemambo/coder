@@ -59,6 +59,19 @@ function runC(code, stdin = '') {
   }
 }
 
+// "Full C" (picoc on WebAssembly): the same cxcore.js and picoc.wasm the app ships.
+const cxSandbox = vm.createContext({ TextEncoder, TextDecoder, WebAssembly, performance, console });
+vm.runInContext(readFileSync(join(root, 'public/workers/cxcore.js'), 'utf8'), cxSandbox);
+const cxModule = new WebAssembly.Module(readFileSync(join(root, 'public/vendor/picoc.wasm')));
+// Same rule as public/workers/cx.worker.js: a picoc failure is "/main.c:LINE:COL message" on stderr.
+function runCx(code, stdin = '', files = {}) {
+  const r = cxSandbox.CX.run(cxModule, { source: code, stdin, files });
+  let error = null;
+  if (r.trap) error = r.trap;
+  else if (r.exitCode !== 0 && /\/main\.c:\d+:\d+ /.test(r.stderr)) error = r.stderr.trim();
+  return { stdout: r.stdout, error, timedOut: false, files: r.files, exitCode: r.exitCode, stderr: r.stderr };
+}
+
 // For SQL the "stdin" is the practice database (see public/workers/sqlcore.js).
 function runSql(code, setup = '') {
   const r = SQLCore.runSql(SQLITE, setup, code);
@@ -115,7 +128,7 @@ async function runPhpTest(code, stdin = '') {
   const r = await runPhpCore(phpInstance, code, stdin);
   return { stdout: r.stdout, error: r.error, timedOut: false };
 }
-const runLang = (language, code, stdin) => (language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'java' ? runJava(code, stdin) : language === 'sql' ? runSql(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : language === 'php' ? runPhpTest(code, stdin) : runPython(code, stdin));
+const runLang = (language, code, stdin) => (language === 'cx' ? runCx(code, stdin) : language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'java' ? runJava(code, stdin) : language === 'sql' ? runSql(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : language === 'php' ? runPhpTest(code, stdin) : runPython(code, stdin));
 
 // ---- 1. every exercise: solution passes, starter fails ----------------------------
 section('Exercises (reference solution must pass, untouched starter must fail)');
@@ -317,6 +330,12 @@ section('Error translator (real messages from the runtimes)');
     ['c', '#include <stdio.h>\nint main(){ int a=5, b=0; printf("%d", a/b); return 0; }', 'c-zero-division', 'divide by zero'],
     ['c', '#include <stdio.h>\nint main(){ int a = "hello"; return 0; }', 'c-cast', 'wrong type'],
     ['c', '#include <stdio.h>\nint main(){ while(1){} return 0; }', 'timeout', 'infinite loop'],
+    ['cx', 'int main() { printf("hi\\n"); return 0; }', 'cx-missing-include', 'cx: missing stdio.h'],
+    ['cx', '#include <stdio.h>\nint main() { printf("%d", total); return 0; }', 'cx-undefined', 'cx: undeclared variable'],
+    ['cx', '#include <stdio.h>\nstruct P { int x; };\nint main() { struct P p; p.z = 1; return 0; }', 'cx-member', 'cx: no such struct member'],
+    ['cx', '#include <stdio.h>\nstruct P { int x; };\nint main() { struct P p; struct P *q = &p; q.x = 1; return 0; }', 'cx-arrow-dot', 'cx: dot used on a pointer'],
+    ['cx', '#include <stdio.h>\nint main() { int *p; *p = 5; return 0; }', 'cx-null-pointer', 'cx: NULL pointer'],
+    ['cx', '#include <stdio.h>\nint main() { int a = 5, b = 0; printf("%d", a / b); return 0; }', 'cx-div-zero', 'cx: divide by zero'],
     ['web', 'console.log(missing)', 'js-ref', 'JS ReferenceError'],
     ['web', 'const el = null;\nel.addEventListener(\"click\", () => {});', 'js-null-property', 'JS null property'],
     ['web', 'const x = 5;\nx();', 'js-not-function', 'JS not a function'],
@@ -704,6 +723,42 @@ section('SQL engine (SQLite via sql.js: the same core file the worker uses)');
   check('EXPLAIN QUERY PLAN prints only a plan column of readable text', plan.startsWith('plan\n') && plan.includes('SEARCH t USING') && !/notused|parent/.test(plan), JSON.stringify(plan));
   check('a plan of a full scan says SCAN', runSql('EXPLAIN QUERY PLAN SELECT * FROM t WHERE name = \'x\';', db).stdout.includes('SCAN t'));
   check('very long results are cut and say so', many.stdout.includes('... 300 more rows not shown') && many.stdout.split('\n').length < 210, many.stdout.split('\n').slice(-3).join(' | '));
+}
+
+section('Full C engine (picoc on WebAssembly: structs, enums, malloc, files)');
+{
+  const H = '#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n';
+  const X = (body, stdin = '') => runCx(H + body, stdin);
+  let r = X('struct Item { int id; char name[20]; int price; };\nint main(void) { struct Item it; it.id = 1; strcpy(it.name, "Rolex"); it.price = 3000; printf("%d %s %d\\n", it.id, it.name, it.price); return 0; }');
+  check('cx: struct members, strcpy into a member, main(void)', r.stdout === '1 Rolex 3000\n' && !r.error, r.error || r.stdout);
+  r = X('typedef struct { int x; int y; } Point;\nint main() { Point p = {3, 4}; Point q = {7}; printf("%d %d %d %d\\n", p.x, p.y, q.x, q.y); return 0; }');
+  check('cx: struct initialiser, short list leaves zeros', r.stdout === '3 4 7 0\n', r.error || r.stdout);
+  r = X('struct Item { int id; char name[10]; };\nstruct Shop { char name[10]; struct Item first; int count; };\nint main() { struct Item list[2] = {{2, "Tea"}, {3, "Soda"}}; struct Shop s = {"Duuka", {9, "Bread"}, 2}; printf("%s %s %s %d\\n", list[1].name, s.first.name, s.name, s.count); return 0; }');
+  check('cx: nested and array-of-struct initialisers', r.stdout === 'Soda Bread Duuka 2\n', r.error || r.stdout);
+  r = X('struct P { int x, y; char c; };\nint main() { struct P p = {1, 2, 65}; printf("%d %d %c\\n", p.x, p.y, p.c); return 0; }');
+  check('cx: several struct members on one line', r.stdout === '1 2 A\n', r.error || r.stdout);
+  r = X('enum Day { MON, TUE = 5, WED };\nint main() { enum Day d = WED; printf("%d %d\\n", d, TUE); return 0; }');
+  check('cx: enum values count on from the last one', r.stdout === '6 5\n', r.error || r.stdout);
+  r = X('union U { int i; char c; };\nint main() { union U u; u.i = 65; printf("%c %d\\n", u.c, (int)sizeof(union U)); return 0; }');
+  check('cx: union shares its memory', r.stdout === 'A 4\n', r.error || r.stdout);
+  r = X('struct Node { int value; struct Node *next; };\ntypedef struct Node Node;\nint main() { Node *head = NULL; for (int i = 1; i <= 3; i++) { Node *n = (Node *)malloc(sizeof(Node)); n->value = i * 10; n->next = head; head = n; } for (Node *p = head; p != NULL; p = p->next) printf("%d ", p->value); printf("\\n"); return 0; }');
+  check('cx: linked list with malloc, typedef type in a for loop', r.stdout === '30 20 10 \n' && !r.error, r.error || r.stdout);
+  r = X('int main() { int *a = calloc(3, sizeof(int)); a = realloc(a, 6 * sizeof(int)); a[5] = 9; printf("%d %d\\n", a[0], a[5]); free(a); return 0; }');
+  check('cx: calloc, realloc and free', r.stdout === '0 9\n', r.error || r.stdout);
+  r = X('int main() { FILE *f = fopen("a.txt", "w"); fprintf(f, "12 apple\\n%d %s\\n", 7, "pear"); fclose(f); f = fopen("a.txt", "r"); int n; char w[20]; while (fscanf(f, "%d %s", &n, w) == 2) printf("[%d,%s]", n, w); fclose(f); f = fopen("a.txt", "a"); fputs("more\\n", f); fclose(f); f = fopen("a.txt", "r"); char line[40]; int c = 0; while (fgets(line, 40, f) != NULL) c++; fclose(f); printf(" %d lines\\n", c); return 0; }');
+  check('cx: write, read, append and fgets on a file', r.stdout === '[12,apple][7,pear] 3 lines\n' && r.files['a.txt'] === '12 apple\n7 pear\nmore\n', r.error || r.stdout);
+  r = X('int main() { FILE *f = fopen("b.bin", "wb"); int arr[3] = {1, 2, 3}; fwrite(arr, sizeof(int), 3, f); fclose(f); f = fopen("b.bin", "rb"); int back[3]; int got = fread(back, sizeof(int), 3, f); printf("%d %d\\n", got, back[2]); fclose(f); f = fopen("nothing.txt", "r"); printf("%d\\n", f == NULL); return 0; }');
+  check('cx: binary fwrite/fread and fopen of a missing file gives NULL', r.stdout === '3 3\n1\n', r.error || r.stdout);
+  r = X('int main() { int n; char w[20]; scanf("%d %s", &n, w); printf("%d-%s\\n", n * 2, w); return 0; }', '21 abc\n');
+  check('cx: scanf from the input box', r.stdout === '42-abc\n', r.error || r.stdout);
+  r = X('int main() { return 3; }');
+  check('cx: a non-zero return from main is not an error', !r.error && r.exitCode === 3);
+  r = X('int main() { int a = 5; printf("%d", total); return 0; }');
+  check('cx: error line numbers count from line 1 of the student program', /\/main\.c:4:/.test(r.error || '') && translateError(r.error, { language: 'cx' })?.line === 4, r.error || '');
+  r = X('int main() { int a = 5, b = 0; printf("%d", a / b); return 0; }');
+  check('cx: integer division by zero is reported', /divide by zero/i.test(r.error || ''), r.error || r.stdout);
+  r = X('int f(int n) { return f(n + 1); }\nint main() { f(1); return 0; }');
+  check('cx: endless recursion is caught, not a frozen page', !!r.error && /too much memory/.test(r.error), r.error || r.stdout);
 }
 
 section('PHP engine (the shared core, on real PHP 8.3 WebAssembly)');
