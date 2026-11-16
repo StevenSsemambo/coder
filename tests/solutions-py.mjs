@@ -4,6 +4,8 @@
 import { level6Solution as L6 } from '../src/content/py/level6b.js';
 import { level7Solution as L7 } from '../src/content/py/level7a.js';
 import { level7bSolution as L7B } from '../src/content/py/level7b.js';
+import { level8Solution as L8 } from '../src/content/py/level8a.js';
+import { level8bSolution as L8B } from '../src/content/py/level8b.js';
 
 export const pySolutions = {
   // ---- lesson 36: decorators
@@ -380,5 +382,292 @@ n = int(input())
 lines = [input() for i in range(n)]
 sales, errors = clean(lines)
 report(sales, errors)
+`,
+
+  // ---- lesson 47: modules and packages
+  'py46-package': `${L8.MAKE_PACKAGE}
+
+make_package("tillkit", {
+    "__init__.py": "",
+    "money.py": """def fmt(amount):
+    return f"UGX {amount:,}"
+""",
+    "tools.py": """def line_total(qty, price):
+    return qty * price
+""",
+})
+
+from tillkit.money import fmt
+from tillkit.tools import line_total
+
+qty = int(input())
+price = int(input())
+print(fmt(line_total(qty, price)))
+`,
+  'py46-guard': `${L8.MAKE_MODULE}
+
+make_module("greeter_ex", """def greet(name):
+    return "Welcome, " + name
+
+if __name__ == "__main__":
+    print(greet("test"))
+""")
+
+import greeter_ex
+
+print(greeter_ex.greet(input()))
+`,
+  'py46-writemod': `${L8.MAKE_MODULE}
+
+make_module("taxes", """def with_vat(price, percent=18):
+    return price + price * percent // 100
+""")
+
+import taxes
+
+price = int(input())
+print(taxes.with_vat(price))
+print(taxes.with_vat(price, 10))
+`,
+
+  // ---- lesson 48: command-line apps
+  'py47-parse': `import argparse
+import contextlib
+import io
+
+${L8.SAFE_PARSE}
+
+parser = argparse.ArgumentParser(prog="duuka")
+parser.add_argument("item")
+parser.add_argument("--qty", type=int, default=1)
+parser.add_argument("--vat", action="store_true")
+
+args, problem = safe_parse(parser, input().split())
+if args is None:
+    print("Bad command")
+else:
+    print("Item:", args.item)
+    print("Qty:", args.qty)
+    print("VAT:", "yes" if args.vat else "no")
+`,
+  'py47-subcommands': `import argparse
+import contextlib
+import io
+
+${L8.SAFE_PARSE}
+
+parser = argparse.ArgumentParser(prog="duuka")
+sub = parser.add_subparsers(dest="command", required=True)
+add = sub.add_parser("add")
+add.add_argument("item")
+add.add_argument("--qty", type=int, default=1)
+sub.add_parser("total")
+
+PRICES = {"sugar": 4500, "rice": 3000, "tea": 500}
+cart = {}
+
+n = int(input())
+for i in range(n):
+    args, problem = safe_parse(parser, input().split())
+    if args is None:
+        print("Bad command")
+        continue
+    if args.command == "add":
+        if args.item not in PRICES:
+            print(f"Unknown item: {args.item}")
+        else:
+            cart[args.item] = cart.get(args.item, 0) + args.qty
+            print(f"Added {args.qty} x {args.item}")
+    else:
+        total = sum(PRICES[item] * qty for item, qty in cart.items())
+        print(f"Total: {total:,}")
+`,
+  'py47-config': `import json
+
+DEFAULTS = {"vat_percent": 18, "currency": "UGX", "shop": "Duuka"}
+
+user = json.loads(input())
+config = {**DEFAULTS, **user}
+print(config["shop"], config["currency"], config["vat_percent"])
+`,
+
+  // ---- lesson 49: SQLite from Python
+  'py48-low': `import sqlite3
+
+${L8.STOCK_HEAD}
+${L8.STOCK_LOW}
+
+stock = Stock()
+for item, qty in [("sugar", 50), ("rice", 30), ("tea", 100), ("salt", 8), ("oil", 12)]:
+    stock.add(item, qty, 1000)
+
+limit = int(input())
+names = stock.low_items(limit)
+if names:
+    for name in names:
+        print(name)
+else:
+    print("Nothing is low")
+`,
+  'py48-sell': `import sqlite3
+
+${L8.STOCK_HEAD}
+${L8.STOCK_SELL}
+
+stock = Stock()
+stock.add("sugar", 50, 4500)
+stock.add("salt", 8, 800)
+stock.add("tea", 100, 500)
+
+n = int(input())
+for i in range(n):
+    _, item, qty = input().split()
+    qty = int(qty)
+    try:
+        stock.sell(item, qty)
+        print(f"Sold {qty} x {item}, left {stock.qty(item)}")
+    except UnknownItem:
+        print(f"Error: unknown item {item}")
+    except OutOfStock as e:
+        print(f"Error: only {e} {item} left")
+`,
+  'py48-injection': `import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE stock (item TEXT, qty INTEGER)")
+con.executemany("INSERT INTO stock VALUES (?, ?)", [("sugar", 50), ("rice", 30), ("tea", 100), ("salt", 8), ("oil", 12)])
+
+name = input()
+rows = con.execute("SELECT item FROM stock WHERE item = ?", (name,)).fetchall()
+print(len(rows))
+`,
+
+  // ---- lesson 50: APIs and JSON (simulated)
+  'py49-json': `import json
+
+order = json.loads(input())
+total = 0
+for item in order["items"]:
+    total += item["qty"] * item["price"]
+print(f"Total: {total:,}")
+`,
+  'py49-client': `import json
+from urllib.parse import urlparse, parse_qs
+
+${L8B.FAKE_API}
+
+class ApiError(Exception):
+    def __init__(self, status, message):
+        super().__init__(f"{status}: {message}")
+        self.status = status
+
+def get_json(url):
+    status, text = fake_api("GET", url)
+    data = json.loads(text)
+    if status != 200:
+        raise ApiError(status, data["error"])
+    return data
+
+n = int(input())
+for i in range(n):
+    item_id = input()
+    try:
+        print(get_json(f"https://api.duuka.ug/v1/items/{item_id}")["name"])
+    except ApiError as e:
+        print("Error", e.status)
+`,
+  'py49-retry': `import json
+
+class ApiError(Exception):
+    def __init__(self, status):
+        super().__init__(status)
+        self.status = status
+
+def with_retries(call, attempts=3):
+    status = None
+    for attempt in range(1, attempts + 1):
+        status, text = call()
+        if status == 200:
+            return json.loads(text), attempt
+        if status < 500:
+            raise ApiError(status)
+    raise ApiError(status)
+
+statuses = iter(input().split())
+
+def call():
+    status = int(next(statuses))
+    return status, '{"ok": true}' if status == 200 else '{"error": "x"}'
+
+try:
+    data, used = with_retries(call)
+    print("OK, attempts used:", used)
+except ApiError as e:
+    print("Failed:", e.status)
+`,
+
+  // ---- lesson 51: logging, debugging, measuring
+  'py50-log': `${L8B.LOG_SETUP}
+
+def process(amount):
+    if amount <= 0:
+        log.error("invalid amount: %s", amount)
+        return
+    log.info("sale recorded: %s", amount)
+    if amount > 1000000:
+        log.warning("large sale: %s", amount)
+
+n = int(input())
+for i in range(n):
+    process(int(input()))
+`,
+  'py50-counted': `def counted(func):
+    def wrapper(*args, **kwargs):
+        wrapper.calls += 1
+        return func(*args, **kwargs)
+    wrapper.calls = 0
+    return wrapper
+
+@counted
+def square(x):
+    return x * x
+
+n = int(input())
+for i in range(n):
+    square(i)
+print(square.calls)
+`,
+  'py50-cheapest': `def cheapest(items):
+    """items is a list of (name, price). Return the name of the cheapest item."""
+    best = items[0]
+    for name, price in items:
+        if price < best[1]:
+            best = (name, price)
+    return best[0]
+
+n = int(input())
+items = []
+for i in range(n):
+    name, price = input().split()
+    items.append((name, int(price)))
+print(cheapest(items))
+`,
+
+  // ---- lesson 52: project, Duuka Manager
+  'py51-manager': `${L8B.APP_HEADER}
+logging.disable(logging.CRITICAL)
+
+${L8B.APP_STOCK}
+
+${L8B.APP_REPORT}
+
+${L8B.parserFn(L8B.VALUE_PARSER)}
+
+${L8B.runFn(L8B.VALUE_RUN)}
+
+n = int(input())
+stock = Stock()
+for i in range(n):
+    run(input().split(), stock)
 `,
 };
