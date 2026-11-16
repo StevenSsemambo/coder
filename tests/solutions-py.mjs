@@ -3,6 +3,7 @@
 
 import { level6Solution as L6 } from '../src/content/py/level6b.js';
 import { level7Solution as L7 } from '../src/content/py/level7a.js';
+import { level7bSolution as L7B } from '../src/content/py/level7b.js';
 
 export const pySolutions = {
   // ---- lesson 36: decorators
@@ -326,5 +327,58 @@ chain = LinkedList()
 for value in input().split():
     chain.add_front(value)
 print(chain.to_text())
+`,
+
+  // ---- lesson 45: CSV and data cleaning
+  'py44-total': `import csv
+
+n = int(input())
+lines = [input() for i in range(n)]
+total = 0
+for row in csv.DictReader(lines):
+    total += int(row["qty"]) * int(row["price"])
+print(f"Revenue: {total:,}")
+`,
+  'py44-clean': `import csv
+
+n = int(input())
+lines = [input() for i in range(n)]
+for name, price in csv.reader(lines):
+    digits = price.replace("UGX", "").replace(",", "").strip()
+    amount = int(digits) if digits else 0
+    print(f"{name.strip().title()}: {amount:,}")
+`,
+  'py44-dedupe': `n = int(input())
+lines = [input() for i in range(n)]
+seen = set()
+removed = 0
+for line in lines:
+    date, item, qty = line.split(",")
+    key = (date, item)
+    if key in seen:
+        removed += 1
+        continue
+    seen.add(key)
+    print(line)
+print(f"Removed: {removed}")
+`,
+
+  // ---- lesson 46: project, the sales analyzer pipeline
+  'py45-clean': `import csv
+from collections import Counter
+from dataclasses import dataclass
+
+${L7B.SALE}
+
+${L7B.CLEAN}
+
+${L7B.ANALYZE}
+
+${L7B.REPORT}
+
+n = int(input())
+lines = [input() for i in range(n)]
+sales, errors = clean(lines)
+report(sales, errors)
 `,
 };

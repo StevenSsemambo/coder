@@ -28,12 +28,12 @@ is run by `npm test`, so nothing is taught that does not work.
 - [x] 40 `py-regex`: regular expressions
 - [x] 41 `py-project-ledger`: Project: customer ledger with proper error handling
 
-### Level 7: Data and algorithms (lessons 42 to 46)
+### Level 7: Data and algorithms (lessons 42 to 46) - DONE
 - [x] 42 `py-bigo`: Big-O in plain words (steps are counted, never timed)
 - [x] 43 `py-search-hash`: binary search, hashing (a toy hash table), recursion and memoization
 - [x] 44 `py-structures`: stacks, queues (`deque`) and linked lists
-- [ ] 45 CSV and data cleaning
-- [ ] 46 Project: sales analyzer with a reusable data pipeline
+- [x] 45 `py-csv`: CSV and data cleaning
+- [x] 46 `py-project-analyzer`: Project: sales analyzer with a reusable data pipeline
 
 ### Level 8: Building real products (lessons 47 to 52)
 - [ ] 47 Project structure, modules and packages
