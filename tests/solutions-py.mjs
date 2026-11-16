@@ -5,6 +5,7 @@ import { level6Solution as L6 } from '../src/content/py/level6b.js';
 import { level7Solution as L7 } from '../src/content/py/level7a.js';
 import { level7bSolution as L7B } from '../src/content/py/level7b.js';
 import { level8Solution as L8 } from '../src/content/py/level8a.js';
+import { level8bSolution as L8B } from '../src/content/py/level8b.js';
 
 export const pySolutions = {
   // ---- lesson 36: decorators
@@ -539,5 +540,134 @@ con.executemany("INSERT INTO stock VALUES (?, ?)", [("sugar", 50), ("rice", 30),
 name = input()
 rows = con.execute("SELECT item FROM stock WHERE item = ?", (name,)).fetchall()
 print(len(rows))
+`,
+
+  // ---- lesson 50: APIs and JSON (simulated)
+  'py49-json': `import json
+
+order = json.loads(input())
+total = 0
+for item in order["items"]:
+    total += item["qty"] * item["price"]
+print(f"Total: {total:,}")
+`,
+  'py49-client': `import json
+from urllib.parse import urlparse, parse_qs
+
+${L8B.FAKE_API}
+
+class ApiError(Exception):
+    def __init__(self, status, message):
+        super().__init__(f"{status}: {message}")
+        self.status = status
+
+def get_json(url):
+    status, text = fake_api("GET", url)
+    data = json.loads(text)
+    if status != 200:
+        raise ApiError(status, data["error"])
+    return data
+
+n = int(input())
+for i in range(n):
+    item_id = input()
+    try:
+        print(get_json(f"https://api.duuka.ug/v1/items/{item_id}")["name"])
+    except ApiError as e:
+        print("Error", e.status)
+`,
+  'py49-retry': `import json
+
+class ApiError(Exception):
+    def __init__(self, status):
+        super().__init__(status)
+        self.status = status
+
+def with_retries(call, attempts=3):
+    status = None
+    for attempt in range(1, attempts + 1):
+        status, text = call()
+        if status == 200:
+            return json.loads(text), attempt
+        if status < 500:
+            raise ApiError(status)
+    raise ApiError(status)
+
+statuses = iter(input().split())
+
+def call():
+    status = int(next(statuses))
+    return status, '{"ok": true}' if status == 200 else '{"error": "x"}'
+
+try:
+    data, used = with_retries(call)
+    print("OK, attempts used:", used)
+except ApiError as e:
+    print("Failed:", e.status)
+`,
+
+  // ---- lesson 51: logging, debugging, measuring
+  'py50-log': `${L8B.LOG_SETUP}
+
+def process(amount):
+    if amount <= 0:
+        log.error("invalid amount: %s", amount)
+        return
+    log.info("sale recorded: %s", amount)
+    if amount > 1000000:
+        log.warning("large sale: %s", amount)
+
+n = int(input())
+for i in range(n):
+    process(int(input()))
+`,
+  'py50-counted': `def counted(func):
+    def wrapper(*args, **kwargs):
+        wrapper.calls += 1
+        return func(*args, **kwargs)
+    wrapper.calls = 0
+    return wrapper
+
+@counted
+def square(x):
+    return x * x
+
+n = int(input())
+for i in range(n):
+    square(i)
+print(square.calls)
+`,
+  'py50-cheapest': `def cheapest(items):
+    """items is a list of (name, price). Return the name of the cheapest item."""
+    best = items[0]
+    for name, price in items:
+        if price < best[1]:
+            best = (name, price)
+    return best[0]
+
+n = int(input())
+items = []
+for i in range(n):
+    name, price = input().split()
+    items.append((name, int(price)))
+print(cheapest(items))
+`,
+
+  // ---- lesson 52: project, Duuka Manager
+  'py51-manager': `${L8B.APP_HEADER}
+logging.disable(logging.CRITICAL)
+
+${L8B.APP_STOCK}
+
+${L8B.APP_REPORT}
+
+${L8B.parserFn(L8B.VALUE_PARSER)}
+
+${L8B.runFn(L8B.VALUE_RUN)}
+
+n = int(input())
+stock = Stock()
+for i in range(n):
+    run(input().split(), stock)
 `,
 };
