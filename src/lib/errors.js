@@ -30,7 +30,7 @@ const RULES = [
   // ---- both languages ------------------------------------------------------
   {
     id: 'timeout',
-    languages: ['python', 'c', 'cpp', 'java', 'web', 'sql', 'php'],
+    languages: ['python', 'c', 'cpp', 'cx', 'java', 'web', 'sql', 'php'],
     match: /Time limit exceeded/i,
     build: () => ({
       en: {
@@ -1594,6 +1594,233 @@ const RULES = [
       };
     },
   },
+
+  // ---- Full C (picoc on WebAssembly: structs, malloc, files). Messages look like "/main.c:12:5 <message>" ----
+  {
+    id: 'cx-missing-include',
+    languages: ['cx'],
+    match: /'(\w+)' is undefined/,
+    when: (m) => headerFor(m[1]) !== null,
+    build: (m) => {
+      const header = headerFor(m[1]);
+      return {
+        en: {
+          title: `Missing ${header} for ${m[1]}`,
+          why: `${m[1]}() lives in a library. The program only knows it if you include the right header at the top.`,
+          fix: `Add ${header} as the first line of your program.`,
+        },
+        sw: {
+          title: `Kichwa ${header} kinakosekana kwa ${m[1]}`,
+          why: `${m[1]}() inatoka kwenye maktaba. Programu inaijua tu ukijumuisha kichwa sahihi juu.`,
+          fix: `Weka ${header} kama mstari wa kwanza wa programu yako.`,
+        },
+      };
+    },
+  },
+  {
+    id: 'cx-undefined',
+    languages: ['cx'],
+    match: /'(\w+)' is undefined/,
+    build: (m) => ({
+      en: {
+        title: `"${m[1]}" is not declared`,
+        why: `The program uses "${m[1]}" but never created it. It may be misspelled (C is case-sensitive), declared inside a different block, or a function that does not exist.`,
+        fix: `Check the spelling. Declare the variable before using it, for example int ${m[1]};`,
+      },
+      sw: {
+        title: `"${m[1]}" haijatangazwa`,
+        why: `Programu inatumia "${m[1]}" lakini haikuiunda. Inaweza kuwa imeandikwa vibaya (C hutofautisha herufi kubwa na ndogo), imetangazwa ndani ya kizuizi kingine, au ni kitendakazi kisichokuwepo.`,
+        fix: `Angalia tahajia. Tangaza kigeugeu kabla ya kukitumia, kwa mfano int ${m[1]};`,
+      },
+    }),
+  },
+  {
+    id: 'cx-member',
+    languages: ['cx'],
+    match: /doesn't have a member called '(\w+)'/,
+    build: (m) => ({
+      en: {
+        title: `The struct has no member "${m[1]}"`,
+        why: `You wrote .${m[1]} or ->${m[1]}, but the struct was declared without a member of that name.`,
+        fix: `Look at the struct definition and copy the member name exactly (spelling and capital letters matter).`,
+      },
+      sw: {
+        title: `Struct haina mwanachama "${m[1]}"`,
+        why: `Uliandika .${m[1]} au ->${m[1]}, lakini struct ilitangazwa bila mwanachama wa jina hilo.`,
+        fix: 'Tazama ufafanuzi wa struct na unakili jina la mwanachama kama lilivyo (tahajia na herufi kubwa vinahesabika).',
+      },
+    }),
+  },
+  {
+    id: 'cx-arrow-dot',
+    languages: ['cx'],
+    match: /can't use '(->|\.)' on something that's not a struct or union( pointer)?\s*:\s*it's an? (.*)$/m,
+    build: (m) => ({
+      en: {
+        title: m[1] === '->' ? 'Use a dot, not an arrow, here' : 'Use an arrow, not a dot, here',
+        why: m[1] === '->' ? `-> is only for a **pointer** to a struct. This is a plain struct variable (${m[3]}).` : `A dot is for a struct **variable**. This is a pointer (${m[3]}), so you need ->.`,
+        fix: m[1] === '->' ? 'Write variable.member for a struct, and pointer->member for a pointer to a struct.' : 'Write pointer->member, or (*pointer).member.',
+      },
+      sw: {
+        title: m[1] === '->' ? 'Tumia nukta, si mshale, hapa' : 'Tumia mshale, si nukta, hapa',
+        why: m[1] === '->' ? `-> ni kwa **kielekezi** cha struct tu. Hiki ni kigeugeu cha struct cha kawaida (${m[3]}).` : `Nukta ni kwa **kigeugeu** cha struct. Hiki ni kielekezi (${m[3]}), kwa hiyo unahitaji ->.`,
+        fix: m[1] === '->' ? 'Andika kigeugeu.mwanachama kwa struct, na kielekezi->mwanachama kwa kielekezi cha struct.' : 'Andika kielekezi->mwanachama, au (*kielekezi).mwanachama.',
+      },
+    }),
+  },
+  {
+    id: 'cx-null-pointer',
+    languages: ['cx'],
+    match: /NULL pointer dereference/,
+    build: () => ({
+      en: {
+        title: 'The pointer has no address yet',
+        why: 'The program followed a pointer that points nowhere (it was never given an address, or malloc has not been called).',
+        fix: 'Give the pointer something to point at before using it: int *p = malloc(sizeof(int)); or p = &variable; and check that malloc did not return NULL.',
+      },
+      sw: {
+        title: 'Kielekezi hakina anwani bado',
+        why: 'Programu ilifuata kielekezi kisichoelekeza popote (hakikupewa anwani, au malloc haikuitwa).',
+        fix: 'Pa kielekezi kitu cha kuelekeza kabla ya kukitumia: int *p = malloc(sizeof(int)); au p = &kigeugeu; na uhakikishe malloc haikurudisha NULL.',
+      },
+    }),
+  },
+  {
+    id: 'cx-type-unknown',
+    languages: ['cx'],
+    match: /type '([^']+)' isn't defined/,
+    build: (m) => ({
+      en: {
+        title: `The type "${m[1]}" does not exist`,
+        why: `The program uses ${m[1]} before it was defined, or the name is misspelled.`,
+        fix: 'Define the struct, enum or typedef above main(), and check the spelling.',
+      },
+      sw: {
+        title: `Aina "${m[1]}" haipo`,
+        why: `Programu inatumia ${m[1]} kabla haijafafanuliwa, au jina limeandikwa vibaya.`,
+        fix: 'Fafanua struct, enum au typedef juu ya main(), na angalia tahajia.',
+      },
+    }),
+  },
+  {
+    id: 'cx-arguments',
+    languages: ['cx'],
+    match: /(too many|not enough) arguments to (\w+)\(\)/,
+    build: (m) => ({
+      en: {
+        title: `Wrong number of arguments to ${m[2]}()`,
+        why: `${m[2]}() was called with ${m[1] === 'too many' ? 'more' : 'fewer'} values than it was defined to take.`,
+        fix: `Count the parameters in the definition of ${m[2]}() and pass exactly that many values.`,
+      },
+      sw: {
+        title: `Idadi isiyo sahihi ya hoja kwa ${m[2]}()`,
+        why: `${m[2]}() iliitwa na thamani ${m[1] === 'too many' ? 'nyingi zaidi' : 'chache zaidi'} kuliko ilivyofafanuliwa kupokea.`,
+        fix: `Hesabu vigezo katika ufafanuzi wa ${m[2]}() na upitishe thamani idadi hiyo hasa.`,
+      },
+    }),
+  },
+  {
+    id: 'cx-assign',
+    languages: ['cx'],
+    match: /can't assign (.+) from (.+)$/m,
+    build: (m) => ({
+      en: {
+        title: `You cannot put a ${m[2]} into a ${m[1]}`,
+        why: 'The two sides of = have types that do not match (for example a number assigned to a whole struct).',
+        fix: 'Assign to one member at a time (p.x = 5;), or copy a struct from another struct of the same type.',
+      },
+      sw: {
+        title: `Huwezi kuweka ${m[2]} ndani ya ${m[1]}`,
+        why: 'Pande mbili za = zina aina zisizolingana (kwa mfano nambari kupewa struct nzima).',
+        fix: 'Pa mwanachama mmoja kwa wakati (p.x = 5;), au nakili struct kutoka struct nyingine ya aina ile ile.',
+      },
+    }),
+  },
+  {
+    id: 'cx-parse',
+    languages: ['cx'],
+    match: /(?:'(.)' expected|(\w+) expected|identifier not expected here|bad type declaration)/,
+    build: (m) => ({
+      en: {
+        title: m[1] ? `A "${m[1]}" is missing` : 'The program could not be read here',
+        why: m[1] ? `The compiler expected a ${m[1]} at this point.` : 'Something is out of place: often a missing semicolon on the line above, a missing bracket, or a typing slip.',
+        fix: 'Look at the marked line and the line above it. Check semicolons ( ; ), brackets and quotes.',
+      },
+      sw: {
+        title: m[1] ? `"${m[1]}" inakosekana` : 'Programu haikuweza kusomwa hapa',
+        why: m[1] ? `Kikusanyaji kilitarajia ${m[1]} mahali hapa.` : 'Kitu kimekaa mahali pasipo sahihi: mara nyingi nusu koloni imesahaulika mstari wa juu, mabano yamekosekana, au kosa la kuandika.',
+        fix: 'Tazama mstari ulioonyeshwa na ule wa juu yake. Angalia nusu koloni ( ; ), mabano na nukuu.',
+      },
+    }),
+  },
+  {
+    id: 'cx-div-zero',
+    languages: ['cx'],
+    match: /divide by zero|divisible by zero/i,
+    build: () => ({
+      en: {
+        title: 'Division by zero',
+        why: 'The program divided a number by 0, which has no answer.',
+        fix: 'Check that the divisor is not 0 before you divide: if (b != 0) { ... }',
+      },
+      sw: {
+        title: 'Kugawanya kwa sifuri',
+        why: 'Programu iligawanya nambari kwa 0, jambo lisilo na jibu.',
+        fix: 'Hakikisha kigawanyo si 0 kabla ya kugawanya: if (b != 0) { ... }',
+      },
+    }),
+  },
+  {
+    id: 'cx-crash-file',
+    languages: ['cx'],
+    match: /fopen returned NULL|failed to open/i,
+    build: () => ({
+      en: {
+        title: 'A file that did not open was used',
+        why: 'fopen returned NULL (the file does not exist, or the name is wrong) and the program used it anyway.',
+        fix: 'Always test the result: FILE *f = fopen("data.txt", "r"); if (f == NULL) { printf("Cannot open\\n"); return 1; }',
+      },
+      sw: {
+        title: 'Faili lisilofunguka lilitumika',
+        why: 'fopen ilirudisha NULL (faili halipo, au jina si sahihi) na programu likalitumia hata hivyo.',
+        fix: 'Jaribu matokeo kila mara: FILE *f = fopen("data.txt", "r"); if (f == NULL) { printf("Cannot open\\n"); return 1; }',
+      },
+    }),
+  },
+  {
+    id: 'cx-memory',
+    languages: ['cx'],
+    match: /too much memory/,
+    build: () => ({
+      en: {
+        title: 'The program used too much memory',
+        why: 'Usually a function that calls itself with no base case, or a loop that keeps calling malloc.',
+        fix: 'Make sure every recursive function has a base case that stops it, and free memory you no longer need.',
+      },
+      sw: {
+        title: 'Programu ilitumia kumbukumbu nyingi mno',
+        why: 'Mara nyingi ni kitendakazi kinachojiita bila sharti la kusimama, au kitanzi kinachoendelea kuita malloc.',
+        fix: 'Hakikisha kila kitendakazi cha kujiita kina sharti la kusimama, na achilia kumbukumbu usiyoihitaji tena (free).',
+      },
+    }),
+  },
+  {
+    id: 'cx-generic',
+    languages: ['cx'],
+    match: /\/main\.c:\d+:\d+ (.+)$/m,
+    build: (m) => ({
+      en: {
+        title: 'The program stopped with an error',
+        why: m[1],
+        fix: 'Read the message and look at the marked line. Check spelling, semicolons, brackets and the types of your variables.',
+      },
+      sw: {
+        title: 'Programu ilisimama kwa kosa',
+        why: m[1],
+        fix: 'Soma ujumbe na utazame mstari ulioonyeshwa. Angalia tahajia, nusu koloni, mabano na aina za vigeugeu vyako.',
+      },
+    }),
+  },
 ];
 
 /** Line number mentioned by the raw error, if any. */
@@ -1615,6 +1842,10 @@ export function extractLine(raw, language) {
   if (language === 'java') {
     const j = raw.match(/\.java:(\d+):/);
     return j ? Number(j[1]) : null;
+  }
+  if (language === 'cx') {
+    const c = raw.match(/\/main\.c:(\d+):\d+ /);
+    return c ? Number(c[1]) : null;
   }
   const a = raw.match(/^(\d+):\d+/m);
   if (a) return Number(a[1]);

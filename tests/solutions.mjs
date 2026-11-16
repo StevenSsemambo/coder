@@ -3,6 +3,7 @@
 
 import { cSolutions } from './solutions-c.mjs';
 import { javaSolutions } from './solutions-java.mjs';
+import { cxSolutions } from './solutions-cx.mjs';
 import { cppSolutions } from './solutions-cpp.mjs';
 import { sqlSolutions } from './solutions-sql.mjs';
 import { phpSolutions } from './solutions-php.mjs';
@@ -20,6 +21,7 @@ const py25 = () => `import json\n\n${L3.PRODUCT}\n\n${L3.SHOP_BASE}\n\n${L3.SHOP
 export const solutions = {
   ...cSolutions,
   ...javaSolutions,
+  ...cxSolutions,
   ...cppSolutions,
   ...sqlSolutions,
   ...phpSolutions,

@@ -4,7 +4,7 @@ import { prepareSource } from './csource.js';
 import { javaRunInfo } from './javasource.js';
 import { runConsoleJs } from './webrun.js';
 
-const WORKER_FILES = { python: 'py.worker.js', c: 'c.worker.js', cpp: 'c.worker.js', sql: 'sql.worker.js', php: 'php.worker.js', java: 'java.worker.js' };
+const WORKER_FILES = { python: 'py.worker.js', c: 'c.worker.js', cpp: 'c.worker.js', sql: 'sql.worker.js', php: 'php.worker.js', java: 'java.worker.js', cx: 'cx.worker.js' };
 export const DEFAULT_TIMEOUT_MS = 8000;
 // Java builds the program (javac, then TeaVM) before it runs it. That takes seconds on a phone, so the build gets its
 // own, long allowance; the program itself then gets the usual short one (the worker says when the build is over).
@@ -125,7 +125,7 @@ class LanguageRunner {
   }
 }
 
-const runners = { python: new LanguageRunner('python'), c: new LanguageRunner('c'), cpp: new LanguageRunner('cpp'), sql: new LanguageRunner('sql'), php: new LanguageRunner('php'), java: new LanguageRunner('java') };
+const runners = { python: new LanguageRunner('python'), c: new LanguageRunner('c'), cpp: new LanguageRunner('cpp'), sql: new LanguageRunner('sql'), php: new LanguageRunner('php'), java: new LanguageRunner('java'), cx: new LanguageRunner('cx') };
 
 /** Start loading a runtime early (for example while the student reads the lesson). */
 export function warmUp(language) {

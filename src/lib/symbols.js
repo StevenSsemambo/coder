@@ -98,6 +98,32 @@ SYMBOLS.php = [
   { label: ',', text: ',' },
 ];
 
+/** "Full C" (structs, pointers, files): the C keys plus the member operators. */
+SYMBOLS.cx = [
+  { label: 'Tab', text: '    ' },
+  { label: ';', text: ';' },
+  { label: '{ }', text: '{}', back: 1 },
+  { label: '( )', text: '()', back: 1 },
+  { label: '[ ]', text: '[]', back: 1 },
+  { label: '\" \"', text: '\"\"', back: 1 },
+  { label: '->', text: '->' },
+  { label: '.', text: '.' },
+  { label: '&', text: '&' },
+  { label: '*', text: '*' },
+  { label: '#', text: '#' },
+  { label: '%', text: '%' },
+  { label: '\\n', text: '\\n' },
+  { label: '=', text: '=' },
+  { label: '==', text: '==' },
+  { label: '!=', text: '!=' },
+  { label: '<', text: '<' },
+  { label: '>', text: '>' },
+  { label: '+', text: '+' },
+  { label: '-', text: '-' },
+  { label: '/', text: '/' },
+  { label: ',', text: ',' },
+];
+
 SYMBOLS.cpp = [
   { label: 'Tab', text: '    ' },
   { label: ';', text: ';' },
