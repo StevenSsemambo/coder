@@ -4,6 +4,7 @@
 import { level6Solution as L6 } from '../src/content/py/level6b.js';
 import { level7Solution as L7 } from '../src/content/py/level7a.js';
 import { level7bSolution as L7B } from '../src/content/py/level7b.js';
+import { level8Solution as L8 } from '../src/content/py/level8a.js';
 
 export const pySolutions = {
   // ---- lesson 36: decorators
@@ -380,5 +381,163 @@ n = int(input())
 lines = [input() for i in range(n)]
 sales, errors = clean(lines)
 report(sales, errors)
+`,
+
+  // ---- lesson 47: modules and packages
+  'py46-package': `${L8.MAKE_PACKAGE}
+
+make_package("tillkit", {
+    "__init__.py": "",
+    "money.py": """def fmt(amount):
+    return f"UGX {amount:,}"
+""",
+    "tools.py": """def line_total(qty, price):
+    return qty * price
+""",
+})
+
+from tillkit.money import fmt
+from tillkit.tools import line_total
+
+qty = int(input())
+price = int(input())
+print(fmt(line_total(qty, price)))
+`,
+  'py46-guard': `${L8.MAKE_MODULE}
+
+make_module("greeter_ex", """def greet(name):
+    return "Welcome, " + name
+
+if __name__ == "__main__":
+    print(greet("test"))
+""")
+
+import greeter_ex
+
+print(greeter_ex.greet(input()))
+`,
+  'py46-writemod': `${L8.MAKE_MODULE}
+
+make_module("taxes", """def with_vat(price, percent=18):
+    return price + price * percent // 100
+""")
+
+import taxes
+
+price = int(input())
+print(taxes.with_vat(price))
+print(taxes.with_vat(price, 10))
+`,
+
+  // ---- lesson 48: command-line apps
+  'py47-parse': `import argparse
+import contextlib
+import io
+
+${L8.SAFE_PARSE}
+
+parser = argparse.ArgumentParser(prog="duuka")
+parser.add_argument("item")
+parser.add_argument("--qty", type=int, default=1)
+parser.add_argument("--vat", action="store_true")
+
+args, problem = safe_parse(parser, input().split())
+if args is None:
+    print("Bad command")
+else:
+    print("Item:", args.item)
+    print("Qty:", args.qty)
+    print("VAT:", "yes" if args.vat else "no")
+`,
+  'py47-subcommands': `import argparse
+import contextlib
+import io
+
+${L8.SAFE_PARSE}
+
+parser = argparse.ArgumentParser(prog="duuka")
+sub = parser.add_subparsers(dest="command", required=True)
+add = sub.add_parser("add")
+add.add_argument("item")
+add.add_argument("--qty", type=int, default=1)
+sub.add_parser("total")
+
+PRICES = {"sugar": 4500, "rice": 3000, "tea": 500}
+cart = {}
+
+n = int(input())
+for i in range(n):
+    args, problem = safe_parse(parser, input().split())
+    if args is None:
+        print("Bad command")
+        continue
+    if args.command == "add":
+        if args.item not in PRICES:
+            print(f"Unknown item: {args.item}")
+        else:
+            cart[args.item] = cart.get(args.item, 0) + args.qty
+            print(f"Added {args.qty} x {args.item}")
+    else:
+        total = sum(PRICES[item] * qty for item, qty in cart.items())
+        print(f"Total: {total:,}")
+`,
+  'py47-config': `import json
+
+DEFAULTS = {"vat_percent": 18, "currency": "UGX", "shop": "Duuka"}
+
+user = json.loads(input())
+config = {**DEFAULTS, **user}
+print(config["shop"], config["currency"], config["vat_percent"])
+`,
+
+  // ---- lesson 49: SQLite from Python
+  'py48-low': `import sqlite3
+
+${L8.STOCK_HEAD}
+${L8.STOCK_LOW}
+
+stock = Stock()
+for item, qty in [("sugar", 50), ("rice", 30), ("tea", 100), ("salt", 8), ("oil", 12)]:
+    stock.add(item, qty, 1000)
+
+limit = int(input())
+names = stock.low_items(limit)
+if names:
+    for name in names:
+        print(name)
+else:
+    print("Nothing is low")
+`,
+  'py48-sell': `import sqlite3
+
+${L8.STOCK_HEAD}
+${L8.STOCK_SELL}
+
+stock = Stock()
+stock.add("sugar", 50, 4500)
+stock.add("salt", 8, 800)
+stock.add("tea", 100, 500)
+
+n = int(input())
+for i in range(n):
+    _, item, qty = input().split()
+    qty = int(qty)
+    try:
+        stock.sell(item, qty)
+        print(f"Sold {qty} x {item}, left {stock.qty(item)}")
+    except UnknownItem:
+        print(f"Error: unknown item {item}")
+    except OutOfStock as e:
+        print(f"Error: only {e} {item} left")
+`,
+  'py48-injection': `import sqlite3
+
+con = sqlite3.connect(":memory:")
+con.execute("CREATE TABLE stock (item TEXT, qty INTEGER)")
+con.executemany("INSERT INTO stock VALUES (?, ?)", [("sugar", 50), ("rice", 30), ("tea", 100), ("salt", 8), ("oil", 12)])
+
+name = input()
+rows = con.execute("SELECT item FROM stock WHERE item = ?", (name,)).fetchall()
+print(len(rows))
 `,
 };
