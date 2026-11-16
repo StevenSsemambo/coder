@@ -26,12 +26,18 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // App shell, workers and the C interpreter are cached on first visit (small).
-        // The big Python and Java runtimes are NOT precached: students download them on purpose from Settings,
+        // App shell, workers, the C interpreter and SQLite (sql.js, wasm) are cached on first visit (small).
+        // The big Python, PHP and Java runtimes are NOT precached: students download them on purpose from Settings,
         // and it is then served from the "saymacoder-packs" cache by pack-sw.js.
-        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest}'],
-        globIgnores: ['pyodide/**', 'java/**'],
+        globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,wasm}'],
+        globIgnores: ['pyodide/**', 'php/**', 'java/**'],
+        // All courses live in one JavaScript file, which grew past the 2 MiB default when the PHP lessons were added.
+        // A file over the limit is silently NOT precached, which would break offline use. 4 MiB gives every track room to grow.
+        // Longer term: load each course on demand (dynamic import) instead of bundling all of them together.
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         navigateFallback: 'index.html',
+        // The C++ phone test page (public/cpp-test/) is its own page: never answer it with the app shell.
+        navigateFallbackDenylist: [/\/cpp-test\//],
         cleanupOutdatedCaches: true,
         // Runtime packs are served by public/pack-sw.js (registered synchronously inside the service worker).
         importScripts: ['pack-sw.js'],

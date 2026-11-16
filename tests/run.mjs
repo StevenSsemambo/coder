@@ -26,7 +26,18 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sandbox = vm.createContext({ self: {}, console });
 vm.runInContext(readFileSync(join(root, 'public/vendor/jscpp.js'), 'utf8') + ';this.__JSCPP = JSCPP;', sandbox);
 const JSCPP = sandbox.__JSCPP;
+// SQL: the exact core file the worker uses, running on sql.js (the same SQLite that ships in the app).
+const initSqlJs = require('sql.js');
+const SQLITE = await initSqlJs();
+const sqlSandbox = vm.createContext({ self: {} });
+vm.runInContext(readFileSync(join(root, 'public/workers/sqlcore.js'), 'utf8'), sqlSandbox);
+const SQLCore = sqlSandbox.self.SQLCore;
 const { loadPyodide } = await import(join(root, 'node_modules/pyodide/pyodide.mjs'));
+// PHP: the shared core (src/lib/phpcore.mjs) that the browser worker also uses, on PHP 8.3 compiled to WebAssembly (@php-wasm).
+const { PHP } = await import('@php-wasm/universal');
+const { loadNodeRuntime } = await import('@php-wasm/node');
+const { createPhp, runPhp: runPhpCore } = await import(join(root, 'src/lib/phpcore.mjs'));
+const phpInstance = await createPhp({ PHP, loadRuntime: () => loadNodeRuntime('8.3', { emscriptenOptions: { processId: 1 } }) });
 
 let passed = 0;
 const failures = [];
@@ -46,6 +57,12 @@ function runC(code, stdin = '') {
     const msg = String((e && e.message) || e);
     return { stdout, error: msg, timedOut: /Time limit exceeded/i.test(msg) };
   }
+}
+
+// For SQL the "stdin" is the practice database (see public/workers/sqlcore.js).
+function runSql(code, setup = '') {
+  const r = SQLCore.runSql(SQLITE, setup, code);
+  return { stdout: r.stdout, error: r.error, timedOut: false };
 }
 
 const py = await loadPyodide();
@@ -93,7 +110,12 @@ async function gradeWebNode(ex, files) {
   dom.window.close();
   return shaped;
 }
-const runLang = (language, code, stdin) => (language === 'c' ? runC(code, stdin) : language === 'java' ? runJava(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : runPython(code, stdin));
+// PHP warnings and notices stay inside stdout (as in real PHP); only a fatal or parse error is reported as `error`.
+async function runPhpTest(code, stdin = '') {
+  const r = await runPhpCore(phpInstance, code, stdin);
+  return { stdout: r.stdout, error: r.error, timedOut: false };
+}
+const runLang = (language, code, stdin) => (language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'java' ? runJava(code, stdin) : language === 'sql' ? runSql(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : language === 'php' ? runPhpTest(code, stdin) : runPython(code, stdin));
 
 // ---- 1. every exercise: solution passes, starter fails ----------------------------
 section('Exercises (reference solution must pass, untouched starter must fail)');
@@ -303,6 +325,37 @@ section('Error translator (real messages from the runtimes)');
     ['web', 'console.log((1 + 2);', 'js-syntax-eof', 'JS missing bracket'],
     ['web', 'while (true) { }', 'timeout', 'JS infinite loop (worker time limit)'],
     ['web', 'function f() { f(); }\nf();', 'js-stack', 'JS endless recursion'],
+    ['cpp', 'using namespace std;\nint main(){ cout << "hi"; return 0; }', 'cpp-missing-iostream', 'C++ missing iostream'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ cout << "hi" << endl return 0; }', 'c-parse', 'C++ missing semicolon'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ cout << total; return 0; }', 'c-undeclared', 'C++ undeclared variable'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ int a = 5, b = 0; cout << a / b; return 0; }', 'c-zero-division', 'C++ divide by zero'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ while (true) { } return 0; }', 'timeout', 'C++ infinite loop'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint f(int n){ return n + f(n - 1); }\nint main(){ cout << f(3); return 0; }', 'cpp-stack', 'C++ recursion without a base case'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ int a[3] = {1, 2, 3}; cout << a[5]; return 0; }', 'cpp-index', 'C++ index past the end'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ int a[3] = {1, 2, 3}; cout << a[-1]; return 0; }', 'cpp-index', 'C++ negative index'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ int *p; *p = 5; return 0; }', 'cpp-pointer-uninit', 'C++ pointer with no address'],
+    ['cpp', '#include <iostream>\nusing namespace std;\nint main(){ int x = 5; int *p = x; return 0; }', 'cpp-pointer-type', 'C++ number where an address belongs'],
+    ['sql', 'SELECT * FROM pupils;', 'sql-no-table', 'SQL missing table'],
+    ['sql', 'SELECT colour FROM t;', 'sql-no-column', 'SQL missing column'],
+    ['sql', 'SELECT name FORM t;', 'sql-syntax', 'SQL misspelled keyword'],
+    ['sql', "SELECT name FROM t WHERE name = 'Amina;", 'sql-incomplete', 'SQL unclosed quote'],
+    ['sql', 'SELECT name FROM t, u;', 'sql-ambiguous', 'SQL ambiguous column'],
+    ['sql', "INSERT INTO t VALUES (1, 'Amina');", 'sql-unique', 'SQL duplicate key'],
+    ['sql', "INSERT INTO t (id) VALUES (9);", 'sql-not-null', 'SQL missing required value'],
+    ['sql', "INSERT INTO t VALUES (7, 'Sam', 3);", 'sql-column-count', 'SQL wrong number of values'],
+    ['sql', 'SELECT name FROM t WHERE COUNT(*) > 1;', 'sql-aggregate-where', 'SQL aggregate in WHERE'],
+    ['sql', 'SELECT NOW();', 'sql-no-function', 'SQL unknown function'],
+    ['sql', 'CREATE TABLE t (a INT);', 'sql-table-exists', 'SQL table already exists'],
+    ['sql', 'CREATE TABLE k (n INT CHECK (n > 0)); INSERT INTO k VALUES (-1);', 'sql-check', 'SQL CHECK rule broken'],
+    ['sql', "INSERT INTO t (colour) VALUES ('x');", 'sql-no-column-named', 'SQL INSERT names a missing column'],
+    ['sql', 'ALTER TABLE t ADD COLUMN level INTEGER NOT NULL;', 'sql-add-notnull', 'SQL new NOT NULL column without default'],
+    ['sql', 'PRAGMA foreign_keys = ON; CREATE TABLE ch (p INTEGER REFERENCES t(id)); INSERT INTO ch VALUES (99);', 'sql-foreign-key', 'SQL foreign key broken'],
+    ['sql', 'SELECT * FROM t WHERE id IN (SELECT id, name FROM t);', 'sql-subquery-columns', 'SQL inner query returns two columns'],
+    ['sql', 'CREATE VIEW vv AS SELECT id FROM t; INSERT INTO vv VALUES (5);', 'sql-view-modify', 'SQL change rows of a view'],
+    ['sql', 'COMMIT;', 'sql-transaction', 'SQL commit without BEGIN'],
+    ['sql', 'BEGIN; BEGIN;', 'sql-transaction', 'SQL BEGIN inside a transaction'],
+    ['sql', 'SELECT id FROM t WHERE ROW_NUMBER() OVER (ORDER BY id) = 1;', 'sql-window-misuse', 'SQL window function in WHERE'],
+    ['sql', 'CREATE INDEX ix ON t(id); CREATE INDEX ix ON t(name);', 'sql-table-exists', 'SQL index already exists'],
     ['python', 'print(undefined_name)', 'py-name-error', 'NameError'],
     ['python', 'x = (1 +', 'py-never-closed', 'unclosed bracket'],
     ['python', 'if True\n    print(1)', 'py-missing-colon', 'missing colon'],
@@ -343,9 +396,22 @@ section('Error translator (real messages from the runtimes)');
     ['java', 'public class Main { public static void main(String[] a) { new java.util.Scanner(System.in).nextInt(); } }', 'java-input', 'Java no input left', ''],
     ['java', 'public class Main { public static void main(String[] a) { throw new IllegalStateException("boom"); } }', 'java-uncaught', 'Java uncaught exception'],
     ['java', 'public class Main { public static void main(String[] a) { while (true) { } } }', 'timeout', 'Java infinite loop'],
+    ['php', '<?php\necho "a"\necho "b";', 'php-missing-semicolon', 'PHP missing semicolon'],
+    ['php', '<?php\nif (true {\n}', 'php-parse', 'PHP generic parse error'],
+    ['php', '<?php\ntotl(1);', 'php-undefined-function', 'PHP undefined function'],
+    ['php', '<?php\nclass A {}\n(new A)->go();', 'php-undefined-method', 'PHP undefined method'],
+    ['php', '<?php\n$x = null;\n$x->go();', 'php-null-member', 'PHP method call on null'],
+    ['php', '<?php\nfunction f(int $x) { return $x; }\nf("abc");', 'php-type-error', 'PHP argument of the wrong type'],
+    ['php', '<?php\nfunction f($a, $b) { return $a; }\nf(1);', 'php-arg-count', 'PHP too few arguments'],
+    ['php', '<?php\necho 1 / 0;', 'php-division-zero', 'PHP division by zero'],
+    ['php', '<?php\necho ugx;', 'php-undefined-constant', 'PHP undefined constant'],
+    ['php', '<?php\n$w = new Wallet();', 'php-class-not-found', 'PHP class not found'],
+    ['php', '<?php\necho [1] + 1;', 'php-unsupported-operand', 'PHP unsupported operand'],
+    ['php', '<?php\nfunction a() {}\nfunction a() {}', 'php-redeclare', 'PHP function defined twice'],
+    ['php', '<?php\nthrow new Exception("boom");', 'php-uncaught', 'PHP uncaught exception'],
   ];
   for (const [language, code, expectedId, label, caseInput = ''] of cases) {
-    const res = await runLang(language, code, caseInput);
+    const res = await runLang(language, code, language === 'sql' ? 'CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT NOT NULL); CREATE TABLE u (id INTEGER, name TEXT); INSERT INTO t VALUES (1, \'Amina\');' : caseInput);
     const raw = res.error || '';
     const en = translateError(raw, { language, lang: 'en' });
     check(`${label}: rule ${expectedId}`, en?.id === expectedId, `got ${en?.id ?? 'no match'} for: ${raw.split('\n').slice(-2).join(' | ').slice(0, 140)}`);
@@ -363,6 +429,9 @@ section('Error translator (real messages from the runtimes)');
   check('python error line number is found', extractLine(pyErr, 'python') === 2, `got ${extractLine(pyErr, 'python')}`);
   const cErr = runC('#include <stdio.h>\nint main(){ printf("%d", y); return 0; }').error;
   check('C error line number is found', extractLine(cErr, 'c') === 2, `got ${extractLine(cErr, 'c')}`);
+  const phpErr = (await runPhpTest('<?php\n\necho 1 / 0;')).error;
+  check('PHP error line number is found', extractLine(phpErr, 'php') === 3, `got ${extractLine(phpErr, 'php')} for ${phpErr}`);
+  check('python rules do not fire for PHP', translateError('ZeroDivisionError: division by zero', { language: 'php', lang: 'en' }) === null);
   const hdr = translateError('1:13 variable sqrt does not exist', { language: 'c', lang: 'en' });
   check('missing header names the right file', hdr?.title.includes('<math.h>'), hdr?.title);
 }
@@ -486,6 +555,10 @@ section('C source preparation');
   const r = runC('#include <stdio.h>\nint main(void) { printf("ok\\n"); return 0; }');
   check('main(void) programs now run', r.stdout === 'ok\n' && !r.error, r.error || '');
 
+  const pi = runC('#include <stdio.h>\n#define PI 3.14159\n#define K 2\nint main() {\n    printf("%.2f %d\\n", PI * 2, K);\n    return 0;\n}\n');
+  check('decimal #define values work', pi.stdout === '6.28 2\n' && !pi.error, pi.error || '');
+  check('integer #define is untouched', normalizeC('#define N 5\n') === '#define N 5\n');
+
   // The interpreter drops whitespace after a comma inside strings in function calls. We work around it.
   const H = '#include <stdio.h>\n';
   const out = (body, stdin = '') => runC(`${H}int main() { ${body} return 0; }`, stdin);
@@ -519,6 +592,11 @@ section('C source preparation');
   check('a line read with gets can be changed afterwards', outS('char s[20]; gets(s); s[0] = s[0] - 32; printf("%s\\n", s);', 'mama rose').stdout === 'Mama rose\n');
   check('text copied with strcpy can be changed afterwards', outS('char a[10] = "abc"; char b[10]; strcpy(b, a); b[0] = 88; printf("%s %s\\n", a, b);').stdout === 'abc Xbc\n');
   check('strcat after strcpy builds the text', outS('char b[20]; strcpy(b, "Mama"); strcat(b, " Rose"); printf("%s %d\\n", b, (int)strlen(b));').stdout === 'Mama Rose 9\n');
+  check('p++ does not move the array it was copied from', out('int a[3] = {1, 2, 3}; int *p = a; p++; printf("%d %d\\n", a[0], *p);').stdout === '1 2\n');
+  check('two pointers to one array move independently', out('int a[3] = {1, 2, 3}; int *p = a; int *q = a; p++; printf("%d %d\\n", *p, *q);').stdout === '2 1\n');
+  check('a function can walk its pointer without moving the caller array', out('int a[3] = {1, 2, 3}; int *p = a; int *e = a + 3; int t = 0; while (p != e) { t += *p; p++; } printf("%d %d\\n", t, a[0]);').stdout === '6 1\n');
+  check('pointer != and < and += work', out('int a[4] = {1, 2, 3, 4}; int *p = a; int *q = a + 2; p += 2; printf("%d %d %d\\n", p != a, a < q, *p);').stdout === '1 1 3\n');
+  check('pointer difference gives a number', out('int a[5] = {1, 2, 3, 4, 5}; int *p = &a[1]; int *q = &a[4]; printf("%d\\n", (int)(q - p));').stdout === '3\n');
   check('commas outside strings are untouched', normalizeC('f(a, b);') === 'f(a, b);');
   check('comments are untouched', normalizeC('// say "a, b"\nint x;') === '// say "a, b"\nint x;');
   check('main(void) inside a string is untouched', normalizeC('printf("main(void)");') === 'printf("main(void)");');
@@ -596,6 +674,73 @@ section('Java engine (real javac and TeaVM through the shipped worker)');
 }
 
 // ---- 5. dates and streak keys --------------------------------------------------------
+section('SQL engine (SQLite via sql.js: the same core file the worker uses)');
+{
+  const { tbl } = await import('../src/content/sql/shared.js');
+  const T = (cols, rows) => SQLCore.formatTable(cols, rows);
+  const samples = [
+    [['name', 'price'], [['Soap', 1500], ['Matooke bunch', 15000]]],
+    [['a'], []],
+    [['id', 'supplier'], [[1, null], [22, 'Kampala Grains']]],
+    [['Price (UGX)'], [[4500]]],
+  ];
+  for (const [cols, rows] of samples) check(`lesson table helper matches the app's table format for ${JSON.stringify(cols)}`, tbl(cols, rows) === T(cols, rows), `${JSON.stringify(tbl(cols, rows))} vs ${JSON.stringify(T(cols, rows))}`);
+
+  const db = 'CREATE TABLE t (id INTEGER PRIMARY KEY, name TEXT); INSERT INTO t VALUES (1, \'Amina\'), (2, \'Brian\');';
+  check('SELECT prints a text table', runSql('SELECT * FROM t;', db).stdout === 'id | name\n---+------\n1  | Amina\n2  | Brian\n', JSON.stringify(runSql('SELECT * FROM t;', db).stdout));
+  check('no rows prints (0 rows) under the header', runSql("SELECT * FROM t WHERE id = 99;", db).stdout.includes('(0 rows)'));
+  check('NULL shows as NULL', runSql('SELECT NULL AS x;', '').stdout === 'x\n----\nNULL\n', JSON.stringify(runSql('SELECT NULL AS x;', '').stdout));
+  check('INSERT reports the rows changed', runSql("INSERT INTO t VALUES (3, 'Grace');", db).stdout === '(1 row changed)\n');
+  check('UPDATE and DELETE report the rows changed', runSql("UPDATE t SET name = 'X'; DELETE FROM t WHERE id = 1;", db).stdout === '(2 rows changed)\n\n(1 row changed)\n');
+  check('CREATE TABLE is silent', runSql('CREATE TABLE z (a INT);', '').stdout === '');
+  check('two queries print two tables with a blank line between', runSql('SELECT 1 AS a; SELECT 2 AS b;', '').stdout === 'a\n-\n1\n\nb\n-\n2\n');
+  check('every run starts with a fresh database', runSql('CREATE TABLE once (a INT);', '').error === null && runSql('CREATE TABLE once (a INT);', '').error === null);
+  check('earlier changes never leak into the next run', runSql("DELETE FROM t;", db).error === null && runSql('SELECT COUNT(*) AS n FROM t;', db).stdout === 'n\n-\n2\n');
+  const bad = runSql('SELECT 1;', 'CREATE TABLE oops (');
+  check('a broken practice database is reported as such', /practice database could not be built/.test(bad.error || ''), bad.error);
+  check('an error keeps the output that came before it', runSql('SELECT 1 AS a; SELECT * FROM nope;', '').stdout === 'a\n-\n1\n' && /no such table/.test(runSql('SELECT 1 AS a; SELECT * FROM nope;', '').error));
+  const many = runSql('WITH RECURSIVE c(x) AS (SELECT 1 UNION ALL SELECT x + 1 FROM c WHERE x < 500) SELECT x FROM c;', '');
+  const plan = runSql("CREATE INDEX ix ON t(name); EXPLAIN QUERY PLAN SELECT * FROM t WHERE name = 'x';", db).stdout;
+  check('EXPLAIN QUERY PLAN prints only a plan column of readable text', plan.startsWith('plan\n') && plan.includes('SEARCH t USING') && !/notused|parent/.test(plan), JSON.stringify(plan));
+  check('a plan of a full scan says SCAN', runSql('EXPLAIN QUERY PLAN SELECT * FROM t WHERE name = \'x\';', db).stdout.includes('SCAN t'));
+  check('very long results are cut and say so', many.stdout.includes('... 300 more rows not shown') && many.stdout.split('\n').length < 210, many.stdout.split('\n').slice(-3).join(' | '));
+}
+
+section('PHP engine (the shared core, on real PHP 8.3 WebAssembly)');
+{
+  const r = (code, stdin = '') => runPhpCore(phpInstance, code, stdin);
+  check('PHP runs a script', (await r('<?php echo "Hello, Kampala!\\n";')).stdout === 'Hello, Kampala!\n');
+  check('PHP is version 8.3', (await r('<?php echo PHP_MAJOR_VERSION, ".", PHP_MINOR_VERSION;')).stdout === '8.3');
+  check('PHP reads input with fgets(STDIN)', (await r('<?php $n = trim(fgets(STDIN)); $m = (int) fgets(STDIN); echo "$n $m";', 'Mary\n50\n')).stdout === 'Mary 50');
+  check('PHP with no input: fgets(STDIN) gives false', (await r('<?php var_dump(fgets(STDIN));')).stdout === 'bool(false)\n');
+  const warn = await r('<?php echo "a\\n"; echo $nope; echo "b\\n";');
+  check('a warning stays inline in the output and is not an error', warn.error === null && warn.stdout === 'a\n\nWarning: Undefined variable $nope in main.php on line 1\nb\n', JSON.stringify(warn));
+  const fatal = await r('<?php echo "before\\n";\necho 1 / 0;');
+  check('a fatal error keeps the output before it and is reported separately', fatal.stdout === 'before\n' && /^Fatal error: Uncaught DivisionByZeroError: Division by zero in main\.php:2/.test(fatal.error), JSON.stringify(fatal));
+  check('error messages show main.php, never the runner file', !/internal|eval\.php|\/tmp\/sm/.test(fatal.error));
+  const trace = await r('<?php\nfunction f(int $x) { return $x; }\nf("abc");');
+  check('stack traces start at the learner code and are numbered from #0', /#0 main\.php\(3\): f\('abc'\)\n#1 \{main\}/.test(trace.error), trace.error);
+  const parse = await r('<?php echo "a" ');
+  check('a parse error has no output and says Parse error', parse.stdout === '' && /^Parse error: /.test(parse.error), JSON.stringify(parse));
+  check('the learner\'s own line numbers are used', /on line 4/.test((await r('<?php\n\n\necho $x[1];\n')).stdout));
+  check('HTML is not used in messages', !/<b>|<br/.test(warn.stdout));
+  await r('<?php file_put_contents("keep.txt", "1"); mkdir("sub"); file_put_contents("sub/x.txt", "2");');
+  check('files a program makes are gone on the next run', (await r('<?php echo count(scandir(".")) - 2;')).stdout === '0');
+  check('a program can read back a file it wrote in the same run', (await r('<?php file_put_contents("a.txt", "hi"); echo file_get_contents("a.txt");')).stdout === 'hi');
+  check('mbstring works (Luganda and Kiswahili text)', (await r('<?php echo mb_strlen("Nnyabo"), mb_strtoupper("ŋ"), mb_substr("Kampala", 0, 3);')).stdout === '6ŊKam');
+  check('json works', (await r('<?php echo json_encode(["ugx" => 12500, "ok" => true]);')).stdout === '{"ugx":12500,"ok":true}');
+  check('SQLite through PDO works', (await r('<?php $d = new PDO("sqlite::memory:"); $d->exec("create table t(a)"); $d->exec("insert into t values (5)"); echo $d->query("select a from t")->fetchColumn();')).stdout === '5');
+  check('time zone is Africa/Kampala', (await r('<?php echo date_default_timezone_get(), " ", date("H:i", 0);')).stdout === 'Africa/Kampala 03:00');
+  check('number_format and str_pad behave', (await r('<?php echo number_format(1500000), "|", str_pad("5", 3, "0", STR_PAD_LEFT);')).stdout === '1,500,000|005');
+  check('floats print like PHP 8 (0.1 + 0.2)', (await r('<?php echo 0.1 + 0.2, "|"; var_dump(0.1 + 0.2);')).stdout === '0.3|float(0.30000000000000004)\n');
+  check('classes, constructor promotion and readonly work', (await r('<?php final class W { public function __construct(public readonly int $b = 0) {} } $w = new W(5000); echo $w->b;')).stdout === '5000');
+  check('enums and match work (PHP 8.1+)', (await r('<?php enum Net: string { case MTN = "mtn"; case AIRTEL = "airtel"; } echo match (Net::from("mtn")) { Net::MTN => "yellow", Net::AIRTEL => "red" };')).stdout === 'yellow');
+  check('very long output is cut', (await r('<?php for ($i = 0; $i < 30000; $i++) { echo "x"; }')).stdout.length === 20000);
+  const again = await r('<?php echo isset($leak) ? "leak" : "clean";');
+  check('variables never leak between runs', (await r('<?php $leak = 1;')).error === null && again.stdout === 'clean');
+  check('a fatal error does not break the next run', (await r('<?php echo 1 / 0;')).error !== null && (await r('<?php echo "ok";')).stdout === 'ok');
+}
+
 section('Dates');
 {
   check('dayKey format', dayKey(new Date(2026, 10, 9)) === '2026-11-09');
@@ -604,6 +749,8 @@ section('Dates');
 
 closeJava();
 console.log(`\n${passed} checks passed, ${failures.length} failed`);
+// the PHP runtime keeps Node alive after the last check, so end the process explicitly
+if (!failures.length) process.exit(0);
 if (failures.length) {
   console.log('\nFAILURES:');
   for (const f of failures) console.log(`  - ${f}`);

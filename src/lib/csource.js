@@ -64,10 +64,18 @@ function fixVoidParams(code) {
   return code.replace(/\b(?!return\b)([A-Za-z_]\w*)\s*\(\s*void\s*\)/g, '$1()');
 }
 
+/**
+ * `#define PI 3.14159` makes the interpreter's preprocessor fail with a parsing error (a bare decimal
+ * number cannot be expanded). In brackets it works, so a decimal macro value gets wrapped.
+ */
+function fixDecimalMacros(code) {
+  return code.replace(/^([ \t]*#[ \t]*define[ \t]+[A-Za-z_]\w*[ \t]+)(-?\d*\.\d+(?:[eE][-+]?\d+)?)(?=[ \t]*(?:\r?\n|$))/gm, '$1($2)');
+}
+
 export function normalizeC(source) {
   return segments(source)
     .map((seg) => {
-      if (seg.kind === 'code') return fixVoidParams(seg.text);
+      if (seg.kind === 'code') return fixDecimalMacros(fixVoidParams(seg.text));
       if (seg.kind === 'string') return protectCommaSpaces(seg.text);
       return seg.text;
     })
@@ -76,5 +84,5 @@ export function normalizeC(source) {
 
 export function prepareSource(language, source) {
   if (language === 'java') return normalizeJava(source);
-  return language === 'c' ? normalizeC(source) : source;
+  return language === 'c' || language === 'cpp' ? normalizeC(source) : source;
 }

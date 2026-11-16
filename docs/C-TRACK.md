@@ -1,4 +1,4 @@
-# The C track: Structured Programming in C (module TTSD113)
+# The C track: C from beginner to pro
 
 Course id `c-structured`, language `c`. Files: `src/content/c/` (lessons), `src/content/c-course.js`
 (the course list), `tests/solutions-c.mjs` (reference solutions). Owner: the C account.
@@ -6,12 +6,9 @@ Course id `c-structured`, language `c`. Files: `src/content/c/` (lessons), `src/
 Running project: **the Campus Duuka**, a small shop beside a Ugandan campus. Learners meet it in the
 first lessons (a price tag, a till) and finish by building a stock and marks system for it.
 
-> **Mapping to the official outline.** TTSD113 is 50 notional hours, 5 credit units, assessed through
-> UVTAB. The official outline text is **not in this repository**, so the order below follows a standard
-> Structured Programming syllabus (problem solving, constructs, functions, arrays and strings,
-> pointers, structures, files). Before the course is used for assessed work, the lecturer must compare
-> this roadmap with the real outline and adjust. Send the outline text and the roadmap can be mapped
-> line by line.
+> **Scope.** The course is built as a full C course from beginner to advanced, in the order a good
+> course teaches it. It is **not** tied to one syllabus. (The lecturer teaches module TTSD113, whose
+> outline is not in this repository; the lessons overlap with it but were not written from it.)
 
 ## Roadmap
 
@@ -51,15 +48,26 @@ progress is saved under them). Exercise ids start with `c<lesson number>-`.
 - [x] 22. `c-marks` Project: class marks processor
 
 **Level 5: Pointers**
-- [ ] 23. Addresses and pointers
-- [ ] 24. Pointers and functions (swap, several results)
-- [ ] 25. Pointers, arrays and strings
+- [x] 23. `c-pointers` Addresses and pointers
+- [x] 24. `c-ptr-fn` Pointers and functions (swap, several results)
+- [x] 25. `c-ptr-arrays` Pointers, arrays and strings
+
+**Level 6: Beyond the basics**
+- [x] 26. `c-bits` Bits and number bases (binary, `& | ^ ~ << >>`, flags)
+- [x] 27. `c-macros` Macros, constants and `sizeof` (`#define`, `const`, macros with a parameter)
+- [x] 28. `c-number-algos` Number detective: digit sum, reverse, GCD, primes, Fibonacci
+- [x] 29. `c-sorting` Sorting and searching: selection sort, insertion sort, binary search
+
+**Level 7: Putting it together**
+- [x] 30. `c-text-algos` Text detective: vowels, reverse, palindrome, Caesar cipher
+- [x] 31. `c-recursion-deep` Recursion in depth: power, digits, binary, Tower of Hanoi, arrays
+- [x] 32. `c-stock-system` Capstone: the Duuka stock system (parallel arrays, validation, menu loop)
 
 ### Part B: blocked until the interpreter can run it
 
 Structures (`struct`), `typedef`, `enum`, `union`, dynamic memory (`malloc`, `free`), file handling
 (`FILE`, `fopen`, `fprintf`, `fscanf`), and a final project that stores records in a file. These are
-almost certainly in the module. **None of them run today** (see the table). Lessons written for
+essential to a complete C course. **None of them run today** (see the table). Lessons written for
 them could not be proved by the tests, so they are not written yet. The engine owner needs to decide
 how to get a C runtime that supports them (see "Engine requests").
 
@@ -97,7 +105,13 @@ Behaviours that differ from real C (say so honestly in lessons where they matter
 - **Short array lists** (`int a[5] = {10, 20};`) left the missing boxes without a value, and `{5}` became `-1, 0, 0`. A new patch pads with zeros as C does, and cuts a flat list for a 2D array into rows. `{0}` now works for 2D arrays too.
 - **`strcmp` and `strncmp`** never stopped at the end of the text, so comparing two **equal** strings crashed, and `strncmp` ignored its length. Both are patched in `scripts/prepare-runtimes.mjs` (tests in `tests/run.mjs`).
 - **Characters stored by `scanf("%s")`, `gets` and `strcpy`** could not be changed afterwards (`s[0] = toupper(s[0]);` stopped with "not a left value"). Patched, with tests.
+- **Pointer fixes (Level 5).** `int *p = a; p++;` also moved `a` itself (every pointer copied from an array shared one position), so any pointer walk wrecked the array. `p != q`, `p < q`, `q - p` and `p += n` crashed. All patched in `scripts/prepare-runtimes.mjs` (tests in `tests/run.mjs`).
+- Pointer features that still do **not** work, so lessons avoid them: `NULL` (and `p = 0`), pointer to pointer (`int **`), arrays of pointers (`char *names[]`), `%p` and printing a pointer, and an inline end test such as `p < a + 3` (keep the end in its own variable: `int *end = a + 3;`).
 - Still not working: `strchr` (result cannot be printed), `strstr`, `fgets`. Reading or writing outside an array **stops with an error** here; real C carries on silently. `s = "abc";` on a char array is accepted here but is an error in real C. `strcat` past the end of the array silently cuts the text here. `scanf("%[^\n]")` and `%*s` are not supported; use `gets` for a line (real compilers removed it).
+
+- **Decimal macros.** `#define PI 3.14159` made the preprocessor fail with a parsing error (a bare decimal
+  cannot be expanded; `(3.14159)` can). `src/lib/csource.js` now wraps a decimal macro value in brackets. Test in `tests/run.mjs`.
+- `const` is **not enforced**: assigning to a `const` variable runs. Lesson 27 says so honestly.
 
 ### The `scanf` patch
 

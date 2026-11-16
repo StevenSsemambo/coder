@@ -30,7 +30,7 @@ const RULES = [
   // ---- both languages ------------------------------------------------------
   {
     id: 'timeout',
-    languages: ['python', 'c', 'java', 'web'],
+    languages: ['python', 'c', 'cpp', 'java', 'web', 'sql', 'php'],
     match: /Time limit exceeded/i,
     build: () => ({
       en: {
@@ -429,6 +429,100 @@ const RULES = [
     }),
   },
 
+  // ---- C++ (runs on the same interpreter as C; the C rules below also apply to it) ---------------
+  {
+    id: 'cpp-missing-iostream',
+    languages: ['cpp'],
+    match: /variable (cout|cin|endl|setw|setprecision|fixed) does not exist/,
+    build: (m) => ({
+      en: {
+        title: `"${m[1]}" is not known yet`,
+        why: `${m[1]} lives in a library. Two things must be at the top of the program: the include line, and using namespace std; so you can write ${m[1]} without std:: in front.`,
+        fix: `Add #include <iostream> as the first line (and #include <iomanip> for setw, setprecision and fixed), then add using namespace std; below the includes.`,
+      },
+      sw: {
+        title: `"${m[1]}" haijulikani bado`,
+        why: `${m[1]} ipo kwenye maktaba. Juu ya programu lazima kuwe na mstari wa include, na using namespace std; ili uandike ${m[1]} bila std:: mbele yake.`,
+        fix: `Ongeza #include <iostream> kama mstari wa kwanza (na #include <iomanip> kwa setw, setprecision na fixed), kisha using namespace std; chini ya mistari ya include.`,
+      },
+    }),
+  },
+
+  {
+    id: 'cpp-stack',
+    languages: ['cpp'],
+    match: /Maximum call stack size exceeded/,
+    build: () => ({
+      en: {
+        title: 'A function kept calling itself',
+        why: 'A function calls itself (or two functions call each other) and never reaches a point where it stops, so the program ran out of room. The practice runner in this app also allows only a few hundred nested calls.',
+        fix: 'Give the function a base case: an if that returns an answer without calling itself, and make sure every call moves closer to it.',
+      },
+      sw: {
+        title: 'Function iliendelea kujiita yenyewe',
+        why: 'Function inajiita yenyewe (au function mbili zinaitana) bila kufikia mahali pa kuacha, hivyo programu imeishiwa nafasi. Mfumo wa mazoezi wa app hii pia unaruhusu miito michache tu ya ndani.',
+        fix: 'Weka kesi ya msingi: if inayorudisha jibu bila kujiita, na hakikisha kila mwito unakaribia kesi hiyo.',
+      },
+    }),
+  },
+
+  {
+    id: 'cpp-index',
+    languages: ['cpp'],
+    match: /index out of bound (\d+) >= (\d+)|negative index (-?\d+)/,
+    build: (m) => {
+      const n = m[3] !== undefined
+        ? { en: `The index ${m[3]} is negative, and array positions start at 0.`, sw: `Kielezo ${m[3]} ni hasi, na nafasi za safu huanza 0.` }
+        : { en: `The program asked for position ${m[1]}, but the array only has ${m[2]} boxes. The last valid index is ${Number(m[2]) - 1}.`, sw: `Programu iliomba nafasi ${m[1]}, lakini safu ina masanduku ${m[2]} tu. Kielezo cha mwisho kinachofaa ni ${Number(m[2]) - 1}.` };
+      return {
+        en: {
+          title: 'Outside the array',
+          why: n.en + ' A real C++ program would not stop here: it would quietly read or change some other memory.',
+          fix: 'Indexes go from 0 to size - 1. Check your loop limit (use i < size, not i <= size) and any i + 1 or i - 1 you use.',
+        },
+        sw: {
+          title: 'Nje ya safu',
+          why: n.sw + ' Programu halisi ya C++ isingesimama hapa: ingesoma au kubadilisha kumbukumbu nyingine kimya kimya.',
+          fix: 'Viashiria huanzia 0 hadi ukubwa - 1. Angalia kikomo cha kitanzi (tumia i < ukubwa, si i <= ukubwa) na i + 1 au i - 1 yoyote unayotumia.',
+        },
+      };
+    },
+  },
+  {
+    id: 'cpp-pointer-uninit',
+    languages: ['cpp'],
+    match: /dereference an unitialized pointer/,
+    build: () => ({
+      en: {
+        title: 'This pointer has no address yet',
+        why: 'A pointer was used with * before it was given an address, so it points to nowhere in particular. A real C++ program would write to a random place in memory.',
+        fix: 'Give the pointer the address of a real variable first, for example int *p = &x;, and only then use *p.',
+      },
+      sw: {
+        title: 'Kielekezi hiki hakina anwani bado',
+        why: 'Kielekezi kilitumiwa na * kabla ya kupewa anwani, hivyo hakielekezi popote maalum. Programu halisi ya C++ ingeandika mahali popote kwenye kumbukumbu.',
+        fix: 'Kwanza mpe kielekezi anwani ya kigezo halisi, kwa mfano int *p = &x;, kisha tu tumia *p.',
+      },
+    }),
+  },
+  {
+    id: 'cpp-pointer-type',
+    languages: ['cpp'],
+    match: /is not a normal porinter/,
+    build: () => ({
+      en: {
+        title: 'A pointer needs an address, not a number',
+        why: 'A pointer variable holds the address of another variable. Here a plain number was given where an address was expected (or an address where a number was expected).',
+        fix: 'Use & to get an address (int *p = &x;) and * to reach the value (*p = 10;). When calling a function that takes pointers, pass addresses: exchange(&a, &b).',
+      },
+      sw: {
+        title: 'Kielekezi kinahitaji anwani, si nambari',
+        why: 'Kigezo cha kielekezi hushikilia anwani ya kigezo kingine. Hapa nambari ya kawaida ilitolewa pale anwani ilipotarajiwa (au kinyume chake).',
+        fix: 'Tumia & kupata anwani (int *p = &x;) na * kufikia thamani (*p = 10;). Unapoita function inayochukua vielekezi, tuma anwani: exchange(&a, &b).',
+      },
+    }),
+  },
+
   // ---- C ----------------------------------------------------------------------
   {
     id: 'c-missing-include',
@@ -537,6 +631,571 @@ const RULES = [
     }),
   },
 
+  // ---- SQL (SQLite) ---------------------------------------------------------------------------
+  {
+    id: 'sql-no-table',
+    languages: ['sql'],
+    match: /no such table: (\S+)/,
+    build: (m) => ({
+      en: {
+        title: `There is no table called "${m[1]}"`,
+        why: `SQLite looked for a table named ${m[1]} in the practice database and did not find one. The name may be spelled differently, or the table may not exist in this lesson.`,
+        fix: `Check the table name in the lesson: capital letters do not matter in SQL, but every other letter does. To see every table, run: SELECT name FROM sqlite_master WHERE type = 'table';`,
+      },
+      sw: {
+        title: `Hakuna jedwali linaloitwa "${m[1]}"`,
+        why: `SQLite ilitafuta jedwali liitwalo ${m[1]} kwenye hifadhidata ya mazoezi na haikuliona. Jina linaweza kuwa limeandikwa tofauti, au jedwali hilo halipo kwenye somo hili.`,
+        fix: `Angalia jina la jedwali kwenye somo. Kuona majedwali yote, endesha: SELECT name FROM sqlite_master WHERE type = 'table';`,
+      },
+    }),
+  },
+  {
+    id: 'sql-no-column',
+    languages: ['sql'],
+    match: /no such column: (\S+)/,
+    build: (m) => ({
+      en: {
+        title: `There is no column called "${m[1]}"`,
+        why: `The table has no column with that name. Often the name is misspelled, or text was written without quotes (SQL reads ${m[1]} as a column name, not as text).`,
+        fix: `Look at the column names with SELECT * FROM tablename LIMIT 1; If you meant text, put it in single quotes, like 'Kampala'.`,
+      },
+      sw: {
+        title: `Hakuna safu inayoitwa "${m[1]}"`,
+        why: `Jedwali halina safu yenye jina hilo. Mara nyingi jina limekosewa tahajia, au maandishi yameandikwa bila nukuu (SQL inasoma ${m[1]} kama jina la safu, si maandishi).`,
+        fix: `Angalia majina ya safu kwa SELECT * FROM jina_la_jedwali LIMIT 1; Kama ulimaanisha maandishi, yaweke ndani ya nukuu moja, mfano 'Kampala'.`,
+      },
+    }),
+  },
+  {
+    id: 'sql-syntax',
+    languages: ['sql'],
+    match: /near "([^"]*)": syntax error/,
+    build: (m) => ({
+      en: {
+        title: `SQL did not understand the part near "${m[1]}"`,
+        why: `Something is wrong at or just before ${m[1]}: a keyword may be misspelled, a comma may be missing or extra, or two parts are in the wrong order (SELECT, then FROM, then WHERE, and so on).`,
+        fix: 'Read the line slowly from the left. Check the spelling of every keyword, check the commas between column names (none after the last one), and check that quotes and brackets come in pairs.',
+      },
+      sw: {
+        title: `SQL haikuelewa sehemu karibu na "${m[1]}"`,
+        why: `Kuna kosa pale ${m[1]} ilipo au kabla yake: neno kuu linaweza kuwa na tahajia mbaya, koma inaweza kukosekana au kuzidi, au sehemu mbili ziko kwenye mpangilio usio sahihi (SELECT, kisha FROM, kisha WHERE, na kadhalika).`,
+        fix: 'Soma mstari polepole kutoka kushoto. Angalia tahajia ya kila neno kuu, koma kati ya majina ya safu (hakuna baada ya ya mwisho), na nukuu na mabano yawe kwa jozi.',
+      },
+    }),
+  },
+  {
+    id: 'sql-incomplete',
+    languages: ['sql'],
+    match: /incomplete input|unrecognized token/,
+    build: () => ({
+      en: {
+        title: 'The SQL stops too early, or a quote is not closed',
+        why: 'The statement is not finished. Usually a closing quote \' or a closing bracket ) is missing.',
+        fix: 'Count your quotes and brackets: every opening one needs a closing one. Text goes in single quotes.',
+      },
+      sw: {
+        title: 'SQL inaishia mapema, au nukuu haijafungwa',
+        why: 'Amri haijakamilika. Mara nyingi nukuu ya kufunga \' au mabano ya kufunga ) yamekosekana.',
+        fix: 'Hesabu nukuu na mabano yako: kila ya kufungua inahitaji ya kufunga. Maandishi huwekwa ndani ya nukuu moja.',
+      },
+    }),
+  },
+  {
+    id: 'sql-ambiguous',
+    languages: ['sql'],
+    match: /ambiguous column name: (\S+)/,
+    build: (m) => ({
+      en: {
+        title: `"${m[1]}" could mean more than one column`,
+        why: `Two tables in your query both have a column called ${m[1]}, so SQL cannot guess which one you want.`,
+        fix: `Put the table name in front, with a dot: tablename.${m[1]}`,
+      },
+      sw: {
+        title: `"${m[1]}" inaweza kumaanisha safu zaidi ya moja`,
+        why: `Majedwali mawili kwenye hoja yako yote yana safu iitwayo ${m[1]}, kwa hiyo SQL haiwezi kubahatisha unataka ipi.`,
+        fix: `Weka jina la jedwali mbele, kwa nukta: jina_la_jedwali.${m[1]}`,
+      },
+    }),
+  },
+  {
+    id: 'sql-unique',
+    languages: ['sql'],
+    match: /UNIQUE constraint failed: (\S+)/,
+    build: (m) => ({
+      en: {
+        title: 'That value already exists',
+        why: `The column ${m[1]} must be different in every row (it is a key or is marked UNIQUE), and you tried to add a value that is already there.`,
+        fix: 'Use a new value, or change the existing row with UPDATE instead of adding a second one.',
+      },
+      sw: {
+        title: 'Thamani hiyo tayari ipo',
+        why: `Safu ${m[1]} lazima iwe tofauti kwenye kila mstari (ni ufunguo au imewekwa UNIQUE), nawe ulijaribu kuongeza thamani iliyopo tayari.`,
+        fix: 'Tumia thamani mpya, au badilisha mstari uliopo kwa UPDATE badala ya kuongeza wa pili.',
+      },
+    }),
+  },
+  {
+    id: 'sql-not-null',
+    languages: ['sql'],
+    match: /NOT NULL constraint failed: (\S+)/,
+    build: (m) => ({
+      en: {
+        title: 'A required value is missing',
+        why: `The column ${m[1]} may not be empty (NULL), but the row you tried to add has no value for it.`,
+        fix: 'Give that column a value in your INSERT, and check that the columns and the values are in the same order.',
+      },
+      sw: {
+        title: 'Thamani inayohitajika haipo',
+        why: `Safu ${m[1]} haiwezi kuwa tupu (NULL), lakini mstari uliojaribu kuongeza hauna thamani yake.`,
+        fix: 'Toa thamani kwa safu hiyo kwenye INSERT yako, na hakikisha safu na thamani ziko kwa mpangilio uleule.',
+      },
+    }),
+  },
+  {
+    id: 'sql-column-count',
+    languages: ['sql'],
+    match: /(\d+) values for (\d+) columns|table (\S+) has (\d+) columns but (\d+) values were supplied/,
+    build: () => ({
+      en: {
+        title: 'The number of values does not match the number of columns',
+        why: 'Your INSERT gives a different number of values than the number of columns it fills.',
+        fix: 'Count them. If you name the columns, write exactly one value for each, in the same order.',
+      },
+      sw: {
+        title: 'Idadi ya thamani hailingani na idadi ya safu',
+        why: 'INSERT yako inatoa idadi tofauti ya thamani kuliko idadi ya safu inazojaza.',
+        fix: 'Zihesabu. Ukitaja safu, andika thamani moja kwa kila safu, kwa mpangilio uleule.',
+      },
+    }),
+  },
+  {
+    id: 'sql-aggregate-where',
+    languages: ['sql'],
+    match: /misuse of aggregate/,
+    build: () => ({
+      en: {
+        title: 'COUNT, SUM, AVG, MIN and MAX cannot be used in WHERE',
+        why: 'WHERE picks rows one by one, before any totals exist. A total can only be tested after the rows are grouped.',
+        fix: 'Use HAVING (after GROUP BY) to test a total, for example HAVING COUNT(*) > 2.',
+      },
+      sw: {
+        title: 'COUNT, SUM, AVG, MIN na MAX haviwezi kutumika kwenye WHERE',
+        why: 'WHERE huchagua mistari moja moja, kabla ya jumla yoyote kuwepo. Jumla inaweza kupimwa tu baada ya mistari kuwekwa kwenye vikundi.',
+        fix: 'Tumia HAVING (baada ya GROUP BY) kupima jumla, mfano HAVING COUNT(*) > 2.',
+      },
+    }),
+  },
+  {
+    id: 'sql-no-function',
+    languages: ['sql'],
+    match: /no such function: (\S+)/,
+    build: (m) => ({
+      en: {
+        title: `SQLite has no function called ${m[1]}`,
+        why: `The name ${m[1]} is not a function SQLite knows. It may be misspelled, or it may exist in another database system (MySQL or SQL Server) but not in SQLite.`,
+        fix: 'Check the spelling. Common SQLite functions: COUNT, SUM, AVG, MIN, MAX, ROUND, LENGTH, UPPER, LOWER, SUBSTR, REPLACE, COALESCE, DATE.',
+      },
+      sw: {
+        title: `SQLite haina kitendakazi kiitwacho ${m[1]}`,
+        why: `Jina ${m[1]} si kitendakazi ambacho SQLite inakijua. Linaweza kuwa limekosewa tahajia, au lipo kwenye mfumo mwingine (MySQL au SQL Server) lakini si SQLite.`,
+        fix: 'Angalia tahajia. Vitendakazi vya kawaida vya SQLite: COUNT, SUM, AVG, MIN, MAX, ROUND, LENGTH, UPPER, LOWER, SUBSTR, REPLACE, COALESCE, DATE.',
+      },
+    }),
+  },
+  {
+    id: 'sql-table-exists',
+    languages: ['sql'],
+    match: /(table|index|view|trigger) (\S+) already exists/,
+    build: (m) => ({
+      en: {
+        title: `The ${m[1]} "${m[2]}" already exists`,
+        why: `You tried to create a ${m[1]} with a name that is already taken in this database.`,
+        fix: `Choose a different name, or write CREATE ${m[1].toUpperCase()} IF NOT EXISTS ${m[2]} ... so SQL skips it when it is already there.`,
+      },
+      sw: {
+        title: `"${m[2]}" (${m[1]}) tayari ipo`,
+        why: `Ulijaribu kuunda ${m[1]} kwa jina ambalo tayari limetumika kwenye hifadhidata hii.`,
+        fix: `Chagua jina tofauti, au andika CREATE ${m[1].toUpperCase()} IF NOT EXISTS ${m[2]} ... ili SQL iruke kama tayari ipo.`,
+      },
+    }),
+  },
+  {
+    id: 'sql-check',
+    languages: ['sql'],
+    match: /CHECK constraint failed: (.+)/,
+    build: (m) => ({
+      en: {
+        title: 'The value breaks a rule of the table',
+        why: `This table has a rule (CHECK ${m[1].trim()}) and the value you tried to save does not obey it, so SQLite refused the whole change.`,
+        fix: 'Use a value that follows the rule, or change the rule if the rule itself is wrong.',
+      },
+      sw: {
+        title: 'Thamani inavunja sheria ya jedwali',
+        why: `Jedwali hili lina sheria (CHECK ${m[1].trim()}) na thamani uliyojaribu kuhifadhi haiitii, kwa hiyo SQLite ilikataa mabadiliko yote.`,
+        fix: 'Tumia thamani inayofuata sheria, au badilisha sheria kama sheria yenyewe ndiyo yenye kosa.',
+      },
+    }),
+  },
+  {
+    id: 'sql-no-column-named',
+    languages: ['sql'],
+    match: /table (\S+) has no column named (\S+)/,
+    build: (m) => ({
+      en: {
+        title: `The table ${m[1]} has no column called "${m[2]}"`,
+        why: `Your INSERT names a column (${m[2]}) that ${m[1]} does not have. The name may be misspelled.`,
+        fix: `See the real column names with PRAGMA table_info(${m[1]}); and use exactly those.`,
+      },
+      sw: {
+        title: `Jedwali ${m[1]} halina safu inayoitwa "${m[2]}"`,
+        why: `INSERT yako inataja safu (${m[2]}) ambayo ${m[1]} haina. Jina linaweza kuwa limekosewa tahajia.`,
+        fix: `Angalia majina halisi ya safu kwa PRAGMA table_info(${m[1]}); kisha utumie hayohayo.`,
+      },
+    }),
+  },
+  {
+    id: 'sql-add-notnull',
+    languages: ['sql'],
+    match: /Cannot add a NOT NULL column with default value NULL/,
+    build: () => ({
+      en: {
+        title: 'A new required column needs a starting value',
+        why: 'The table already has rows. A new NOT NULL column would be empty in all of them, which breaks its own rule.',
+        fix: "Give the column a default, for example: ALTER TABLE t ADD COLUMN level INTEGER NOT NULL DEFAULT 1;",
+      },
+      sw: {
+        title: 'Safu mpya inayohitajika inahitaji thamani ya kuanzia',
+        why: 'Jedwali tayari lina mistari. Safu mpya ya NOT NULL ingekuwa tupu kwenye yote, jambo linalovunja sheria yake yenyewe.',
+        fix: 'Ipe safu thamani ya msingi, kwa mfano: ALTER TABLE t ADD COLUMN level INTEGER NOT NULL DEFAULT 1;',
+      },
+    }),
+  },
+  {
+    id: 'sql-foreign-key',
+    languages: ['sql'],
+    match: /FOREIGN KEY constraint failed/,
+    build: () => ({
+      en: {
+        title: 'That row points at something that does not exist, or is still needed',
+        why: 'A foreign key links this row to a row in another table. Either the row you are adding points at a parent that is not there (for example a customer number nobody has), or you are deleting a parent that other rows still point at.',
+        fix: 'Check that the number you point at exists in the other table. To delete a parent, first delete or change the rows that point at it.',
+      },
+      sw: {
+        title: 'Mstari huo unaelekeza kwenye kitu ambacho hakipo, au bado kinahitajika',
+        why: 'Ufunguo wa kigeni unaunganisha mstari huu na mstari kwenye jedwali lingine. Ama mstari unaoongeza unaelekeza kwa mzazi asiyekuwepo (kwa mfano namba ya mteja ambayo haipo), au unafuta mzazi ambaye mistari mingine bado inamtegemea.',
+        fix: 'Hakikisha namba unayoelekeza ipo kwenye jedwali lingine. Ili kufuta mzazi, kwanza futa au badilisha mistari inayomwelekea.',
+      },
+    }),
+  },
+  {
+    id: 'sql-subquery-columns',
+    languages: ['sql'],
+    match: /sub-select returns (\d+) columns/,
+    build: (m) => ({
+      en: {
+        title: 'The inner query must return exactly one column here',
+        why: `The query in brackets returns ${m[1]} columns, but IN (...) or a comparison can only use one column of values.`,
+        fix: 'Select just the one column you need in the brackets, for example IN (SELECT customer_id FROM orders).',
+      },
+      sw: {
+        title: 'Hoja ya ndani lazima irudishe safu moja tu hapa',
+        why: `Hoja ndani ya mabano inarudisha safu ${m[1]}, lakini IN (...) au ulinganisho unaweza kutumia safu moja ya thamani tu.`,
+        fix: 'Chagua safu moja unayohitaji ndani ya mabano, kwa mfano IN (SELECT customer_id FROM orders).',
+      },
+    }),
+  },
+
+  // ---- PHP (8.3) -------------------------------------------------------------------------------
+  // Only fatal and parse errors reach these rules. Warnings and notices stay in the program output, as in real PHP.
+  {
+    id: 'php-missing-semicolon',
+    languages: ['php'],
+    match: /Parse error: syntax error, unexpected (?:token|identifier|variable) "?([^"\n]+?)"?,? expecting (?:"[,.]" or )?";"/,
+    build: (m) => ({
+      en: {
+        title: 'A semicolon ; is missing',
+        why: `PHP reached ${m[1]} and found that the line before it was not finished. Every PHP statement ends with a semicolon.`,
+        fix: 'Look at the end of the line just above the line number shown. Add ; there.',
+      },
+      sw: {
+        title: 'Alama ya nukta-mkato ; haipo',
+        why: `PHP ilifika ${m[1]} na kuona kuwa mstari uliotangulia haukukamilika. Kila amri ya PHP inaisha kwa nukta-mkato.`,
+        fix: 'Angalia mwisho wa mstari juu ya nambari ya mstari iliyoonyeshwa. Weka ; hapo.',
+      },
+    }),
+  },
+  {
+    id: 'php-parse',
+    languages: ['php'],
+    match: /Parse error: (?:syntax error, )?(unexpected [^\n]*?) in /,
+    build: (m) => ({
+      en: {
+        title: 'PHP could not read this line',
+        why: `PHP stopped at something it did not expect (${m[1]}). Usually a bracket, quote or semicolon is missing or in the wrong place, on this line or the line above.`,
+        fix: 'Check that every ( has a ), every { has a }, and every opening quote has a closing quote. Then check the line above for a missing ;.',
+      },
+      sw: {
+        title: 'PHP haikuweza kusoma mstari huu',
+        why: `PHP ilisimama mahali ambapo haikutarajia kitu (${m[1]}). Mara nyingi mabano, nukuu au nukta-mkato imekosekana au imewekwa vibaya, kwenye mstari huu au ule wa juu.`,
+        fix: 'Hakikisha kila ( ina ), kila { ina }, na kila nukuu ya kufungua ina ya kufunga. Kisha angalia mstari wa juu kama ; imekosekana.',
+      },
+    }),
+  },
+  {
+    id: 'php-undefined-function',
+    languages: ['php'],
+    match: /Call to undefined function ([A-Za-z0-9_\\]+)\(\)/,
+    build: (m) => ({
+      en: {
+        title: `There is no function called ${m[1]}()`,
+        why: 'The name may be misspelled, or the function has not been written yet. PHP function names must be typed exactly (capital letters do not matter for functions, but spelling does).',
+        fix: `Check the spelling of ${m[1]}. If it is your own function, define it with "function ${m[1]}() { ... }".`,
+      },
+      sw: {
+        title: `Hakuna kazi (function) inayoitwa ${m[1]}()`,
+        why: 'Jina linaweza kuwa limekosewa tahajia, au kazi hiyo haijaandikwa bado.',
+        fix: `Angalia tahajia ya ${m[1]}. Kama ni kazi yako mwenyewe, ifafanue kwa "function ${m[1]}() { ... }".`,
+      },
+    }),
+  },
+  {
+    id: 'php-undefined-method',
+    languages: ['php'],
+    match: /Call to (?:undefined|private|protected) method ([A-Za-z0-9_\\]+)::([A-Za-z0-9_]+)\(\)/,
+    build: (m) => ({
+      en: {
+        title: `${m[1]} has no method you can call named ${m[2]}()`,
+        why: `Either ${m[2]} is not written inside class ${m[1]}, its name is misspelled, or it is private or protected, so code outside the class may not call it.`,
+        fix: `Check the spelling inside class ${m[1]}. If it is private, make it public or call it from inside the class.`,
+      },
+      sw: {
+        title: `${m[1]} haina njia (method) inayoitwa ${m[2]}() unayoweza kuiita`,
+        why: `Huenda ${m[2]} haijaandikwa ndani ya class ${m[1]}, jina limekosewa, au ni private/protected kwa hiyo nje ya class haiwezi kuitwa.`,
+        fix: `Angalia tahajia ndani ya class ${m[1]}. Kama ni private, ifanye public au iite kutoka ndani ya class.`,
+      },
+    }),
+  },
+  {
+    id: 'php-null-member',
+    languages: ['php'],
+    match: /Call to a member function ([A-Za-z0-9_]+)\(\) on (null|string|int|array|bool|float)/,
+    build: (m) => ({
+      en: {
+        title: `You called ${m[1]}() on ${m[2]}, not on an object`,
+        why: `The variable before the arrow -> holds ${m[2]}, so it has no methods. Often an object was never created with "new", or a function that should return an object returned nothing.`,
+        fix: 'Print the variable with var_dump($variable) just before this line to see what it really holds.',
+      },
+      sw: {
+        title: `Uliita ${m[1]}() kwenye ${m[2]}, si kitu (object)`,
+        why: `Kigezo kabla ya mshale -> kina ${m[2]}, kwa hiyo hakina methods. Mara nyingi object haikuundwa kwa "new", au kazi iliyotakiwa kurudisha object haikurudisha kitu.`,
+        fix: 'Chapisha kigezo kwa var_dump($kigezo) kabla ya mstari huu uone kina nini hasa.',
+      },
+    }),
+  },
+  {
+    id: 'php-type-error',
+    languages: ['php'],
+    match: /TypeError: ([A-Za-z0-9_\\:]+)\(\): Argument #(\d+) \(\$(\w+)\) must be of type ([^,\n]+), ([^\s]+) given/,
+    build: (m) => ({
+      en: {
+        title: `${m[1]}() wanted ${m[4]} but got ${m[5]}`,
+        why: `Argument number ${m[2]} (${'$'}${m[3]}) has to be ${m[4]}. The value you passed is ${m[5]}. PHP checks types when a function declares them.`,
+        fix: `Pass a ${m[4]} value. If the value comes from text, convert it first, for example (int)"50" or (float)"2.5".`,
+      },
+      sw: {
+        title: `${m[1]}() ilitaka ${m[4]} lakini ikapata ${m[5]}`,
+        why: `Kigezo namba ${m[2]} (${'$'}${m[3]}) lazima kiwe ${m[4]}. Thamani uliyotoa ni ${m[5]}.`,
+        fix: `Toa thamani ya aina ${m[4]}. Kama inatoka kwenye maandishi, ibadilishe kwanza, mfano (int)"50".`,
+      },
+    }),
+  },
+  {
+    id: 'php-arg-count',
+    languages: ['php'],
+    match: /ArgumentCountError: Too few arguments to function ([A-Za-z0-9_\\:]+)\(\), (\d+) passed .*? and (?:exactly|at least) (\d+) expected/,
+    build: (m) => ({
+      en: {
+        title: `${m[1]}() needs ${m[3]} value(s) but got ${m[2]}`,
+        why: 'When you call a function you must give one value for each parameter that has no default value.',
+        fix: `Call ${m[1]}() with ${m[3]} value(s) inside the brackets, or give the missing parameters default values.`,
+      },
+      sw: {
+        title: `${m[1]}() inahitaji thamani ${m[3]} lakini ilipewa ${m[2]}`,
+        why: 'Unapoita kazi lazima utoe thamani moja kwa kila kigezo ambacho hakina thamani ya msingi.',
+        fix: `Ita ${m[1]}() ukiwa na thamani ${m[3]} ndani ya mabano, au weka thamani za msingi kwa vigezo vinavyokosekana.`,
+      },
+    }),
+  },
+  {
+    id: 'php-division-zero',
+    languages: ['php'],
+    match: /DivisionByZeroError: (Division|Modulo) by zero/,
+    build: () => ({
+      en: {
+        title: 'You divided by zero',
+        why: 'Dividing by 0 has no answer, so PHP stops. This often happens when the number you divide by comes from input or from a count that turned out to be 0.',
+        fix: 'Check the value before dividing: if ($count > 0) { ... }.',
+      },
+      sw: {
+        title: 'Umegawanya kwa sifuri',
+        why: 'Kugawanya kwa 0 hakuna jibu, kwa hiyo PHP inasimama. Hii hutokea mara nyingi namba unayogawanyia inatoka kwenye pembejeo au hesabu iliyokuwa 0.',
+        fix: 'Angalia thamani kabla ya kugawanya: if ($idadi > 0) { ... }.',
+      },
+    }),
+  },
+  {
+    id: 'php-undefined-constant',
+    languages: ['php'],
+    match: /Undefined constant "([^"]+)"/,
+    build: (m) => ({
+      en: {
+        title: `PHP does not know "${m[1]}"`,
+        why: `PHP read ${m[1]} as a constant (a fixed name), not as text or as a variable. Text needs quotes, and variables start with $.`,
+        fix: `If you meant text, write "${m[1]}" with quotes. If you meant a variable, write ${'$'}${m[1]}.`,
+      },
+      sw: {
+        title: `PHP haijui "${m[1]}"`,
+        why: `PHP ilisoma ${m[1]} kama constant (jina lisilobadilika), si maandishi wala kigezo. Maandishi yanahitaji nukuu, na vigezo vinaanza na $.`,
+        fix: `Kama ulimaanisha maandishi, andika "${m[1]}" kwa nukuu. Kama ulimaanisha kigezo, andika ${'$'}${m[1]}.`,
+      },
+    }),
+  },
+  {
+    id: 'php-class-not-found',
+    languages: ['php'],
+    match: /Class "([^"]+)" not found/,
+    build: (m) => ({
+      en: {
+        title: `There is no class called ${m[1]}`,
+        why: 'The class name may be misspelled, or the class is written further down in a file that PHP has not loaded, or it was never written.',
+        fix: `Check the spelling of ${m[1]} (it must match exactly) and make sure "class ${m[1]} { ... }" exists in your program.`,
+      },
+      sw: {
+        title: `Hakuna class inayoitwa ${m[1]}`,
+        why: 'Jina la class linaweza kuwa limekosewa tahajia, au class haijaandikwa kabisa.',
+        fix: `Angalia tahajia ya ${m[1]} (lazima ilingane kabisa) na hakikisha "class ${m[1]} { ... }" ipo kwenye programu yako.`,
+      },
+    }),
+  },
+  {
+    id: 'php-unsupported-operand',
+    languages: ['php'],
+    match: /Unsupported operand types: ([a-z]+) ([-+*\/%.]+|\*\*) ([a-z]+)/,
+    build: (m) => ({
+      en: {
+        title: `You cannot use ${m[2]} between ${m[1]} and ${m[3]}`,
+        why: `PHP can do arithmetic on numbers, but one side here is not a number (${m[1]} ${m[2]} ${m[3]}). An array or null cannot be added or multiplied like a number.`,
+        fix: 'Check both sides of the operator. To add up the numbers inside an array, use array_sum($array).',
+      },
+      sw: {
+        title: `Huwezi kutumia ${m[2]} kati ya ${m[1]} na ${m[3]}`,
+        why: `PHP inaweza kufanya hesabu kwa namba, lakini upande mmoja si namba (${m[1]} ${m[2]} ${m[3]}).`,
+        fix: 'Angalia pande zote mbili za alama. Kujumlisha namba ndani ya array tumia array_sum($array).',
+      },
+    }),
+  },
+  {
+    id: 'php-redeclare',
+    languages: ['php'],
+    match: /Cannot redeclare ([A-Za-z0-9_\\]+)\(\)/,
+    build: (m) => ({
+      en: {
+        title: `${m[1]}() is defined twice`,
+        why: 'Two functions in the same program have the same name. PHP does not allow that.',
+        fix: `Rename one of them, or delete the duplicate definition of ${m[1]}().`,
+      },
+      sw: {
+        title: `${m[1]}() imefafanuliwa mara mbili`,
+        why: 'Kazi mbili kwenye programu moja zina jina lilelile. PHP hairuhusu.',
+        fix: `Badilisha jina la moja, au futa ufafanuzi unaojirudia wa ${m[1]}().`,
+      },
+    }),
+  },
+  {
+    id: 'php-memory',
+    languages: ['php'],
+    match: /Allowed memory size of \d+ bytes exhausted/,
+    build: () => ({
+      en: {
+        title: 'The program used too much memory',
+        why: 'Something keeps growing without stopping, for example a loop that keeps adding to an array forever, or a function that calls itself with no end.',
+        fix: 'Check that your loop has a way to finish, and that a recursive function has a stopping case.',
+      },
+      sw: {
+        title: 'Programu imetumia kumbukumbu nyingi mno',
+        why: 'Kuna kitu kinachoendelea kukua bila kusimama, mfano mzunguko unaoongeza kwenye array milele, au kazi inayojiita bila mwisho.',
+        fix: 'Hakikisha mzunguko wako una namna ya kuisha, na kazi inayojiita ina sharti la kusimama.',
+      },
+    }),
+  },
+  {
+    id: 'php-uncaught',
+    languages: ['php'],
+    match: /Fatal error: Uncaught ([A-Za-z\\]*(?:Exception|Error)): ([^\n]*)/,
+    build: (m) => ({
+      en: {
+        title: `An ${m[1]} stopped the program`,
+        why: `Something went wrong (${m[2]}) and nothing in the program caught it, so PHP stopped.`,
+        fix: 'Read the message after the word "Error" or "Exception": it says what happened. To handle it yourself, put the risky code in try { ... } catch (Exception $e) { ... }.',
+      },
+      sw: {
+        title: `${m[1]} imesimamisha programu`,
+        why: `Kitu kimekwenda vibaya (${m[2]}) na hakuna sehemu ya programu iliyokishika, kwa hiyo PHP imesimama.`,
+        fix: 'Soma ujumbe baada ya neno "Error" au "Exception": unasema kilichotokea. Kukishughulikia mwenyewe, weka msimbo hatari ndani ya try { ... } catch (Exception $e) { ... }.',
+      },
+    }),
+  },
+  {
+    id: 'sql-view-modify',
+    languages: ['sql'],
+    match: /cannot modify (\S+) because it is a view/,
+    build: (m) => ({
+      en: {
+        title: `${m[1]} is a view, so you cannot change rows in it`,
+        why: `A view is a saved question, not a table that holds rows. There is nothing in ${m[1]} to add to, change or delete.`,
+        fix: 'Run your INSERT, UPDATE or DELETE on the real table that the view reads from.',
+      },
+      sw: {
+        title: `${m[1]} ni mwonekano (view), kwa hiyo huwezi kubadilisha mistari ndani yake`,
+        why: `Mwonekano ni swali lililohifadhiwa, si jedwali lenye mistari. Hakuna kitu ndani ya ${m[1]} cha kuongeza, kubadilisha au kufuta.`,
+        fix: 'Endesha INSERT, UPDATE au DELETE yako kwenye jedwali halisi ambalo mwonekano unalisoma.',
+      },
+    }),
+  },
+  {
+    id: 'sql-transaction',
+    languages: ['sql'],
+    match: /cannot (commit|rollback) - no transaction is active|cannot start a transaction within a transaction/,
+    build: (m) => ({
+      en: {
+        title: m[1] ? `There is nothing to ${m[1]}: no transaction was started` : 'A transaction is already open',
+        why: m[1] ? `${m[1].toUpperCase()} ends a transaction, but BEGIN was never run (or the transaction already ended).` : 'You ran BEGIN while another transaction was still open. A transaction cannot start inside another.',
+        fix: m[1] ? 'Start with BEGIN; do the changes; then finish with COMMIT; (keep them) or ROLLBACK; (undo them).' : 'Finish the open one first with COMMIT; or ROLLBACK;, and only then BEGIN a new one.',
+      },
+      sw: {
+        title: m[1] ? `Hakuna cha ${m[1] === 'commit' ? 'kuthibitisha' : 'kurudisha nyuma'}: hakuna muamala ulioanzishwa` : 'Muamala tayari umefunguliwa',
+        why: m[1] ? `${m[1].toUpperCase()} humaliza muamala, lakini BEGIN haikuendeshwa (au muamala ulishaisha).` : 'Uliendesha BEGIN wakati muamala mwingine bado uko wazi. Muamala hauwezi kuanza ndani ya mwingine.',
+        fix: m[1] ? 'Anza na BEGIN; fanya mabadiliko; kisha malizia na COMMIT; (yabaki) au ROLLBACK; (yaondolewe).' : 'Maliza ule ulio wazi kwanza kwa COMMIT; au ROLLBACK;, kisha ndipo uanze BEGIN mpya.',
+      },
+    }),
+  },
+  {
+    id: 'sql-window-misuse',
+    languages: ['sql'],
+    match: /misuse of (aliased )?window function/,
+    build: () => ({
+      en: {
+        title: 'A window function cannot be used in WHERE',
+        why: 'WHERE runs before window functions such as ROW_NUMBER, RANK or SUM(...) OVER are worked out, so it cannot see their results.',
+        fix: 'Work the window function out inside a WITH (or a subquery), then filter on its result in the outer query.',
+      },
+      sw: {
+        title: 'Kitendakazi cha dirisha hakiwezi kutumika kwenye WHERE',
+        why: 'WHERE huendeshwa kabla vitendakazi vya dirisha kama ROW_NUMBER, RANK au SUM(...) OVER havijahesabiwa, kwa hiyo haviwezi kuona matokeo yake.',
+        fix: 'Hesabu kitendakazi cha dirisha ndani ya WITH (au hoja ya ndani), kisha chuja kwa matokeo yake kwenye hoja ya nje.',
+      },
+    }),
+  },
   // ---- Java (javac messages and exception reports; see docs/JAVA-TRACK.md) -----------------------------
   {
     id: 'java-expected',
@@ -944,6 +1603,11 @@ export function extractLine(raw, language) {
     const w = raw.match(/script\.js:(\d+)/);
     return w ? Number(w[1]) : null;
   }
+  if (language === 'php') {
+    // "Uncaught Error: ... in main.php:7" (where it happened), or "... in main.php on line 7"
+    const p = raw.match(/main\.php:(\d+)/) || raw.match(/main\.php on line (\d+)/);
+    return p ? Number(p[1]) : null;
+  }
   if (language === 'python') {
     const all = [...raw.matchAll(/File "<exec>", line (\d+)/g)];
     return all.length ? Number(all[all.length - 1][1]) : null;
@@ -974,7 +1638,8 @@ export function cleanRaw(raw, language) {
 export function translateError(raw, { language, lang = 'en' }) {
   if (!raw) return null;
   for (const rule of RULES) {
-    if (!rule.languages.includes(language)) continue;
+    // C++ runs on the same interpreter as C, so the C rules apply to it too (its own rules come first).
+    if (!rule.languages.includes(language) && !(language === 'cpp' && rule.languages.includes('c'))) continue;
     const m = raw.match(rule.match);
     if (!m) continue;
     if (rule.when && !rule.when(m)) continue;

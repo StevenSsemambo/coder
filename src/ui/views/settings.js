@@ -4,7 +4,6 @@ import { saveSettings } from '../../lib/storage.js';
 import { LANGUAGES } from '../../lib/errors.js';
 import { PACKS, packStatus, downloadPack, removePack, formatBytes, cacheSupported } from '../../lib/packs.js';
 import { toast } from '../components.js';
-import packInfo from '../../generated/pack-info.json';
 
 export async function settingsView() {
   const persist = async () => {
@@ -35,46 +34,47 @@ export async function settingsView() {
     },
   });
 
-  // ---- runtime packs (Python and Java are separate downloads so the app stays small)
-  const NEEDED_FOR = { python: 'Python', java: 'Java' };
-  function packCard(id) {
+  // ---- runtime packs (Python, PHP, Java): each is a separate download so the app stays small
+  const packRows = ['python', 'php', 'java'].map((id) => makePackRow(id));
+  function makePackRow(id) {
     const pack = PACKS[id];
+    const NAME = { python: 'Python', php: 'PHP', java: 'Java' };
+    const label = `Needed for ${NAME[id]}`;
     const row = h('div', { class: 'card pack' });
-    const progressNode = h('div', { class: 'bar hidden' }, h('span', { style: 'width:0%' }));
+    const progress = h('div', { class: 'bar hidden' }, h('span', { style: 'width:0%' }));
 
     async function render() {
       const st = await packStatus(id);
       const status = !st.supported ? 'Offline storage is not available in this browser.' : st.installed ? 'Installed. Works with no internet.' : `Not downloaded (${formatBytes(pack.bytes)}).`;
       replace(
         row,
-        h('div', { class: 'course-top' }, h('h3', null, pack.name), h('span', { class: `chip ${st.installed ? 'chip-ok' : ''}` }, st.installed ? 'Installed' : `Needed for ${NEEDED_FOR[id]}`)),
+        h('div', { class: 'course-top' }, h('h3', null, pack.name), h('span', { class: `chip ${st.installed ? 'chip-ok' : ''}` }, st.installed ? 'Installed' : label)),
         h('p', { class: 'muted' }, status),
-        progressNode,
+        progress,
         st.supported
           ? st.installed
             ? h('button', { class: 'btn btn-ghost', type: 'button', onclick: async () => { await removePack(id); render(); } }, 'Remove from this phone')
-            : h('button', { class: 'btn btn-primary', type: 'button', id: `download-${id}`, onclick: download }, `Download ${formatBytes(pack.bytes)}`)
+            : h('button', { class: 'btn btn-primary', type: 'button', id: `download-${id}`, onclick: start }, `Download ${formatBytes(pack.bytes)}`)
           : null,
       );
     }
 
-    async function download(e) {
+    async function start(e) {
       const btn = e.currentTarget;
       btn.disabled = true;
       btn.textContent = 'Downloading…';
-      progressNode.classList.remove('hidden');
+      progress.classList.remove('hidden');
       try {
-        await downloadPack(id, (f) => { progressNode.firstChild.style.width = `${Math.round(f * 100)}%`; });
-        toast(`${NEEDED_FOR[id]} is ready to use offline.`);
+        await downloadPack(id, (f) => { progress.firstChild.style.width = `${Math.round(f * 100)}%`; });
+        toast(`${NAME[id]} is ready to use offline.`);
       } catch (err) {
         toast(`Download failed. Check your connection and try again. (${err.message})`);
       }
       render();
     }
-    return { row, ready: render() };
+    return { row, render };
   }
-  const packCards = ['python', 'java'].map(packCard);
-  await Promise.all(packCards.map((c) => c.ready));
+  for (const p of packRows) await p.render();
 
   // ---- storage safety
   const storageNote = h('p', { class: 'muted' }, 'Checking storage…');
@@ -101,8 +101,8 @@ export async function settingsView() {
     { class: 'view' },
     h('h1', null, 'Settings'),
     h('h2', { class: 'section-title' }, 'Downloads'),
-    h('p', { class: 'muted' }, `C is built in (${formatBytes(packInfo.c.bundledBytes)}). Python and Java are separate downloads so the app stays small.`),
-    packCards.map((c) => c.row),
+    h('p', { class: 'muted' }, `C and SQL are built in. Python, PHP and Java are separate downloads so the app stays small.`),
+    packRows.map((p) => p.row),
     h('h2', { class: 'section-title' }, 'Reading and language'),
     h('label', { class: 'field' }, h('span', null, 'Explain errors in'), langSelect),
     h('label', { class: 'field' }, h('span', null, 'Code text size'), sizeInput, sizeValue),

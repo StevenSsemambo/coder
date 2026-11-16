@@ -47,6 +47,83 @@ export const SYMBOLS = {
   ],
 };
 
+// SQL: the keys a phone keyboard hides (quotes, brackets, * and %), plus the words typed most often.
+SYMBOLS.sql = [
+  { label: 'Tab', text: '  ' },
+  { label: ';', text: ';' },
+  { label: "' '", text: "''", back: 1 },
+  { label: '( )', text: '()', back: 1 },
+  { label: '*', text: '*' },
+  { label: ',', text: ',' },
+  { label: '=', text: '=' },
+  { label: '<>', text: '<>' },
+  { label: '<', text: '<' },
+  { label: '>', text: '>' },
+  { label: '%', text: '%' },
+  { label: '_', text: '_' },
+  { label: '.', text: '.' },
+  { label: '||', text: '||' },
+  { label: '--', text: '-- ' },
+];
+
+// PHP: the keys a phone keyboard hides ($, ;, brackets, ->, =>), plus the opening tag.
+SYMBOLS.php = [
+  { label: 'Tab', text: '    ' },
+  { label: '$', text: '$' },
+  { label: ';', text: ';' },
+  { label: '<?php', text: '<?php\n' },
+  { label: '( )', text: '()', back: 1 },
+  { label: '[ ]', text: '[]', back: 1 },
+  { label: '{ }', text: '{}', back: 1 },
+  { label: '" "', text: '""', back: 1 },
+  { label: "' '", text: "''", back: 1 },
+  { label: '->', text: '->' },
+  { label: '=>', text: '=>' },
+  { label: '=', text: '=' },
+  { label: '==', text: '==' },
+  { label: '===', text: '===' },
+  { label: '.', text: '.' },
+  { label: '\\n', text: '\\n' },
+  { label: '&&', text: '&&' },
+  { label: '||', text: '||' },
+  { label: '!', text: '!' },
+  { label: '?', text: '?' },
+  { label: '+', text: '+' },
+  { label: '-', text: '-' },
+  { label: '*', text: '*' },
+  { label: '/', text: '/' },
+  { label: '%', text: '%' },
+  { label: '<', text: '<' },
+  { label: '>', text: '>' },
+  { label: ',', text: ',' },
+];
+
+SYMBOLS.cpp = [
+  { label: 'Tab', text: '    ' },
+  { label: ';', text: ';' },
+  { label: '{ }', text: '{}', back: 1 },
+  { label: '( )', text: '()', back: 1 },
+  { label: '[ ]', text: '[]', back: 1 },
+  { label: '\" \"', text: '\"\"', back: 1 },
+  { label: '<<', text: '<<' },
+  { label: '>>', text: '>>' },
+  { label: '#', text: '#' },
+  { label: '<', text: '<' },
+  { label: '>', text: '>' },
+  { label: '=', text: '=' },
+  { label: '==', text: '==' },
+  { label: '&', text: '&' },
+  { label: '*', text: '*' },
+  { label: '%', text: '%' },
+  { label: '\\n', text: '\\n' },
+  { label: '!', text: '!' },
+  { label: '+', text: '+' },
+  { label: '-', text: '-' },
+  { label: '/', text: '/' },
+  { label: ',', text: ',' },
+];
+
+// Java: the keys a phone keyboard hides (braces, brackets, quotes, <>, && ||, %), plus a tab.
 SYMBOLS.java = [
   { label: 'Tab', text: '    ' },
   { label: ';', text: ';' },
