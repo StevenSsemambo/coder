@@ -1,13 +1,14 @@
 // C++ phone test page. See docs/CPP-TRACK.md ("Phone test") for what it measures and what the numbers mean.
 
 const VERSION = '22.0.0-git20542-10';
+const SITE_BASE = new URL('compiler/gen/', location.href).href; // put there by scripts/fetch-cpp-compiler.mjs at deploy
 const SOURCES = {
   unpkg: `https://unpkg.com/@yowasp/clang@${VERSION}/gen/`,
   jsdelivr: `https://cdn.jsdelivr.net/npm/@yowasp/clang@${VERSION}/gen/`,
 };
-const EXPECTED_TOTAL_BYTES = 105.3e6;
+const EXPECTED_BYTES = { site: 27.3e6, cdn: 105.3e6 }; // what is transferred: gzipped on this site, plain from a CDN
 const COMPILE_SLOW_MS = 20000; // a compile slower than this is "too slow for a lesson"
-const INIT_TIMEOUT_MS = 8 * 60 * 1000;
+const INIT_TIMEOUT_MS = 25 * 60 * 1000; // a slow 3G download of 27 MB can take many minutes
 const COMPILE_TIMEOUT_MS = 3 * 60 * 1000;
 const FLAGS = ['-std=c++17', '-O0', '-fno-exceptions'];
 
@@ -142,6 +143,7 @@ function workerUrl(name) {
   return workerSource[name] ? URL.createObjectURL(new Blob([workerSource[name]], { type: 'text/javascript' })) : name;
 }
 const STATE_KEY = 'cppPhoneTestState';
+const CACHE_NAMES = ['cpp-compiler-test-v1', 'cpp-compiler-test-v2'];
 
 function mb(bytes) { return (bytes / 1e6).toFixed(1) + ' MB'; }
 function secs(ms) { return (ms / 1000).toFixed(1) + ' s'; }
@@ -271,9 +273,37 @@ function runProgram(wasm, stdin, timeoutMs) {
 
 function baseUrl() {
   const choice = $('source').value;
-  let base = choice === 'custom' ? $('custom').value.trim() : SOURCES[choice];
+  let base = choice === 'site' ? SITE_BASE : choice === 'custom' ? $('custom').value.trim() : SOURCES[choice];
   if (base && !base.endsWith('/')) base += '/';
   return base;
+}
+const usesGz = () => $('source').value === 'site';
+
+// ---- connection check: which of the places the compiler can come from can this phone reach? -------------------
+
+async function ping(label, url, ms) {
+  const ac = new AbortController();
+  const timer = setTimeout(() => ac.abort(), ms);
+  const t0 = performance.now();
+  try {
+    const res = await fetch(url, { signal: ac.signal, cache: 'no-store' });
+    const buf = await res.arrayBuffer();
+    const took = performance.now() - t0;
+    const kb = buf.byteLength / 1024;
+    return `${label}: ${res.ok ? 'reachable' : 'HTTP ' + res.status} (${Math.round(took)} ms, ${kb.toFixed(0)} KB, ${(kb / (took / 1000)).toFixed(0)} KB/s)`;
+  } catch (e) {
+    const took = Math.round(performance.now() - t0);
+    return `${label}: NOT reachable (${e && e.name === 'AbortError' ? 'no answer in ' + ms / 1000 + ' s' : (e && e.message || e)}, after ${took} ms)`;
+  } finally { clearTimeout(timer); }
+}
+
+async function diagnose() {
+  const c = navigator.connection || {};
+  const lines = [`Connection: online=${navigator.onLine}, type=${c.effectiveType || '?'}, downlink=${c.downlink || '?'} Mbit/s, rtt=${c.rtt || '?'} ms${c.saveData ? ', DATA SAVER ON' : ''}`];
+  lines.push(await ping('this website', SITE_BASE + 'bundle.js.gz', 20000));
+  lines.push(await ping('unpkg.com', SOURCES.unpkg + 'bundle.js', 20000));
+  lines.push(await ping('cdn.jsdelivr.net', SOURCES.jsdelivr + 'bundle.js', 20000));
+  return lines;
 }
 
 async function runAll() {
@@ -306,17 +336,23 @@ async function runAll() {
     } catch (e) {
       throw new Error('This browser cannot run module workers: ' + e.message);
     }
+    const expected = usesGz() ? EXPECTED_BYTES.site : EXPECTED_BYTES.cdn;
+    const tStart = performance.now();
     compiler.onProgress = (total, name) => {
-      setBar('init', total / EXPECTED_TOTAL_BYTES);
-      $('dt-init').textContent = `Downloading ${name}... ${mb(total)} of about ${mb(EXPECTED_TOTAL_BYTES)}`;
+      setBar('init', total / expected);
+      const sec = (performance.now() - tStart) / 1000;
+      const speed = total / 1e3 / Math.max(sec, 0.5); // KB/s
+      const eta = speed > 0 ? Math.max(0, (expected - total) / 1e3 / speed) : 0;
+      $('dt-init').textContent = `Downloading ${name}... ${mb(total)} of about ${mb(expected)}  (${Math.round(speed)} KB/s, about ${eta > 90 ? Math.round(eta / 60) + ' min' : Math.round(eta) + ' s'} left)`;
     };
-    const init = await callCompiler({ cmd: 'init', base }, INIT_TIMEOUT_MS);
+    const init = await callCompiler({ cmd: 'init', base, gz: usesGz() }, INIT_TIMEOUT_MS);
     setBar('init', null);
-    const fileLines = Object.entries(init.files).map(([n, f]) => `${n}: ${mb(f.bytes)} from ${f.from}${f.from === 'network' ? ` in ${secs(f.ms)}${f.stored ? ', saved' : ', NOT saved (' + (f.error || 'cache unavailable') + ')'}` : ''}`);
+    const fileLines = Object.entries(init.files).map(([n, f]) => `${n}${init.gz ? '.gz' : ''}: ${mb(f.bytes)} from ${f.from}${f.from === 'network' ? ` in ${secs(f.ms)}${f.stored ? ', saved' : ', NOT saved (' + (f.error || 'cache unavailable') + ')'}` : ''}`);
     const storageAfter = await storageInfo();
     const fromNetwork = Object.values(init.files).some((f) => f.from === 'network');
     const allSaved = Object.values(init.files).every((f) => f.from === 'cache' || f.stored);
-    out.steps.init = { ms: init.ms, importMs: init.importMs, version: init.version, files: init.files, savedForOffline: allSaved, storageUsedMB: Math.round(((storageAfter.usage - storageBefore.usage) / 1e6) * 10) / 10, storageQuotaMB: Math.round(storageAfter.quota / 1e6) };
+    const transferred = Object.values(init.files).filter((f) => f.from === 'network').reduce((a, f) => a + f.bytes, 0);
+    out.steps.init = { transferredMB: Math.round(transferred / 1e5) / 10, gz: init.gz, ms: init.ms, importMs: init.importMs, version: init.version, files: init.files, savedForOffline: allSaved, storageUsedMB: Math.round(((storageAfter.usage - storageBefore.usage) / 1e6) * 10) / 10, storageQuotaMB: Math.round(storageAfter.quota / 1e6) };
     setStep('init', 'ok', `${init.version}\n${fileLines.join('\n')}\n${fromNetwork ? 'First start (downloaded)' : 'Started from the saved copy, no download'}. Saved for offline use: ${allSaved ? 'yes' : 'NO'}. Phone storage quota: about ${out.steps.init.storageQuotaMB} MB.`, init.ms);
 
     // 2. the programs
@@ -360,6 +396,10 @@ async function runAll() {
     }
   } catch (e) {
     out.fatal = String(e.message || e);
+    if (!out.steps.init) {
+      setStep('init', 'fail', out.fatal + '\n\nChecking which places this phone can reach...');
+      try { out.diagnosis = await diagnose(); } catch (d) { out.diagnosis = ['Connection check failed: ' + d.message]; }
+    }
     const failing = STEP_LIST.find((s) => $('st-' + s.id).textContent === '\u23F3');
     if (failing) setStep(failing.id, 'fail', out.fatal);
   }
@@ -388,13 +428,13 @@ function finish(out) {
     'C++ PHONE TEST RESULT',
     `Verdict: ${verdict}`,
     `When: ${out.startedAt}   Online during test: ${out.online}`,
-    `Compiler source: ${out.base}`,
+    `Compiler source: ${out.base}${out.base === SITE_BASE ? ' (this website)' : ''}`,
     `Device: ${deviceInfo().userAgent}`,
     `Memory: ${deviceInfo().memoryGB} GB, cores: ${deviceInfo().cores}, screen ${deviceInfo().screen}, network ${deviceInfo().network}`,
   ];
   if (out.steps.init) {
     const i = out.steps.init;
-    lines.push(`Start-up: ${secs(i.ms)} (import ${secs(i.importMs)}), saved for offline: ${i.savedForOffline}, storage used ${i.storageUsedMB} MB of quota ${i.storageQuotaMB} MB`);
+    lines.push(`Start-up: ${secs(i.ms)} (import ${secs(i.importMs)}), downloaded ${i.transferredMB} MB${i.gz ? ' (gzipped, from this website)' : ''}, saved for offline: ${i.savedForOffline}, storage used ${i.storageUsedMB} MB of quota ${i.storageQuotaMB} MB`);
     for (const [n, f] of Object.entries(i.files)) lines.push(`  file ${n}: ${mb(f.bytes)} ${f.from}${f.ms ? ' ' + secs(f.ms) : ''}${f.error ? ' CACHE ERROR ' + f.error : ''}`);
   }
   for (const p of PROGRAMS) {
@@ -403,6 +443,7 @@ function finish(out) {
     lines.push(`${p.id}: ${r.pass ? 'PASS' : 'FAIL'}, compile ${r.compileMs !== undefined ? secs(r.compileMs) : '-'}, run ${r.runMs !== undefined ? r.runMs + ' ms' : '-'}${r.wasmKB ? ', ' + r.wasmKB + ' KB' : ''}${r.pageGapMs !== undefined ? ', longest page freeze ' + r.pageGapMs + ' ms' : ''}${r.compilerMessage ? '\n  message: ' + r.compilerMessage.replace(/\n/g, ' | ') : ''}`);
   }
   if (out.fatal) lines.push('Stopped with: ' + out.fatal);
+  if (out.diagnosis) lines.push(...out.diagnosis);
   $('report').value = lines.join('\n');
   window.__result = { out, report: lines.join('\n') };
   state.running = false;
@@ -414,7 +455,8 @@ function finish(out) {
 
 async function clearSaved() {
   try {
-    const removed = await caches.delete('cpp-compiler-test-v1');
+    let removed = false;
+    for (const n of CACHE_NAMES) removed = (await caches.delete(n)) || removed;
     alert(removed ? 'The saved compiler was deleted. The next run downloads it again.' : 'Nothing was saved.');
   } catch (e) { alert('Could not delete: ' + e.message); }
 }
@@ -436,6 +478,17 @@ function init() {
   $('again').addEventListener('click', runAll);
   $('clear').addEventListener('click', clearSaved);
   $('copy').addEventListener('click', copyReport);
+  $('check').addEventListener('click', async () => {
+    $('check').disabled = true;
+    $('checkOut').textContent = 'Checking...';
+    try { $('checkOut').textContent = (await diagnose()).join('\n'); } catch (e) { $('checkOut').textContent = String(e); }
+    $('check').disabled = false;
+  });
+  // Prefer the copy hosted on this website; fall back to a CDN when the deploy did not include it.
+  fetch(SITE_BASE + 'bundle.js.gz', { method: 'HEAD', cache: 'no-store' }).then((r) => {
+    if (r.ok) { if (!params.get('base')) $('source').value = 'site'; }
+    else $('siteNote').textContent = 'The compiler is not hosted on this website yet, so a CDN will be used.';
+  }).catch(() => { $('siteNote').textContent = 'The compiler is not hosted on this website yet, so a CDN will be used.'; });
   $('again').disabled = true;
   try {
     const last = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');

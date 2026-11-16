@@ -190,16 +190,30 @@ shipped by the normal deploy. It is not linked from the app.
 
 * **Address** (once the deploy is green): `<your Pages address>/cpp-test/index.html`, for example
   `https://stevenssemambo.github.io/coder/cpp-test/index.html`.
-* **How to run it:** Wi-Fi, a **private/incognito tab** in the phone's normal browser (not the installed app), close other
-  apps, tap **Run the test**, wait (first run downloads about 105 MB), then tap **Copy results** and paste the report.
+* **How to run it:** Wi-Fi if possible, a **private/incognito tab** in the phone's normal browser (not the installed app), close
+  other apps, tap **Run the test**, wait (first run downloads about **27 MB** from this website, and the page shows the speed and
+  time left), then tap **Copy results** and paste the report. **Check my connection** tests, with small requests, which of
+  this website, unpkg and jsDelivr the phone can reach; it also runs by itself when the start-up fails.
 * **Offline check:** after one finished run, switch on airplane mode **without closing or reloading the page** and tap
   **Run again**. The compiler must start from the saved copy. (The worker scripts are kept in memory so this works.)
-* **What it does:** downloads `@yowasp/clang` (pinned to 22.0.0-git20542-10) from unpkg (or jsDelivr, or a custom address),
-  keeps every file in Cache Storage, then compiles and runs 5 programs: hello, string/vector/class, inheritance +
+* **Where the compiler comes from:** by default **this website**. `scripts/fetch-cpp-compiler.mjs` runs after
+  `npm run build` (npm `postbuild`), fetches `@yowasp/clang@22.0.0-git20542-10` with `npm pack`, and puts gzipped copies of its
+  files in `dist/cpp-test/compiler/gen/` (27.1 MB instead of 105.5 MB; nothing is committed to git, and the service worker does
+  not precache them, so installing the app does not download them). The page unpacks them with `DecompressionStream` and keeps
+  the small gzipped copy in Cache Storage, so offline storage is 27 MB. unpkg, jsDelivr or a custom address remain as options.
+  If the download step fails at build time the build still succeeds and the page falls back to a CDN.
+* **What it does:** keeps every file in Cache Storage, then compiles and runs 5 programs: hello, string/vector/class, inheritance +
   virtual + template + lambda + `map` + `cin`, a deliberate mistake (must be rejected with a real message), and a
   program that never ends (must be stopped by terminating its worker, with the page staying responsive).
   Flags: `-std=c++17 -O0 -fno-exceptions`.
+* **Stalls:** a download with no data for 90 s is abandoned with a message that names the file, the host and how many MB had arrived.
 * **Crash detection:** if the browser runs out of memory and the tab dies, reopening the page says which step it stopped at.
+
+**First real-phone attempt (2026-11-15): inconclusive, fixed.** Android 10, Chrome 156, 2 GB RAM, 3g. The page
+tried unpkg and stopped at the very first request with "Failed to fetch" (the 254 KB `bundle.js`, so before any big
+download), and a second report with jsDelivr was taken **offline**, with nothing saved, so it had to fail. The compiler never started, so this
+says nothing about whether C++ runs on the phone. Likely cause: a third-party CDN that this phone's network could not reach. Fix:
+host the compiler on the same website as the page (above), send it gzipped, and add the connection check so a failure names what is unreachable.
 
 How to read the report (the page prints one of three verdicts):
 
@@ -225,6 +239,8 @@ service worker's navigation fallback so that the app shell never answers the tes
 | `src/lib/errors.js` | new C++-only rules `cpp-missing-iostream`, `cpp-stack`, `cpp-index`, `cpp-pointer-uninit` and `cpp-pointer-type`; C++ also uses the C rules; `timeout` covers `cpp` |
 | `src/ui/views/learn.js` | label `C++` |
 | `vite.config.js` | `navigateFallbackDenylist` for `/cpp-test/` (the phone test page) |
+| `package.json` | npm script `postbuild` runs `scripts/fetch-cpp-compiler.mjs` (adds the gzipped compiler to `dist/`) |
+| `scripts/fetch-cpp-compiler.mjs` | new; downloads `@yowasp/clang` with `npm pack` and writes gzipped copies to `dist/cpp-test/compiler/`; `SKIP_CPP_COMPILER=1` skips it |
 | `src/content/index.js` | one import and one entry in the registry |
 | `tests/run.mjs`, `tests/solutions.mjs` | C++ runs on the C runner; 10 new error-translator checks; `cppSolutions` merged |
 
