@@ -1,5 +1,6 @@
 // Reference solutions for the Java course (Java track). Every Java exercise must have one here.
 import { prog, progM } from '../src/content/java/shared.js';
+import { ledgerProgram } from '../src/content/java/ledger-program.js';
 
 const J = (body) => prog(body);
 const S = (body) => prog(body, 'import java.util.Scanner;');
@@ -298,4 +299,340 @@ export const javaSolutions = {
         int a = in.nextInt();
         int b = in.nextInt();
         System.out.println("GCD: " + gcd(a, b));`),
+
+  // Level 2, lesson 11: j-arrays
+  'j11-marks': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int[] marks = new int[n];
+        for (int i = 0; i < n; i++) {
+            marks[i] = in.nextInt();
+        }
+        int sum = 0;
+        int highest = marks[0];
+        for (int m : marks) {
+            sum += m;
+            if (m > highest) {
+                highest = m;
+            }
+        }
+        double average = sum / (double) n;
+        System.out.printf("Average: %.2f%n", average);
+        System.out.println("Highest: " + highest);`),
+  'j11-reverse': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int[] a = new int[n];
+        for (int i = 0; i < n; i++) {
+            a[i] = in.nextInt();
+        }
+        for (int i = n - 1; i >= 0; i--) {
+            System.out.print(a[i] + " ");
+        }
+        System.out.println();`),
+  'j11-above-average': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int[] deposits = new int[n];
+        int sum = 0;
+        for (int i = 0; i < n; i++) {
+            deposits[i] = in.nextInt();
+            sum += deposits[i];
+        }
+        double avg = sum / (double) n;
+        int count = 0;
+        for (int d : deposits) {
+            if (d > avg) {
+                count++;
+            }
+        }
+        System.out.println("Above average: " + count);`),
+  'j11-squares': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int[] squares = new int[n];
+        for (int i = 0; i < n; i++) {
+            squares[i] = i * i;
+        }
+        for (int i = 0; i < n; i++) {
+            System.out.print(squares[i] + " ");
+        }
+        System.out.println();`),
+  'j11-bonus-method': M(String.raw`    static void addBonus(int[] deposits, int bonus) {
+        for (int i = 0; i < deposits.length; i++) {
+            deposits[i] += bonus;
+        }
+    }`, String.raw`        int[] d = {20000, 35000, 15000};
+        addBonus(d, 1000);
+        System.out.println(d[0] + " " + d[1] + " " + d[2]);`),
+
+  // Level 2, lesson 12: j-array-algos
+  'j12-search': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int[] ids = new int[n];
+        for (int i = 0; i < n; i++) {
+            ids[i] = in.nextInt();
+        }
+        int target = in.nextInt();
+        int found = -1;
+        for (int i = 0; i < n; i++) {
+            if (ids[i] == target) {
+                found = i;
+                break;
+            }
+        }
+        if (found >= 0) {
+            System.out.println("Found at index " + found);
+        } else {
+            System.out.println("Not found");
+        }`),
+  'j12-min-max': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int[] a = new int[n];
+        for (int i = 0; i < n; i++) {
+            a[i] = in.nextInt();
+        }
+        int min = a[0];
+        int max = a[0];
+        for (int x : a) {
+            if (x < min) {
+                min = x;
+            }
+            if (x > max) {
+                max = x;
+            }
+        }
+        System.out.println("Min: " + min);
+        System.out.println("Max: " + max);`),
+  'j12-sort': prog(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int[] a = new int[n];
+        for (int i = 0; i < n; i++) {
+            a[i] = in.nextInt();
+        }
+        Arrays.sort(a);
+        for (int i = 0; i < n; i++) {
+            System.out.print(a[i] + " ");
+        }
+        System.out.println();`, 'import java.util.Scanner;\nimport java.util.Arrays;'),
+  'j12-top3': prog(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int[] a = new int[n];
+        for (int i = 0; i < n; i++) {
+            a[i] = in.nextInt();
+        }
+        Arrays.sort(a);
+        System.out.println("Top 3: " + a[n - 1] + " " + a[n - 2] + " " + a[n - 3]);`, 'import java.util.Scanner;\nimport java.util.Arrays;'),
+  'j12-bands': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int[] counts = new int[5];
+        for (int i = 0; i < n; i++) {
+            int mark = in.nextInt();
+            if (mark >= 80) {
+                counts[0]++;
+            } else if (mark >= 70) {
+                counts[1]++;
+            } else if (mark >= 60) {
+                counts[2]++;
+            } else if (mark >= 50) {
+                counts[3]++;
+            } else {
+                counts[4]++;
+            }
+        }
+        String[] letters = {"A", "B", "C", "D", "F"};
+        for (int i = 0; i < 5; i++) {
+            System.out.println(letters[i] + ": " + counts[i]);
+        }`),
+
+  // Level 2, lesson 13: j-2d
+  'j13-grid-total': S(String.raw`        Scanner in = new Scanner(System.in);
+        int rows = in.nextInt();
+        int cols = in.nextInt();
+        int[][] g = new int[rows][cols];
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                g[r][c] = in.nextInt();
+            }
+        }
+        int total = 0;
+        int largest = g[0][0];
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                total += g[r][c];
+                if (g[r][c] > largest) {
+                    largest = g[r][c];
+                }
+            }
+        }
+        System.out.println("Total: " + total);
+        System.out.println("Largest: " + largest);`),
+  'j13-row-totals': S(String.raw`        Scanner in = new Scanner(System.in);
+        int rows = in.nextInt();
+        int cols = in.nextInt();
+        int bestTotal = -1;
+        int bestMember = 0;
+        for (int r = 1; r <= rows; r++) {
+            int total = 0;
+            for (int c = 0; c < cols; c++) {
+                total += in.nextInt();
+            }
+            System.out.println("Member " + r + ": " + total);
+            if (total > bestTotal) {
+                bestTotal = total;
+                bestMember = r;
+            }
+        }
+        System.out.println("Best: Member " + bestMember);`),
+  'j13-col-totals': S(String.raw`        Scanner in = new Scanner(System.in);
+        int rows = in.nextInt();
+        int cols = in.nextInt();
+        int[][] g = new int[rows][cols];
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                g[r][c] = in.nextInt();
+            }
+        }
+        for (int c = 0; c < cols; c++) {
+            int total = 0;
+            for (int r = 0; r < rows; r++) {
+                total += g[r][c];
+            }
+            System.out.print(total + " ");
+        }
+        System.out.println();`),
+  'j13-transpose': S(String.raw`        Scanner in = new Scanner(System.in);
+        int rows = in.nextInt();
+        int cols = in.nextInt();
+        int[][] g = new int[rows][cols];
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                g[r][c] = in.nextInt();
+            }
+        }
+        for (int c = 0; c < cols; c++) {
+            for (int r = 0; r < rows; r++) {
+                System.out.print(g[r][c] + " ");
+            }
+            System.out.println();
+        }`),
+  'j13-diagonal': S(String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int[][] g = new int[n][n];
+        for (int r = 0; r < n; r++) {
+            for (int c = 0; c < n; c++) {
+                g[r][c] = in.nextInt();
+            }
+        }
+        int main = 0;
+        int other = 0;
+        for (int i = 0; i < n; i++) {
+            main += g[i][i];
+            other += g[i][n - 1 - i];
+        }
+        System.out.println("Main: " + main);
+        System.out.println("Other: " + other);`),
+
+  // Level 2, lesson 14: j-strings
+  'j14-initials': S(String.raw`        Scanner in = new Scanner(System.in);
+        String first = in.next();
+        String last = in.next();
+        System.out.println(Character.toUpperCase(first.charAt(0)) + "." + Character.toUpperCase(last.charAt(0)) + ".");`),
+  'j14-vowels': S(String.raw`        Scanner in = new Scanner(System.in);
+        String line = in.nextLine();
+        int count = 0;
+        for (char c : line.toLowerCase().toCharArray()) {
+            if ("aeiou".indexOf(c) >= 0) {
+                count++;
+            }
+        }
+        System.out.println("Vowels: " + count);`),
+  'j14-palindrome': S(String.raw`        Scanner in = new Scanner(System.in);
+        String word = in.next();
+        String reversed = new StringBuilder(word).reverse().toString();
+        if (word.equalsIgnoreCase(reversed)) {
+            System.out.println("Palindrome");
+        } else {
+            System.out.println("Not a palindrome");
+        }`),
+  'j14-csv': S(String.raw`        Scanner in = new Scanner(System.in);
+        String line = in.nextLine();
+        String[] parts = line.split(",");
+        int savings = Integer.parseInt(parts[1]);
+        int months = Integer.parseInt(parts[2]);
+        System.out.println(parts[0] + " has saved " + savings + " over " + months + " months (average " + (savings / months) + ")");`),
+  'j14-phone': S(String.raw`        Scanner in = new Scanner(System.in);
+        String line = in.nextLine();
+        String clean = line.replace(" ", "").replace("-", "");
+        if (clean.length() == 10 && clean.startsWith("07")) {
+            System.out.println("Phone: " + clean + " (valid)");
+        } else {
+            System.out.println("Phone: " + clean + " (invalid)");
+        }`),
+
+  // Level 2, lesson 15: j-ledger
+  'j15-interest': ledgerProgram({
+    extraCases: String.raw`                case "INTEREST" -> {
+                    int rate = in.nextInt();
+                    for (int i = 0; i < count; i++) {
+                        balances[i] += balances[i] * rate / 100;
+                    }
+                    System.out.println("Interest applied at " + rate + "%");
+                }`,
+  }),
+  'j15-transfer': ledgerProgram({
+    extraCases: String.raw`                case "TRANSFER" -> {
+                    String from = in.next();
+                    String to = in.next();
+                    int amount = in.nextInt();
+                    int a = findMember(names, count, from);
+                    int b = findMember(names, count, to);
+                    if (a < 0) {
+                        System.out.println("No such member: " + from);
+                    } else if (b < 0) {
+                        System.out.println("No such member: " + to);
+                    } else if (amount > balances[a]) {
+                        System.out.println("Insufficient funds. Balance: " + balances[a]);
+                    } else {
+                        balances[a] -= amount;
+                        balances[b] += amount;
+                        System.out.println("Transferred " + amount + " from " + from + " to " + to);
+                    }
+                }`,
+  }),
+  'j15-leave': ledgerProgram({
+    extraCases: String.raw`                case "LEAVE" -> {
+                    String name = in.next();
+                    int i = findMember(names, count, name);
+                    if (i < 0) {
+                        System.out.println("No such member: " + name);
+                    } else {
+                        System.out.println(names[i] + " has left the SACCO");
+                        for (int k = i; k < count - 1; k++) {
+                            names[k] = names[k + 1];
+                            balances[k] = balances[k + 1];
+                        }
+                        count--;
+                    }
+                }`,
+  }),
+  'j15-stats': ledgerProgram({
+    extraCases: String.raw`                case "STATS" -> {
+                    if (count == 0) {
+                        System.out.println("No members");
+                    } else {
+                        int hi = 0;
+                        int lo = 0;
+                        int total = 0;
+                        for (int i = 0; i < count; i++) {
+                            total += balances[i];
+                            if (balances[i] > balances[hi]) {
+                                hi = i;
+                            }
+                            if (balances[i] < balances[lo]) {
+                                lo = i;
+                            }
+                        }
+                        System.out.println("Highest: " + names[hi] + " " + balances[hi]);
+                        System.out.println("Lowest: " + names[lo] + " " + balances[lo]);
+                        System.out.println("Average: " + (total / count));
+                    }
+                }`,
+  }),
 };
