@@ -436,6 +436,10 @@ const sqlFiles = ['sql-wasm.js', 'sql-wasm.wasm'].map((name) => {
 });
 const sqlBytes = sqlFiles.reduce((n, f) => n + f.size, 0);
 
+// ---- picoc.wasm ("full C": structs, malloc, files) ---------------------------
+// Built from tools/picoc-wasm (about 0.6 MB, committed). Cached on first visit like the other small runtimes.
+copyFileSync(join(root, 'tools/picoc-wasm/picoc.wasm'), join(root, 'public/vendor/picoc.wasm'));
+
 // ---- PHP (optional pack) ------------------------------------------------------
 // Real PHP 8.3 on WebAssembly (@php-wasm). The worker (small) is bundled into public/workers/php.worker.js and is
 // precached with the app. The one big WebAssembly file goes to public/php/ and is a download in Settings (like Python).

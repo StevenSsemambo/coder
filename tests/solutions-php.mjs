@@ -190,4 +190,315 @@ echo "UGX ", number_format($b), " -> fee UGX ", number_format($feeB), "\n";
 echo "UGX ", number_format($c), " -> fee UGX ", number_format($feeC), "\n";
 echo "Total fees: UGX ", number_format($feeA + $feeB + $feeC), "\n";
 `,
+
+  // Level 2: Loops and arrays
+  'php8-tickets': php`<?php
+$n = (int) trim(fgets(STDIN));
+for ($i = 1; $i <= $n; $i++) {
+    echo "Ticket ", $i, "\n";
+}
+`,
+  'php8-doubling': php`<?php
+$savings = (int) trim(fgets(STDIN));
+$target = (int) trim(fgets(STDIN));
+$months = 0;
+while ($savings < $target) {
+    $savings *= 2;
+    $months++;
+}
+echo "Months: ", $months, "\n";
+echo "Savings: UGX ", number_format($savings), "\n";
+`,
+  'php8-day-total': php`<?php
+$count = 0;
+$total = 0;
+while (($line = fgets(STDIN)) !== false) {
+    $amount = (int) trim($line);
+    if ($amount === 0) {
+        continue;
+    }
+    $count++;
+    $total += $amount;
+}
+echo "Counted: ", $count, "\n";
+echo "Total: UGX ", number_format($total), "\n";
+`,
+  'php8-float': php`<?php
+$float = (int) trim(fgets(STDIN));
+$paid = 0;
+while (($line = fgets(STDIN)) !== false) {
+    $request = (int) trim($line);
+    if ($request > $float) {
+        break;
+    }
+    $float -= $request;
+    $paid++;
+}
+echo "Paid: ", $paid, " withdrawals\n";
+echo "Float left: UGX ", number_format($float), "\n";
+`,
+  'php9-roll-call': php`<?php
+$names = [];
+while (($line = fgets(STDIN)) !== false) {
+    $names[] = trim($line);
+}
+echo "Customers (", count($names), "): ", implode(", ", $names), "\n";
+`,
+  'php9-numbered': php`<?php
+$line = trim(fgets(STDIN));
+$names = explode(",", $line);
+foreach ($names as $i => $name) {
+    echo $i + 1, ". ", $name, "\n";
+}
+`,
+  'php9-banknotes': php`<?php
+$amount = (int) trim(fgets(STDIN));
+$notes = [50000, 20000, 10000, 5000, 2000, 1000];
+$left = $amount;
+foreach ($notes as $note) {
+    $how = intdiv($left, $note);
+    if ($how > 0) {
+        echo "UGX ", number_format($note), " x ", $how, "\n";
+    }
+    $left %= $note;
+}
+if ($left > 0) {
+    echo "Left over: UGX ", number_format($left), "\n";
+}
+`,
+  'php9-reverse': php`<?php
+$n = (int) trim(fgets(STDIN));
+$amounts = [];
+for ($i = 0; $i < $n; $i++) {
+    $amounts[] = trim(fgets(STDIN));
+}
+$parts = [];
+for ($i = count($amounts) - 1; $i >= 0; $i--) {
+    $parts[] = $amounts[$i];
+}
+echo implode(" ", $parts), "\n";
+`,
+  'php10-price-check': php`<?php
+$prices = ["sugar" => 4500, "rice" => 3000, "soap" => 2500, "salt" => 1000];
+$item = strtolower(trim(fgets(STDIN)));
+if (isset($prices[$item])) {
+    echo ucfirst($item), ": UGX ", number_format($prices[$item]), "\n";
+} else {
+    echo "Not stocked: ", $item, "\n";
+}
+`,
+  'php10-tally': php`<?php
+$counts = [];
+while (($line = fgets(STDIN)) !== false) {
+    $network = trim($line);
+    $counts[$network] = ($counts[$network] ?? 0) + 1;
+}
+foreach ($counts as $network => $n) {
+    echo $network, ": ", $n, "\n";
+}
+`,
+  'php10-stock-value': php`<?php
+$prices = ["sugar" => 4500, "rice" => 3000, "soap" => 2500];
+$quantities = [];
+foreach ($prices as $item => $price) {
+    $quantities[$item] = (int) trim(fgets(STDIN));
+}
+$total = 0;
+foreach ($prices as $item => $price) {
+    $value = $price * $quantities[$item];
+    $total += $value;
+    echo ucfirst($item), ": ", $quantities[$item], " x UGX ", number_format($price), " = UGX ", number_format($value), "\n";
+}
+echo "Stock value: UGX ", number_format($total), "\n";
+`,
+  'php10-big-ones': php`<?php
+$n = (int) trim(fgets(STDIN));
+$transactions = [];
+for ($i = 0; $i < $n; $i++) {
+    $parts = explode(",", trim(fgets(STDIN)));
+    $transactions[] = ["name" => $parts[0], "service" => $parts[1], "amount" => (int) $parts[2]];
+}
+$found = false;
+foreach ($transactions as $tx) {
+    if ($tx["amount"] >= 100000) {
+        echo $tx["name"], ": UGX ", number_format($tx["amount"]), "\n";
+        $found = true;
+    }
+}
+if (!$found) {
+    echo "No big transactions\n";
+}
+`,
+
+  'php11-stats': php`<?php
+$parts = explode(",", trim(fgets(STDIN)));
+$amounts = [];
+foreach ($parts as $p) {
+    $amounts[] = (int) $p;
+}
+echo "Count: ", count($amounts), "\n";
+echo "Total: UGX ", number_format(array_sum($amounts)), "\n";
+echo "Average: UGX ", number_format(array_sum($amounts) / count($amounts)), "\n";
+echo "Highest: UGX ", number_format(max($amounts)), "\n";
+echo "Lowest: UGX ", number_format(min($amounts)), "\n";
+`,
+  'php11-top3': php`<?php
+$n = (int) trim(fgets(STDIN));
+$amounts = [];
+for ($i = 0; $i < $n; $i++) {
+    $amounts[] = (int) trim(fgets(STDIN));
+}
+rsort($amounts);
+foreach (array_slice($amounts, 0, 3) as $i => $amount) {
+    echo $i + 1, ". UGX ", number_format($amount), "\n";
+}
+`,
+  'php11-leaderboard': php`<?php
+$n = (int) trim(fgets(STDIN));
+$totals = [];
+for ($i = 0; $i < $n; $i++) {
+    $parts = explode(",", trim(fgets(STDIN)));
+    $totals[$parts[0]] = ($totals[$parts[0]] ?? 0) + (int) $parts[2];
+}
+ksort($totals);
+arsort($totals);
+$place = 1;
+foreach ($totals as $name => $total) {
+    echo $place, ". ", $name, ": UGX ", number_format($total), "\n";
+    $place++;
+}
+`,
+  'php11-unique-sorted': php`<?php
+$networks = explode(",", trim(fgets(STDIN)));
+$unique = array_unique($networks);
+sort($unique);
+echo "Networks (", count($unique), "): ", implode(", ", $unique), "\n";
+`,
+  'php12-fees': php`<?php
+$n = (int) trim(fgets(STDIN));
+$amounts = [];
+for ($i = 0; $i < $n; $i++) {
+    $amounts[] = (int) trim(fgets(STDIN));
+}
+$fees = array_map(fn($a) => max(500, (int) ceil($a * 2 / 100)), $amounts);
+echo "Fees: ", implode(", ", array_map(fn($f) => number_format($f), $fees)), "\n";
+echo "Total fees: UGX ", number_format(array_sum($fees)), "\n";
+`,
+  'php12-big-sum': php`<?php
+$n = (int) trim(fgets(STDIN));
+$transactions = [];
+for ($i = 0; $i < $n; $i++) {
+    $parts = explode(",", trim(fgets(STDIN)));
+    $transactions[] = ["name" => $parts[0], "service" => $parts[1], "amount" => (int) $parts[2]];
+}
+$big = array_filter($transactions, fn($tx) => $tx["service"] === "withdraw" && $tx["amount"] >= 100000);
+echo "Big withdrawals: ", count($big), "\n";
+echo "Total: UGX ", number_format(array_sum(array_column($big, "amount"))), "\n";
+`,
+  'php12-sort-records': php`<?php
+$n = (int) trim(fgets(STDIN));
+$transactions = [];
+for ($i = 0; $i < $n; $i++) {
+    $parts = explode(",", trim(fgets(STDIN)));
+    $transactions[] = ["name" => $parts[0], "service" => $parts[1], "amount" => (int) $parts[2]];
+}
+usort($transactions, fn($a, $b) => $b["amount"] <=> $a["amount"] ?: $a["name"] <=> $b["name"]);
+foreach ($transactions as $tx) {
+    echo $tx["name"], " ", $tx["service"], " UGX ", number_format($tx["amount"]), "\n";
+}
+`,
+  'php13-summary': php`<?php
+$n = (int) trim(fgets(STDIN));
+$txs = [];
+for ($i = 0; $i < $n; $i++) {
+    [$name, $service, $amount] = explode(",", trim(fgets(STDIN)));
+    $txs[] = ["name" => $name, "service" => $service, "amount" => (int) $amount];
+}
+
+$deposits = 0;
+$depositTotal = 0;
+$withdrawals = 0;
+$withdrawalTotal = 0;
+$fees = 0;
+$biggest = $txs[0];
+foreach ($txs as $tx) {
+    if ($tx["service"] === "deposit") {
+        $deposits++;
+        $depositTotal += $tx["amount"];
+    } else {
+        $withdrawals++;
+        $withdrawalTotal += $tx["amount"];
+        if ($tx["amount"] <= 50000) {
+            $fees += 1000;
+        } elseif ($tx["amount"] <= 200000) {
+            $fees += 2000;
+        } else {
+            $fees += 3500;
+        }
+    }
+    if ($tx["amount"] > $biggest["amount"]) {
+        $biggest = $tx;
+    }
+}
+$names = array_unique(array_column($txs, "name"));
+sort($names);
+echo "DAILY SUMMARY - NAMBI'S MONEY BOOTH\n";
+echo "Transactions : ", count($txs), "\n";
+echo "Deposits     : ", $deposits, " (UGX ", number_format($depositTotal), ")\n";
+echo "Withdrawals  : ", $withdrawals, " (UGX ", number_format($withdrawalTotal), ")\n";
+echo "Fees earned  : UGX ", number_format($fees), "\n";
+echo "Biggest      : ", $biggest["name"], " (UGX ", number_format($biggest["amount"]), ")\n";
+echo "Customers    : ", implode(", ", $names), "\n";
+`,
+  'php13-ranking': php`<?php
+$n = (int) trim(fgets(STDIN));
+$txs = [];
+for ($i = 0; $i < $n; $i++) {
+    [$name, $service, $amount] = explode(",", trim(fgets(STDIN)));
+    $txs[] = ["name" => $name, "service" => $service, "amount" => (int) $amount];
+}
+
+$totals = [];
+$counts = [];
+foreach ($txs as $tx) {
+    $totals[$tx["name"]] = ($totals[$tx["name"]] ?? 0) + $tx["amount"];
+    $counts[$tx["name"]] = ($counts[$tx["name"]] ?? 0) + 1;
+}
+ksort($totals);
+arsort($totals);
+$place = 1;
+foreach ($totals as $name => $total) {
+    echo $place, ". ", $name, ": UGX ", number_format($total), " (", $counts[$name], " tx)\n";
+    $place++;
+}
+`,
+  'php13-fee-report': php`<?php
+$n = (int) trim(fgets(STDIN));
+$txs = [];
+for ($i = 0; $i < $n; $i++) {
+    [$name, $service, $amount] = explode(",", trim(fgets(STDIN)));
+    $txs[] = ["name" => $name, "service" => $service, "amount" => (int) $amount];
+}
+
+$bands = [];
+$totalFees = 0;
+foreach ($txs as $tx) {
+    if ($tx["service"] === "deposit") {
+        $fee = 0;
+    } elseif ($tx["amount"] <= 50000) {
+        $fee = 1000;
+    } elseif ($tx["amount"] <= 200000) {
+        $fee = 2000;
+    } else {
+        $fee = 3500;
+    }
+    $bands[$fee] = ($bands[$fee] ?? 0) + 1;
+    $totalFees += $fee;
+}
+ksort($bands);
+foreach ($bands as $fee => $count) {
+    echo "Fee UGX ", number_format($fee), " x ", $count, " = UGX ", number_format($fee * $count), "\n";
+}
+echo "Total fees: UGX ", number_format($totalFees), "\n";
+`,
 };

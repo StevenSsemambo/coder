@@ -63,13 +63,10 @@ progress is saved under them). Exercise ids start with `c<lesson number>-`.
 - [x] 31. `c-recursion-deep` Recursion in depth: power, digits, binary, Tower of Hanoi, arrays
 - [x] 32. `c-stock-system` Capstone: the Duuka stock system (parallel arrays, validation, menu loop)
 
-### Part B: blocked until the interpreter can run it
+### Part B: now the course `c-advanced`
 
-Structures (`struct`), `typedef`, `enum`, `union`, dynamic memory (`malloc`, `free`), file handling
-(`FILE`, `fopen`, `fprintf`, `fscanf`), and a final project that stores records in a file. These are
-essential to a complete C course. **None of them run today** (see the table). Lessons written for
-them could not be proved by the tests, so they are not written yet. The engine owner needs to decide
-how to get a C runtime that supports them (see "Engine requests").
+Structures, `enum`, `union`, dynamic memory, linked lists, files and a capstone were built as a **second
+course** on a different runtime (picoc on WebAssembly): see `docs/CX-TRACK.md`. This course (JSCPP) stays as it is.
 
 ## What the built-in interpreter can and cannot do
 
@@ -123,8 +120,7 @@ so `npm test` proves it still works.
 
 ## Engine requests (for the engine owner)
 
-1. **A C runtime that supports structures, `enum`, `malloc`/`free` and file I/O**, running offline in a
-   Web Worker. Unblocks Part B. A quick npm search found no ready-made package; options to investigate
+1. ~~A C runtime that supports structures, `enum`, `malloc`/`free` and file I/O~~ **Done:** picoc on WebAssembly (`docs/CX-TRACK.md`). Original request: A quick npm search found no ready-made package; options to investigate
    are a small C interpreter or compiler built to WebAssembly (the build then needs a toolchain) or
    extending JSCPP. Whatever is chosen must keep the download small (the app today ships C in about 400 KB).
 2. `scanf` that returns the number of items read and works at end of input, so the `while (scanf(...) == 1)`

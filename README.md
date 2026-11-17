@@ -21,7 +21,8 @@ It is built by several Claude accounts, one track each. **Contributors: read `do
 | Installs to the home screen and works with the network off | Working (tested) |
 | **Web track** (HTML, CSS, JavaScript with a sandboxed live preview and auto-checker): 45 lessons, 136 exercises. Roadmap in `docs/WEB-TRACK.md` | Written |
 | **Python**: 35 lessons in 5 levels, 68 exercises | Written |
-| **C**: 32 lessons, 98 exercises, from `printf` to pointers, bits, macros, algorithms, sorting and a stock-system capstone. Structs, `malloc` and files (Part B) wait for a real C runtime. Roadmap in `docs/C-TRACK.md` | Part A written |
+| **C**: 32 lessons, 98 exercises, from `printf` to pointers, bits, macros, algorithms, sorting and a stock-system capstone. Roadmap in `docs/C-TRACK.md` | Written |
+| **C Part 2** (`c-advanced`, a full C engine): 14 lessons, 42 exercises: structs, `enum`, `union`, `malloc`/`free`/`realloc`, linked lists, text and binary files, and a stock-system capstone. Roadmap and limits in `docs/CX-TRACK.md` | Written |
 | **C++**: 18 lessons, 54 exercises, from `cout` to pointers (Part A, what C++ shares with C plus streams). Strings, vectors, references, classes and templates (Part B) wait for a real C++ compiler. Roadmap in `docs/CPP-TRACK.md` | Part A written |
 | **SQL** (SQLite): 25 lessons, 75 exercises, one shop database throughout. Roadmap in `docs/SQL-TRACK.md` | Written |
 | Rich lessons: real-life stories, analogies, runnable examples, predict-the-output, fill-the-gaps, put-in-order, find-the-bug, mistake museum, recap cards | Working |
@@ -89,13 +90,14 @@ lesson opens with a story and ends with a recap.
 * **C and C++** run on [JSCPP](https://github.com/felixhao28/JSCPP), a C/C++ teaching-subset
   interpreter written in JavaScript. It is **not a real compiler**: it covers what a first module
   needs (variables, `printf`/`scanf`, `if`, loops, functions, arrays, strings, basic pointers) but not
-  everything in the standard. Structs, `malloc`, file I/O and most of C++ beyond the basics do not run.
+  everything in the standard. Structs, `malloc` and files do not run there (they run in the C Part 2 course, below); neither does most of C++ beyond the basics.
   `scripts/prepare-runtimes.mjs` applies a set of exact-match patches so it behaves like real C
   (static locals, partial array initialisers, `strcmp`, assignable `scanf`/`gets`/`strcpy` targets,
   pointer comparison and arithmetic, and more); each patch must match exactly once, so the build stops
   with an error if the library changes. `src/lib/csource.js` preprocesses source for the quirks
   that are easier to fix there (`main(void)`, spaces inside string literals). Known gaps are listed
   in `docs/C-TRACK.md`; `tests/run.mjs` has an engine check for every patch.
+* **C Part 2** (`c-advanced`) runs on [picoc](https://github.com/jpoirier/picoc) compiled to WebAssembly (about 560 KB, offline): structs, `enum`, `union`, `malloc`/`free`, `FILE` input and output. Source, patches and build script are in `tools/picoc-wasm/`; the tiny WASI layer (an in-memory file system, so a file lives for one run) is `public/workers/cxcore.js`, shared by the worker and the tests.
 * **SQL** is [sql.js](https://github.com/sql-js/sql.js) (SQLite compiled to WebAssembly), vendored in
   `public/vendor/sqljs`, so it works offline from the first visit.
 

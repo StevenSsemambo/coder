@@ -2,7 +2,7 @@
 
 Planned course id `php-start`, language id `php`. Files (when created): `src/content/php/` (lessons),
 `src/content/php-course.js` (course list), `tests/solutions-php.mjs` (reference solutions).
-Owner: the PHP account. Status: **runner built; Level 1 written (7 lessons, 20 exercises). Next: Level 2 (lessons 8 to 13).**
+Owner: the PHP account. Status: **runner built; Levels 1 and 2 written (13 lessons, 46 exercises). Next: Level 3 (functions, lessons 14 to 18).**
 
 Running project: **Nambi's Mobile Money Booth**, a small agent booth in a trading centre. Learners start
 by printing a receipt in lesson 1 and finish with a tested payment-and-wallet application (deposits,
@@ -83,12 +83,12 @@ exercises with exactly 3 hints and at least one hidden test (an exercise that ta
 - [x] 7. `php-receipt` Project: Nambi's booth receipt
 
 **Level 2: Loops and arrays**
-- [ ] 8. `php-loops` `for`, `while`, `break`, `continue`
-- [ ] 9. `php-arrays` Indexed arrays, adding, counting, `foreach`
-- [ ] 10. `php-assoc` Associative arrays (keys and values), nested arrays
-- [ ] 11. `php-array-fn` `count`, `in_array`, `array_sum`, `array_keys`, `sort`, `usort`
-- [ ] 12. `php-map-filter` `array_map`, `array_filter`, `array_reduce`, arrow functions
-- [ ] 13. `php-daily-summary` Project: the booth's daily summary
+- [x] 8. `php-loops` `for`, `while`, `break`, `continue`
+- [x] 9. `php-arrays` Indexed arrays, adding, counting, `foreach`
+- [x] 10. `php-assoc` Associative arrays (keys and values), nested arrays
+- [x] 11. `php-array-fn` `count`, `in_array`, `array_search`, `array_sum`, `max`/`min`, `sort` family, `array_slice` (usort moved to 12, after arrow functions)
+- [x] 12. `php-map-filter` `array_map`, `array_filter`, `array_reduce`, arrow functions
+- [x] 13. `php-daily-summary` Project: the booth's daily summary
 
 **Level 3: Functions**
 - [ ] 14. `php-functions` Defining and calling functions, return values
@@ -133,6 +133,19 @@ Facts later lessons can rely on, and conventions to keep:
 - A "mistake" that only gives a warning or a wrong answer (not a fatal error) must have `logic: true`, or the test says "the mistake really fails".
   A `bug` block must be a real fatal or parse error.
 - Warnings are part of the output. Lesson 2 shows one on purpose (`Warning: Undefined variable $nmae in main.php on line 3`).
+
+## Level 2 as written (files: `src/content/php/level2.js` lessons 8 to 10, `level2b.js` lessons 11 to 13)
+
+Lessons 8 to 13 are done and tested: 26 exercises (`php8-` to `php13-`). Do not rewrite them. Facts later lessons can rely on:
+
+- Taught: `for`, `while`, `break`, `continue`, reading input with `while (($line = fgets(STDIN)) !== false)` and with a count-first `for`; indexed and
+  associative arrays, `[]`, `count`, `foreach` (with `$k => $v`), `isset`, `??`, the tally pattern, lists of records; `explode`/`implode`, `print_r`;
+  `array_sum`, `max`/`min` on arrays, `in_array` (strict), `array_search` (`!== false`), `sort`/`rsort`/`asort`/`arsort`/`ksort`, `array_slice`, `array_merge`,
+  `array_reverse`, `array_unique`, `range`, `array_keys`/`array_values`; arrow functions `fn`, `array_map`, `array_filter` (keeps keys), `array_reduce`,
+  `usort` with `<=>` and `?:` tie-breaks, `array_column`; destructuring `[$a, $b] = explode(...)` (first used in lesson 13).
+- NOT yet taught (Level 3): `function`, `return`, type declarations, `sprintf`, `str_pad`, classes. Lesson 13 says the fee rule "will get a function in Level 3".
+- The project report is built independently in JavaScript by `summaryLines()`, `ranking()`, `txInput()` in `shared.js`; reuse them.
+- Arrow functions copy outside variables (they cannot change them): taught as a mistake in lesson 12. Pass by reference comes in lesson 16.
 
 ## Style notes specific to PHP
 
