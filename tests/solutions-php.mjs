@@ -1,5 +1,7 @@
 // Reference solutions for the PHP course (see docs/PHP-TRACK.md). Every PHP exercise must have one here,
 // it must pass all its tests, and the starter must NOT pass.
+import { MOMO_LIB } from '../src/content/php/shared.js';
+
 const php = String.raw;
 
 export const phpSolutions = {
@@ -500,5 +502,327 @@ foreach ($bands as $fee => $count) {
     echo "Fee UGX ", number_format($fee), " x ", $count, " = UGX ", number_format($fee * $count), "\n";
 }
 echo "Total fees: UGX ", number_format($totalFees), "\n";
+`,
+
+  // Level 3: Functions
+  'php14-fee': php`<?php
+function fee($service, $amount) {
+    if ($service === "deposit") {
+        return 0;
+    }
+    if ($amount <= 50000) {
+        return 1000;
+    }
+    if ($amount <= 200000) {
+        return 2000;
+    }
+    return 3500;
+}
+
+$service = strtolower(trim(fgets(STDIN)));
+$amount = (int) trim(fgets(STDIN));
+echo "Fee: UGX ", number_format(fee($service, $amount)), "\n";
+`,
+  'php14-statement': php`<?php
+function fee($service, $amount) {
+    if ($service === "deposit") {
+        return 0;
+    }
+    if ($amount <= 50000) {
+        return 1000;
+    }
+    if ($amount <= 200000) {
+        return 2000;
+    }
+    return 3500;
+}
+
+function total($service, $amount) {
+    return $amount + fee($service, $amount);
+}
+
+$n = (int) trim(fgets(STDIN));
+$fees = 0;
+for ($i = 0; $i < $n; $i++) {
+    [$name, $service, $amount] = explode(",", trim(fgets(STDIN)));
+    $amount = (int) $amount;
+    $fees += fee($service, $amount);
+    echo $name, ": UGX ", number_format($amount), " + fee UGX ", number_format(fee($service, $amount)), " = UGX ", number_format(total($service, $amount)), "\n";
+}
+echo "Fees earned: UGX ", number_format($fees), "\n";
+`,
+  'php14-lowhigh': php`<?php
+function lowHigh($list) {
+    return [min($list), max($list)];
+}
+
+$amounts = [];
+foreach (explode(",", trim(fgets(STDIN))) as $part) {
+    $amounts[] = (int) $part;
+}
+[$low, $high] = lowHigh($amounts);
+echo "Low: UGX ", number_format($low), "\n";
+echo "High: UGX ", number_format($high), "\n";
+echo "Gap: UGX ", number_format($high - $low), "\n";
+`,
+  'php14-discount': php`<?php
+function discount($amount, $percent) {
+    return intdiv($amount * (100 - $percent), 100);
+}
+
+$amount = (int) trim(fgets(STDIN));
+$percent = (int) trim(fgets(STDIN));
+echo "Pay: UGX ", number_format(discount($amount, $percent)), "\n";
+`,
+  'php15-parse-amount': php`<?php
+declare(strict_types=1);
+
+function parseAmount(string $text): ?int {
+    if (!ctype_digit($text)) {
+        return null;
+    }
+    return (int) $text;
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    $text = trim($line);
+    $amount = parseAmount($text);
+    if ($amount === null) {
+        echo "Invalid: ", $text, "\n";
+    } else {
+        echo "UGX ", number_format($amount), "\n";
+    }
+}
+`,
+  'php15-money-format': php`<?php
+function money(int $amount, string $currency = "UGX", bool $commas = true): string {
+    $shown = $commas ? number_format($amount) : (string) $amount;
+    return $currency . " " . $shown;
+}
+
+$amount = (int) trim(fgets(STDIN));
+echo money($amount), "\n";
+echo money($amount, commas: false), "\n";
+echo money($amount, currency: "KES"), "\n";
+`,
+  'php15-clamp': php`<?php
+function clamp(int $value, int $min = 0, int $max = 100): int {
+    return min($max, max($min, $value));
+}
+
+$v = (int) trim(fgets(STDIN));
+echo clamp($v), "\n";
+echo clamp($v, max: 50), "\n";
+echo clamp($v, 10, 20), "\n";
+`,
+  'php15-strict-fee': php`<?php
+declare(strict_types=1);
+
+function fee(string $service, int $amount): int {
+    if ($service === "deposit") {
+        return 0;
+    }
+    if ($amount <= 50000) {
+        return 1000;
+    }
+    if ($amount <= 200000) {
+        return 2000;
+    }
+    return 3500;
+}
+
+$service = strtolower(trim(fgets(STDIN)));
+$amountText = trim(fgets(STDIN));
+$amount = (int) $amountText;
+echo "Fee: UGX ", number_format(fee($service, $amount)), "\n";
+`,
+  'php16-tickets': php`<?php
+function nextTicket(string $service): string {
+    static $counts = [];
+    $counts[$service] = ($counts[$service] ?? 0) + 1;
+    return strtoupper($service[0]) . "-" . $counts[$service];
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    $service = strtolower(trim($line));
+    echo nextTicket($service), "\n";
+}
+`,
+  'php16-add-total': php`<?php
+function addTo(int $amount, int &$total, int &$count): void {
+    $total += $amount;
+    $count++;
+}
+
+$total = 0;
+$count = 0;
+while (($line = fgets(STDIN)) !== false) {
+    $amount = (int) trim($line);
+    addTo($amount, $total, $count);
+}
+echo "Count: ", $count, "\n";
+echo "Total: UGX ", number_format($total), "\n";
+`,
+  'php16-swap': php`<?php
+function swap(&$a, &$b) {
+    $temp = $a;
+    $a = $b;
+    $b = $temp;
+}
+
+$x = (int) trim(fgets(STDIN));
+$y = (int) trim(fgets(STDIN));
+echo "Before: ", $x, " and ", $y, "\n";
+swap($x, $y);
+echo "After: ", $x, " and ", $y, "\n";
+`,
+  'php16-total-fees': php`<?php
+function totalFees(array $txs): int {
+    $sum = 0;
+    foreach ($txs as $tx) {
+        if ($tx["service"] === "deposit") {
+            continue;
+        }
+        if ($tx["amount"] <= 50000) {
+            $sum += 1000;
+        } elseif ($tx["amount"] <= 200000) {
+            $sum += 2000;
+        } else {
+            $sum += 3500;
+        }
+    }
+    return $sum;
+}
+
+$n = (int) trim(fgets(STDIN));
+$txs = [];
+for ($i = 0; $i < $n; $i++) {
+    [$name, $service, $amount] = explode(",", trim(fgets(STDIN)));
+    $txs[] = ["service" => $service, "amount" => (int) $amount];
+}
+echo "Fees earned: UGX ", number_format(totalFees($txs)), "\n";
+`,
+
+  'php17-receipt-lines': php`<?php
+$n = (int) trim(fgets(STDIN));
+$total = 0;
+for ($i = 0; $i < $n; $i++) {
+    [$item, $price] = explode(",", trim(fgets(STDIN)));
+    $price = (int) $price;
+    $total += $price;
+    printf("%-14s %10s\n", $item, number_format($price));
+}
+echo str_repeat("-", 25), "\n";
+printf("%-14s %10s\n", "TOTAL", number_format($total));
+`,
+  'php17-phone-check': php`<?php
+while (($line = fgets(STDIN)) !== false) {
+    $phone = trim($line);
+    if (preg_match('/^0[0-9]{9}$/', $phone) !== 1) {
+        echo $phone, ": invalid\n";
+        continue;
+    }
+    $prefix = substr($phone, 0, 3);
+    if (in_array($prefix, ["077", "078", "076"], true)) {
+        $network = "MTN";
+    } elseif (in_array($prefix, ["070", "075", "074"], true)) {
+        $network = "Airtel";
+    } else {
+        $network = "other";
+    }
+    echo $phone, ": ", $network, "\n";
+}
+`,
+  'php17-normalise': php`<?php
+while (($line = fgets(STDIN)) !== false) {
+    $digits = preg_replace('/\D/', '', trim($line));
+    if (str_starts_with($digits, "0")) {
+        $digits = "256" . substr($digits, 1);
+    }
+    echo $digits, "\n";
+}
+`,
+  'php17-tx-ids': php`<?php
+while (($line = fgets(STDIN)) !== false) {
+    [$id, $name, $amount] = explode(",", trim($line));
+    printf("TX-%06d  %-8s UGX %s\n", (int) $id, $name, number_format((int) $amount));
+}
+`,
+  'php18-send-fee': php`<?php
+declare(strict_types=1);
+
+function sendFee(int $amount): int {
+    if ($amount <= 5000) {
+        return 100;
+    }
+    if ($amount <= 30000) {
+        return 300;
+    }
+    if ($amount <= 100000) {
+        return 700;
+    }
+    if ($amount <= 500000) {
+        return 1500;
+    }
+    if ($amount <= 2000000) {
+        return 2500;
+    }
+    return 4000;
+}
+
+$amount = (int) trim(fgets(STDIN));
+echo "Fee: UGX ", number_format(sendFee($amount)), "\n";
+`,
+  'php18-quote': MOMO_LIB.slice(0, MOMO_LIB.indexOf('function fee(')) + php`function fee(string $type, int $amount): int {
+    return match ($type) {
+        "send" => sendFee($amount),
+        "withdraw" => withdrawFee($amount),
+        default => 0,
+    };
+}
+
+function levy(string $type, int $amount): int {
+    return $type === "withdraw" ? (int) ceil($amount * 5 / 1000) : 0;
+}
+
+$parts = explode(",", trim(fgets(STDIN)));
+$type = strtolower(trim($parts[0]));
+$amount = (int) $parts[1];
+$fee = fee($type, $amount);
+$levy = levy($type, $amount);
+echo "Fee: UGX ", number_format($fee), "\n";
+echo "Levy: UGX ", number_format($levy), "\n";
+echo "Total: UGX ", number_format($amount + $fee + $levy), "\n";
+`,
+  'php18-statement': MOMO_LIB + php`
+printf("%-9s %10s %7s %6s %11s\n", "Type", "Amount", "Fee", "Levy", "Total");
+echo str_repeat("-", 47), "\n";
+$valid = 0;
+$invalid = 0;
+$fees = 0;
+$levies = 0;
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    if ($line === "") {
+        continue;
+    }
+    $parsed = parseLine($line);
+    if ($parsed === null) {
+        echo "Invalid: ", $line, "\n";
+        $invalid++;
+        continue;
+    }
+    [$type, $amount] = $parsed;
+    $fee = fee($type, $amount);
+    $levy = levy($type, $amount);
+    $valid++;
+    $fees += $fee;
+    $levies += $levy;
+    printf("%-9s %10s %7s %6s %11s\n", ucfirst($type), money($amount), money($fee), money($levy), money($amount + $fee + $levy));
+}
+echo str_repeat("-", 47), "\n";
+echo "Valid: ", $valid, ", invalid: ", $invalid, "\n";
+echo "Fees collected : UGX ", money($fees), "\n";
+echo "Levy collected : UGX ", money($levies), "\n";
 `,
 };

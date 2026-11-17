@@ -2,7 +2,7 @@
 
 Planned course id `php-start`, language id `php`. Files (when created): `src/content/php/` (lessons),
 `src/content/php-course.js` (course list), `tests/solutions-php.mjs` (reference solutions).
-Owner: the PHP account. Status: **runner built; Levels 1 and 2 written (13 lessons, 46 exercises). Next: Level 3 (functions, lessons 14 to 18).**
+Owner: the PHP account. Status: **runner built; Levels 1 to 3 written (18 lessons, 69 exercises). Next: Level 4 (objects, lessons 19 to 24).**
 
 Running project: **Nambi's Mobile Money Booth**, a small agent booth in a trading centre. Learners start
 by printing a receipt in lesson 1 and finish with a tested payment-and-wallet application (deposits,
@@ -91,11 +91,11 @@ exercises with exactly 3 hints and at least one hidden test (an exercise that ta
 - [x] 13. `php-daily-summary` Project: the booth's daily summary
 
 **Level 3: Functions**
-- [ ] 14. `php-functions` Defining and calling functions, return values
-- [ ] 15. `php-types` Type declarations, default and named arguments, `declare(strict_types=1)`
-- [ ] 16. `php-scope` Scope, `static`, pass by reference
-- [ ] 17. `php-strings-pro` `sprintf`, `explode`, `implode`, `trim`, `str_pad`, `preg_match` basics
-- [ ] 18. `php-fees` Project: Mobile Money fee calculator
+- [x] 14. `php-functions` Defining and calling functions, return values
+- [x] 15. `php-types` Type declarations, default and named arguments, `declare(strict_types=1)`
+- [x] 16. `php-scope` Scope, `static`, pass by reference
+- [x] 17. `php-strings-pro` `sprintf`/`printf` widths, `str_pad`, `str_contains` family, `preg_match`/`preg_replace` basics (explode/implode/trim were taught earlier)
+- [x] 18. `php-fees` Project: Mobile Money fee calculator
 
 **Level 4: Objects**
 - [ ] 19. `php-classes` Classes, objects, properties, methods, constructor promotion
@@ -146,6 +146,20 @@ Lessons 8 to 13 are done and tested: 26 exercises (`php8-` to `php13-`). Do not 
 - NOT yet taught (Level 3): `function`, `return`, type declarations, `sprintf`, `str_pad`, classes. Lesson 13 says the fee rule "will get a function in Level 3".
 - The project report is built independently in JavaScript by `summaryLines()`, `ranking()`, `txInput()` in `shared.js`; reuse them.
 - Arrow functions copy outside variables (they cannot change them): taught as a mistake in lesson 12. Pass by reference comes in lesson 16.
+
+## Level 3 as written (files: `src/content/php/level3.js` lessons 14 to 16, `level3b.js` lessons 17 and 18)
+
+Lessons 14 to 18 are done and tested: 23 exercises (`php14-` to `php18-`). Do not rewrite them. Facts later lessons can rely on:
+
+- Taught: `function`, parameters, `return` (early return, arrays, no return = null), types (`int float string bool array`, `?T`, `void`), defaults, named arguments,
+  `declare(strict_types=1)` (first statement; input from `fgets` needs `(int)`), scope (private variables, `static`, `&` references, `function () use (&$x)`),
+  `sprintf`/`printf` (`%s %d %f %05d %.2f %-12s %10s`), `str_pad`, `str_starts_with/ends_with/contains`, `preg_match`, `preg_replace`, `ctype_digit`.
+- NOT yet taught: classes, objects, exceptions, `readonly`, enums, namespaces. Lesson 18 ends by saying Level 4 gives the functions and their data a home: a class.
+- Project 18 is "Mobile Money fee calculator" with MADE-UP fee tables (send, withdraw, 0.5% levy on withdrawals); the PHP library is `MOMO_LIB` in `shared.js`
+  (used by the lesson and by the exercise starters and solutions); expected outputs come from `momoStatement()`, `momoFee()`, `levy()` in `shared.js`.
+- `reorder` blocks: PHP hoists top-level functions, so a reorder block whose only order rule is "function before call" has several correct orders
+  and fails the "only one order is correct" test. Use 7 or more lines (the permutation check only runs for 6 or fewer).
+- A `predict` answer must be exactly the text the code prints (the test compares).
 
 ## Style notes specific to PHP
 

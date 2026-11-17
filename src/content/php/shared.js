@@ -80,3 +80,121 @@ export function summaryLines(txs) {
     `Customers    : ${names.join(', ')}`,
   ];
 }
+
+// ---- Level 3 helpers: the Mobile Money fee calculator (made-up fee tables, for teaching only) ----------------------
+/** Made-up "send money" fee: up to 5,000 -> 100; 30,000 -> 300; 100,000 -> 700; 500,000 -> 1,500; 2,000,000 -> 2,500; above -> 4,000. */
+export const sendFee = (a) => (a <= 5000 ? 100 : a <= 30000 ? 300 : a <= 100000 ? 700 : a <= 500000 ? 1500 : a <= 2000000 ? 2500 : 4000);
+/** Made-up 0.5% levy on withdrawals only, rounded up to a whole shilling (integer maths: amount * 5 / 1000). */
+export const levy = (type, a) => (type === 'withdraw' ? Math.ceil((a * 5) / 1000) : 0);
+export const momoFee = (type, a) => (type === 'send' ? sendFee(a) : type === 'withdraw' ? boothFee('withdraw', a) : 0);
+
+/** Parse one `type,amount` input line the way the project does; null when it is not valid. */
+export function parseMomoLine(raw) {
+  const parts = raw.trim().split(',');
+  if (parts.length !== 2) return null;
+  const type = parts[0].trim().toLowerCase();
+  const text = parts[1].trim();
+  if (!['send', 'withdraw', 'pay'].includes(type) || !/^\d+$/.test(text) || Number(text) === 0) return null;
+  return [type, Number(text)];
+}
+
+export const MOMO_RULE = '-'.repeat(47);
+const col = (type, amount, fee, lv, total) =>
+  `${type.padEnd(9)} ${amount.padStart(10)} ${fee.padStart(7)} ${lv.padStart(6)} ${total.padStart(11)}`;
+export const momoHeader = () => [col('Type', 'Amount', 'Fee', 'Levy', 'Total'), MOMO_RULE];
+
+/** The statement of the project lesson, as lines. `summary` adds the closing lines. Blank input lines are ignored. */
+export function momoStatement(inputLines, summary = true) {
+  const lines = momoHeader();
+  let valid = 0;
+  let invalid = 0;
+  let fees = 0;
+  let levies = 0;
+  for (const raw of inputLines) {
+    const line = raw.trim();
+    if (line === '') continue;
+    const p = parseMomoLine(line);
+    if (!p) {
+      lines.push(`Invalid: ${line}`);
+      invalid++;
+      continue;
+    }
+    const [type, amount] = p;
+    const f = momoFee(type, amount);
+    const l = levy(type, amount);
+    valid++;
+    fees += f;
+    levies += l;
+    lines.push(col(type[0].toUpperCase() + type.slice(1), money(amount), money(f), money(l), money(amount + f + l)));
+  }
+  if (summary) lines.push(MOMO_RULE, `Valid: ${valid}, invalid: ${invalid}`, `Fees collected : UGX ${money(fees)}`, `Levy collected : UGX ${money(levies)}`);
+  return lines;
+}
+
+/** The PHP function library of the Mobile Money project (lesson 18 and its exercises), as one piece of PHP code. */
+export const MOMO_LIB = php`<?php
+declare(strict_types=1);
+
+function sendFee(int $amount): int {
+    if ($amount <= 5000) {
+        return 100;
+    }
+    if ($amount <= 30000) {
+        return 300;
+    }
+    if ($amount <= 100000) {
+        return 700;
+    }
+    if ($amount <= 500000) {
+        return 1500;
+    }
+    if ($amount <= 2000000) {
+        return 2500;
+    }
+    return 4000;
+}
+
+function withdrawFee(int $amount): int {
+    if ($amount <= 50000) {
+        return 1000;
+    }
+    if ($amount <= 200000) {
+        return 2000;
+    }
+    return 3500;
+}
+
+function fee(string $type, int $amount): int {
+    return match ($type) {
+        "send" => sendFee($amount),
+        "withdraw" => withdrawFee($amount),
+        default => 0,
+    };
+}
+
+function levy(string $type, int $amount): int {
+    return $type === "withdraw" ? (int) ceil($amount * 5 / 1000) : 0;
+}
+
+function parseAmount(string $text): ?int {
+    $t = trim($text);
+    return ctype_digit($t) ? (int) $t : null;
+}
+
+function parseLine(string $line): ?array {
+    $parts = explode(",", $line);
+    if (count($parts) !== 2) {
+        return null;
+    }
+    $type = strtolower(trim($parts[0]));
+    $amount = parseAmount($parts[1]);
+    if (!in_array($type, ["send", "withdraw", "pay"], true) || $amount === null || $amount === 0) {
+        return null;
+    }
+    return [$type, $amount];
+}
+
+function money(int $n): string {
+    return number_format($n);
+}
+`;
