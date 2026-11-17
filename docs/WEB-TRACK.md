@@ -13,6 +13,42 @@ Goal: a learner finishes able to build, deploy and sell a small business website
 | 4. JavaScript in the page | The DOM and events / **Rendering lists, event delegation, XSS** / **Forms and validation (submit, input events, regex)** / **Timers, debounce, keyboard events** / **Tabs, accordion, modal, live search** (accessible) / **localStorage and JSON** / **fetch, promises, async/await, loading and error states** / **Promises in depth**: `Promise.all`, chains, `sleep`, `retry` / **Project: Order App** (menu from API, cart, saved, checkout) |
 | 5. Go professional | **Accessibility** / **Speed, SEO (JSON-LD), security** / **Git and GitHub Pages, paths and case bugs** / **Installable and offline: PWA manifest, service worker, caching strategies** / **Tools of the trade**: DevTools, npm, Vite, Prettier/ESLint, TypeScript, frameworks, a six-month plan / **Capstone: a client website from a brief** / **Going to market: finding clients, pricing, deposits, Mobile Money, WhatsApp order links** |
 
+## Launch-ready extension (roadmap, taken over 2026-11-17)
+
+The audit found what a developer still needs to deliver a real site to a real company. Lesson ids continue from w45.
+Each lesson follows the usual pattern (story first, recap last, at least 2 interactive blocks, a mistakes block, 3+ exercises with
+3 hints and checks). Tick a lesson when it is written AND `npm test` is green.
+
+| Id | Lesson | Goes in | Done |
+|---|---|---|---|
+| w46 | Navigation that works on phones (hamburger menu, sticky header, dropdown, `aria-expanded`, active link) | Level 4, after w41 | [ ] |
+| w47 | Forms that really send (form services, `action`/`method`, `mailto:`, honeypot, thank-you page, success/error states) | Level 6 | [ ] |
+| w48 | Domains, DNS, hosting and the files search engines read (`robots.txt`, `sitemap.xml`, canonical, 404, redirects, Search Console) | Level 6 | [ ] |
+| w49 | Trust and the law (privacy policy, cookie consent banner, terms, Uganda Data Protection and Privacy Act 2019, licensing) | Level 6 | [ ] |
+| w50 | Measuring success (analytics events, conversions, UTM links with `URLSearchParams`) | Level 6 | [ ] |
+| w51 | CSS frameworks and design systems (reading Bootstrap and Tailwind, utility classes, design tokens, spacing and type scales, wireframes) | Level 6 | [ ] |
+| w52 | Content management (what a CMS is, WordPress, headless CMS, a JSON file as a CMS, when to use a site builder) | Level 6 | [ ] |
+| w53 | Websites in many languages (`lang`, `hreflang`, `dir`, `Intl`, a language switcher) | Level 6 | [ ] |
+| w54 | Modern CSS, part 2 (container queries, nesting, `@layer`, `:has()`, logical properties, print styles) | Level 2, after w38 | [ ] |
+| w55 | Browser APIs (`IntersectionObserver`, `FormData`, `URLSearchParams`, hash routing, clipboard and share, `AbortController`) | Level 4, after w42 | [ ] |
+| w56 | SVG: icons, logos and simple charts | Level 2, after w54 | [ ] |
+| w57 | Speed in depth (Core Web Vitals, image formats, fonts, CDN, caching headers) | Level 6 | [ ] |
+| w58 | Security, part 2 (CSP, CORS, CSRF, cookies, sessions and login ideas, security headers) | Level 6 | [ ] |
+| w59 | Quality, maintenance and handover (cross-browser testing, validation, launch checklist, backups, monitoring, care plan, handover document) | Level 6 | [ ] |
+| w60 | Capstone 2: launch a company website | Level 6 | [ ] |
+
+Still deliberately out of scope here (needs a runtime this app does not have): a real backend with a database and login
+(Node and Express), React or Vue, TypeScript, test frameworks, a real WordPress. They are explained, with a simulated version
+where one can run. They belong in a later "Full-stack" track.
+
+### What the preview and the tests can and cannot do (found while auditing)
+- The test environment (jsdom) has NO `IntersectionObserver`, `matchMedia`, `ResizeObserver`, clipboard, `scrollIntoView`,
+  `structuredClone`, `dialog.showModal` or a canvas. Lessons that use these must feature-detect them (`if ("IntersectionObserver" in window)`),
+  which is also correct professional practice, and checks must use `uses` (source checks) or the fallback behaviour.
+- `fetch` is a pretend server answering from the lesson's `api` table (a POST answers 201 with `{ ok: true, received }`).
+- `localStorage` and `sessionStorage` are pretend. There are no real cookies, no network, no service worker.
+- Media queries are not evaluated by the tests: check them with `uses`.
+
 ## Coverage audit: is anything left out?
 
 Covered: the full HTML element set a business site needs, the whole CSS toolbox used in production (selectors and specificity, box model, units, display, position, flexbox, grid, responsive design, typography, backgrounds, transitions and animations, variables, dark mode, naming), core JavaScript (types, operators, control flow, functions, arrays, objects, classes, modules, errors, async), the DOM (events, delegation, forms), browser storage, networking with `fetch`, accessibility, SEO, performance, web security basics, version control and deployment, and the business side (clients, quotes, deposits).
