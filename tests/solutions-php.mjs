@@ -825,4 +825,301 @@ echo "Valid: ", $valid, ", invalid: ", $invalid, "\n";
 echo "Fees collected : UGX ", money($fees), "\n";
 echo "Levy collected : UGX ", money($levies), "\n";
 `,
+
+  // Level 4: Objects
+  'php19-customer': php`<?php
+class Customer {
+    public function __construct(public string $name, public int $balance = 0) {}
+
+    public function deposit(int $amount): void {
+        $this->balance += $amount;
+    }
+
+    public function describe(): string {
+        return $this->name . ": UGX " . number_format($this->balance);
+    }
+}
+
+$name = trim(fgets(STDIN));
+$balance = (int) trim(fgets(STDIN));
+$deposit = (int) trim(fgets(STDIN));
+$c = new Customer($name, $balance);
+$c->deposit($deposit);
+echo $c->describe(), "\n";
+`,
+  'php19-queue': php`<?php
+class Customer {
+    public function __construct(public string $name, public int $balance = 0) {}
+}
+
+$n = (int) trim(fgets(STDIN));
+$customers = [];
+for ($i = 0; $i < $n; $i++) {
+    $parts = explode(",", trim(fgets(STDIN)));
+    $customers[] = new Customer($parts[0], (int) $parts[1]);
+}
+usort($customers, fn($a, $b) => $b->balance <=> $a->balance ?: $a->name <=> $b->name);
+foreach ($customers as $c) {
+    echo $c->name, ": UGX ", number_format($c->balance), "\n";
+}
+`,
+  'php19-till': php`<?php
+class Till {
+    private int $total = 0;
+    private int $count = 0;
+
+    public function add(int $amount): static {
+        $this->total += $amount;
+        $this->count++;
+        return $this;
+    }
+
+    public function total(): int {
+        return $this->total;
+    }
+
+    public function count(): int {
+        return $this->count;
+    }
+}
+
+$till = new Till();
+while (($line = fgets(STDIN)) !== false) {
+    $amount = (int) trim($line);
+    $till->add($amount);
+}
+echo "Count: ", $till->count(), "\n";
+echo "Total: UGX ", number_format($till->total()), "\n";
+`,
+  'php20-wallet': php`<?php
+class Wallet {
+    private int $balance = 0;
+
+    public function deposit(int $amount): bool {
+        if ($amount <= 0) {
+            return false;
+        }
+        $this->balance += $amount;
+        return true;
+    }
+
+    public function withdraw(int $amount): bool {
+        if ($amount <= 0 || $amount > $this->balance) {
+            return false;
+        }
+        $this->balance -= $amount;
+        return true;
+    }
+
+    public function balance(): int {
+        return $this->balance;
+    }
+}
+
+$wallet = new Wallet();
+while (($line = fgets(STDIN)) !== false) {
+    [$command, $amount] = explode(" ", trim($line));
+    $ok = $command === "deposit" ? $wallet->deposit((int) $amount) : $wallet->withdraw((int) $amount);
+    echo $ok ? "OK" : "Rejected", "\n";
+}
+echo "Balance: UGX ", number_format($wallet->balance()), "\n";
+`,
+  'php20-receipt': php`<?php
+final class Receipt {
+    public function __construct(
+        public readonly string $name,
+        public readonly string $service,
+        public readonly int $amount,
+    ) {}
+
+    public static function fromLine(string $line): self {
+        [$name, $service, $amount] = explode(",", $line);
+        return new self(trim($name), trim($service), (int) $amount);
+    }
+
+    public function fee(): int {
+        if ($this->service === "deposit") {
+            return 0;
+        }
+        if ($this->amount <= 50000) {
+            return 1000;
+        }
+        return $this->amount <= 200000 ? 2000 : 3500;
+    }
+
+    public function __toString(): string {
+        return $this->name . ": " . $this->service . " UGX " . number_format($this->amount)
+            . ", fee UGX " . number_format($this->fee())
+            . ", total UGX " . number_format($this->amount + $this->fee());
+    }
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    echo Receipt::fromLine($line), "\n";
+}
+`,
+  'php20-limit': php`<?php
+class DailyLimit {
+    private int $used = 0;
+
+    public function __construct(private int $limit) {}
+
+    public function tryUse(int $amount): bool {
+        if ($amount <= 0 || $this->used + $amount > $this->limit) {
+            return false;
+        }
+        $this->used += $amount;
+        return true;
+    }
+
+    public function remaining(): int {
+        return $this->limit - $this->used;
+    }
+}
+
+$limit = (int) trim(fgets(STDIN));
+$day = new DailyLimit($limit);
+while (($line = fgets(STDIN)) !== false) {
+    echo $day->tryUse((int) trim($line)) ? "Approved" : "Declined", "\n";
+}
+echo "Remaining: UGX ", number_format($day->remaining()), "\n";
+`,
+  'php21-transactions': php`<?php
+abstract class Transaction {
+    public function __construct(protected string $name, protected int $amount) {}
+
+    abstract public function label(): string;
+    abstract public function fee(): int;
+
+    public function describe(): string {
+        return $this->name . " (" . $this->label() . "): UGX " . number_format($this->amount) . " + fee UGX " . number_format($this->fee());
+    }
+}
+
+class Deposit extends Transaction {
+    public function label(): string {
+        return "deposit";
+    }
+    public function fee(): int {
+        return 0;
+    }
+}
+
+class Withdrawal extends Transaction {
+    public function label(): string {
+        return "withdraw";
+    }
+    public function fee(): int {
+        if ($this->amount <= 50000) {
+            return 1000;
+        }
+        return $this->amount <= 200000 ? 2000 : 3500;
+    }
+}
+
+class Send extends Transaction {
+    public function label(): string {
+        return "send";
+    }
+    public function fee(): int {
+        if ($this->amount <= 5000) {
+            return 100;
+        }
+        if ($this->amount <= 30000) {
+            return 300;
+        }
+        if ($this->amount <= 100000) {
+            return 700;
+        }
+        if ($this->amount <= 500000) {
+            return 1500;
+        }
+        if ($this->amount <= 2000000) {
+            return 2500;
+        }
+        return 4000;
+    }
+}
+
+$day = [];
+while (($line = fgets(STDIN)) !== false) {
+    [$type, $name, $amount] = explode(",", trim($line));
+    $day[] = match ($type) {
+        "deposit" => new Deposit($name, (int) $amount),
+        "withdraw" => new Withdrawal($name, (int) $amount),
+        "send" => new Send($name, (int) $amount),
+    };
+}
+$fees = 0;
+foreach ($day as $tx) {
+    echo $tx->describe(), "\n";
+    $fees += $tx->fee();
+}
+echo "Fees earned: UGX ", number_format($fees), "\n";
+`,
+  'php21-accounts': php`<?php
+abstract class Account {
+    public function __construct(protected int $balance) {}
+
+    abstract public function rate(): int;
+
+    public function yearlyInterest(): int {
+        return intdiv($this->balance * $this->rate(), 100);
+    }
+
+    public function balance(): int {
+        return $this->balance;
+    }
+}
+
+class Savings extends Account {
+    public function rate(): int {
+        return 5;
+    }
+}
+
+class FixedDeposit extends Account {
+    public function rate(): int {
+        return 12;
+    }
+}
+
+class Current extends Account {
+    public function rate(): int {
+        return 0;
+    }
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    [$kind, $balance] = explode(",", trim($line));
+    $account = match ($kind) {
+        "savings" => new Savings((int) $balance),
+        "fixed" => new FixedDeposit((int) $balance),
+        "current" => new Current((int) $balance),
+    };
+    echo ucfirst($kind), ": UGX ", number_format($account->balance()), " earns UGX ", number_format($account->yearlyInterest()), " a year\n";
+}
+`,
+  'php21-vip': php`<?php
+class Customer {
+    public function __construct(protected string $name) {}
+
+    public function describe(): string {
+        return $this->name;
+    }
+}
+
+class VipCustomer extends Customer {
+    public function describe(): string {
+        return parent::describe() . " (VIP)";
+    }
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    [$name, $kind] = explode(",", trim($line));
+    $c = $kind === "vip" ? new VipCustomer($name) : new Customer($name);
+    echo $c->describe(), "\n";
+}
+`,
 };
