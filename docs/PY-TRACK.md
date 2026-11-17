@@ -1,6 +1,6 @@
 # Python track (course id `py-start`)
 
-Owner: Python account. Files: `src/content/py/`, `src/content/python-course.js`, `tests/solutions-py.mjs`
+STATUS: COMPLETE (57 lessons, 125 exercises). Owner: Python account. Files: `src/content/py/`, `src/content/python-course.js`, `tests/solutions-py.mjs`
 (Python solutions from Level 6 on), this file.
 
 Levels 1 to 5 (35 lessons, 68 exercises) were written first. This file plans the rest, agreed with the
@@ -43,12 +43,12 @@ is run by `npm test`, so nothing is taught that does not work.
 - [x] 51 `py-logging`: logging, debugging, counting calls and timing
 - [x] 52 `py-project-duuka`: Project: Duuka Manager (SQLite + command line + logging + tests)
 
-### Level 9: Capstones and the path forward (lessons 53 to 57)
+### Level 9: Capstones and the path forward (lessons 53 to 57) - DONE
 - [x] 53 `py-async`: concurrency with real asyncio (top-level `await`; threads are explained, not run)
 - [x] 54 `py-backend`: how a web backend thinks (a 25-line MiniApp stands in for Flask)
 - [x] 55 `py-shipping`: packaging and shipping (tomllib, versions, entry points, zipfile, checksums)
-- [ ] 56 Where to go next: web, data, AI, automation
-- [ ] 57 Final capstone: a small business system
+- [x] 56 `py-next`: where to go next: data, automation, web and AI (a working first step on each road)
+- [x] 57 `py-capstone`: final capstone: a small business system (stock, cash and credit sales, payments, commands, JSON export, tests)
 
 Lesson 38 carries special methods and dataclasses together; if the exercises show it is too much, it is
 split and later lessons are renumbered here.

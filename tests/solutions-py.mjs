@@ -7,6 +7,7 @@ import { level7bSolution as L7B } from '../src/content/py/level7b.js';
 import { level8Solution as L8 } from '../src/content/py/level8a.js';
 import { level8bSolution as L8B } from '../src/content/py/level8b.js';
 import { level9aSolution as L9A } from '../src/content/py/level9a.js';
+import { level9bSolution as L9B } from '../src/content/py/level9b.js';
 
 export const pySolutions = {
   // ---- lesson 36: decorators
@@ -797,5 +798,43 @@ def load_entry_point(spec):
 
 function = load_entry_point(input())
 print(function())
+`,
+
+  // ---- lesson 56: where to go next
+  'py55-stats': `import statistics
+
+numbers = [int(x) for x in input().split()]
+mean = statistics.mean(numbers)
+median = statistics.median(numbers)
+mode = statistics.mode(numbers)
+print(f"Mean: {mean:.2f}")
+print(f"Median: {median:.1f}")
+print(f"Mode: {mode}")
+`,
+  'py55-group': `from collections import Counter
+from pathlib import PurePosixPath
+
+n = int(input())
+names = [input() for i in range(n)]
+counts = Counter(PurePosixPath(name).suffix or "(none)" for name in names)
+for kind in sorted(counts):
+    print(f"{kind}: {counts[kind]}")
+`,
+  'py55-similar': `a = input()
+b = input()
+wa = set(a.lower().split())
+wb = set(b.lower().split())
+print(f"Similarity: {len(wa & wb) / len(wa | wb):.2f}")
+`,
+
+  // ---- lesson 57: the final capstone
+  'py56-capstone': `${L9B.businessCode(L9B.SELL_REAL)}
+
+${L9B.COMMANDS_CODE}
+
+n = int(input())
+shop = Business()
+for i in range(n):
+    print(run_line(shop, input()))
 `,
 };
