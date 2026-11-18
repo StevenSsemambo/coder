@@ -206,9 +206,12 @@ Same rules as every track (`docs/TRACKS.md`), plus:
 
 Checked by scripts (so the next author can rerun the idea), then fixed:
 
-- **Answer position.** Every correct answer was the first option, and the app does not shuffle. `src/content/sql/shuffle.js`
-  now spreads the right answer evenly over all positions when the course loads (23, 24, 23 and 23 of 93 four-option
-  questions; fill dropdowns 10, 9, 9). A test keeps it that way. New lessons only need to write the right answer first.
+- **Answer position.** Every correct answer was the first option, and the app did not shuffle. This is now fixed for
+  EVERY track in the app itself: `choiceOrder` in `src/content/blocks.js` shows the options of quiz, predict, bug, web
+  `see` blocks and fill-in gaps in a deterministic shuffled order (different for each question), and `lesson-blocks.js`
+  still checks the option's original index. Authors keep writing the right answer FIRST. Across all tracks the right
+  answer is now shown 26, 25, 27 and 23 percent of the time in positions 1 to 4. `tests/render.mjs` clicks through
+  every choice block of every track (right answer accepted, wrong refused), and `tests/run.mjs` keeps the spread even.
 - **Wide tables on a phone.** `pre` text wraps in this app, which breaks the aligned columns of SQL results (25 results
   are wider than 44 characters, the widest 75). SQL blocks, run output and the expected-versus-actual view now carry a
   `lang-sql` class and scroll sideways (`styles.css`, `components.js`, `lesson-blocks.js`). `tests/render.mjs` checks the
@@ -226,13 +229,5 @@ Checked by scripts (so the next author can rerun the idea), then fixed:
 - Verified clean: no exercise prompt hides a result heading (the six flagged are `SELECT *` and `PRAGMA` outputs whose
   headings come from SQLite), no explanation refers to an option by position, no stray whitespace in prose.
 
-Still open: a native-speaker read of the Kiswahili file, a real-phone look at lesson 1, a predict block and a failed
-exercise (sideways scrolling), and the platform-wide answer-position issue below.
-
-### For the other tracks (engine owner)
-
-The same first-option bias exists elsewhere: the correct answer is option 1 in 99 of 101 C questions, 70 of 70 C++ and
-65 of 100 Python. One fix helps every track: in `choiceBlock` and `seeBlock` (`src/ui/lesson-blocks.js`), list the
-options in the order `shuffleOrder(block.options.length, seed)` gives (seed from the block index plus a hash of the
-question) and compare the tapped option's original index with `block.answer`. It needs no content change.
-
+Still open: a native-speaker read of the Kiswahili file, and a real-phone look at lesson 1, a predict block and a failed
+exercise (sideways scrolling).

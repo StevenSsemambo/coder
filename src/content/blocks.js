@@ -53,6 +53,40 @@ export function shuffleOrder(count, seed = 1) {
   return order;
 }
 
+/**
+ * The order in which the options of a choice (quiz, predict, bug, see) or of a fill-in gap are SHOWN.
+ *
+ * Lessons are written with the right answer FIRST, which is easiest for authors. Shown in that order, a learner
+ * could score well by always tapping the first choice, so the app shows them shuffled. The shuffle is deterministic
+ * (a lesson always looks the same, and so does a screenshot), different for every question (the seed is the question
+ * text and the block's place in the lesson), and never changes what is right: callers keep the ORIGINAL index of each
+ * option when they check an answer. Returns indices into `options`.
+ *
+ * Options that talk about each other ("all of the above", "the first option") keep their written order.
+ */
+const REFERS_TO_OTHERS = /\b(all|none|both|neither)\s+of\s+the\s+(above|options|answers)\b|\b(the\s+)?(first|second|third|last)\s+(option|answer|choice)\b/i;
+
+export function choiceOrder(options, key = '', index = 0) {
+  const identity = Array.from({ length: options.length }, (_, i) => i);
+  if (options.length < 2 || options.some((o) => REFERS_TO_OTHERS.test(String(o)))) return identity;
+  // FNV-1a hash of the question text and the block's place, then a small good-quality random generator (mulberry32).
+  let h = 2166136261;
+  for (const ch of `${key}#${index}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  let a = h >>> 0;
+  const next = () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const order = identity;
+  for (let i = order.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(next() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return order;
+}
+
 const isText = (v) => typeof v === 'string' && v.trim().length > 0;
 
 function checkChoice(block, problems) {

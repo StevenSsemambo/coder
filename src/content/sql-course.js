@@ -7,13 +7,11 @@ import { level4a } from './sql/level4a.js';
 import { level4b } from './sql/level4b.js';
 import { level5a } from './sql/level5a.js';
 import { level5b } from './sql/level5b.js';
-import { shuffleChoices } from './sql/shuffle.js';
 
 export const sqlCourse = {
   id: 'sql-start',
   language: 'sql',
   title: 'SQL from Zero',
   subtitle: 'Ask databases questions, then design your own. Runs offline on SQLite.',
-  // shuffleChoices: the lessons are written with the right answer first; this spreads it over every position.
-  lessons: shuffleChoices([...level1, ...level1b, ...level2, ...level3, ...level4a, ...level4b, ...level5a, ...level5b]),
+  lessons: [...level1, ...level1b, ...level2, ...level3, ...level4a, ...level4b, ...level5a, ...level5b],
 };
