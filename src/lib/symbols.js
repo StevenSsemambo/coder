@@ -226,4 +226,4 @@ SYMBOLS.js = [
 
 
 /** The editor/symbol language to use for a course language (the web course edits JavaScript in lessons). */
-export const editorLanguage = (courseLanguage) => (courseLanguage === 'web' ? 'js' : courseLanguage);
+export const editorLanguage = (courseLanguage) => (courseLanguage === 'web' ? 'js' : courseLanguage === 'cppfull' ? 'cpp' : courseLanguage);

@@ -27,7 +27,7 @@ const server = await createServer({ server: { middlewareMode: true }, appType: '
 let ok = 0;
 const failures = [];
 try {
-  const { courses } = await server.ssrLoadModule('/src/content/index.js');
+  const { allCourses: courses } = await server.ssrLoadModule('/src/content/index.js');
   const { renderBlock } = await server.ssrLoadModule('/src/ui/lesson-blocks.js');
   const { lessonView } = await server.ssrLoadModule('/src/ui/views/lesson.js');
   const { outputView, testResultsView } = await server.ssrLoadModule('/src/ui/components.js');
