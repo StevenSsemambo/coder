@@ -5,7 +5,7 @@ Course id `java-start` (proposed), language `java`. The Java account owns the le
 `docs/TRACKS.md`, decision of the project owner on 2026-11-15).
 
 Last updated: 2026-11-15. Status: **the runtime is built into the app and verified in a real browser. Levels 1 and 2 (lessons 1 to 15) and
-Level 3 lessons 16 to 19 are written and tested. Lessons 20 to 27 are next.**
+Level 3 lessons 16 to 23 are written and tested. Lessons 24 to 27 are next.**
 
 ## 1. Verdict
 
@@ -173,7 +173,7 @@ Headless Chromium 153, driving the **built** app (`vite build` then `vite previe
 ## 7. Roadmap
 
 `[x]` written and tested, `[ ]` still to write. Lesson ids never change once published. Exercise ids start with
-`j<lesson number>-`. This order is a proposal for the owner to approve, not a promise. **Lessons 1 to 19 are written and tested; the rest of Level 3 and Levels 4 to 6 are still to write.**
+`j<lesson number>-`. This order is a proposal for the owner to approve, not a promise. **Lessons 1 to 23 are written and tested; the rest of Level 3 and Levels 4 to 6 are still to write.**
 
 **Running project: the Village SACCO.** A savings and credit group (members, savings accounts, loans,
 interest, a monthly report). It is the most Ugandan example I can think of that also needs everything
@@ -208,10 +208,10 @@ Java course distinct.)
 - [x] 17. `j-constructors` Constructors and `this`
 - [x] 18. `j-encapsulation` Private fields, getters and setters, validation
 - [x] 19. `j-static` `static` members and constants
-- [ ] 20. `j-object` `toString`, `equals`, `hashCode`
-- [ ] 21. `j-inherit` Inheritance, `super`, overriding
-- [ ] 22. `j-poly` Polymorphism and `instanceof`
-- [ ] 23. `j-abstract` Abstract classes
+- [x] 20. `j-object` `toString`, `equals`, `hashCode`
+- [x] 21. `j-inherit` Inheritance, `super`, overriding
+- [x] 22. `j-poly` Polymorphism and `instanceof`
+- [x] 23. `j-abstract` Abstract classes
 - [ ] 24. `j-interfaces` Interfaces: `default` and `static` methods, interface or abstract class
 - [ ] 25. `j-nested` Nested, inner and anonymous classes
 - [ ] 26. `j-enums-records` Enums and records

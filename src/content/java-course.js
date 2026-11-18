@@ -20,11 +20,15 @@ import { classesLesson } from './java/classes.js';
 import { constructorsLesson } from './java/constructors.js';
 import { encapsulationLesson } from './java/encapsulation.js';
 import { staticsLesson } from './java/statics.js';
+import { objectMethodsLesson } from './java/objectmethods.js';
+import { inheritanceLesson } from './java/inheritance.js';
+import { polymorphismLesson } from './java/polymorphism.js';
+import { abstractsLesson } from './java/abstracts.js';
 
 export const javaCourse = {
   id: 'java-start',
   language: 'java',
   title: 'Java from Zero to Market-Ready',
   subtitle: 'Learn real Java offline, and build the Village SACCO system step by step',
-  lessons: [whatLesson, firstLesson, variablesLesson, operatorsLesson, inputLesson, decisionsLesson, loopsLesson, nestedLesson, methodsLesson, recursionLesson, arraysLesson, arrayAlgosLesson, gridsLesson, stringsLesson, ledgerLesson, classesLesson, constructorsLesson, encapsulationLesson, staticsLesson],
+  lessons: [whatLesson, firstLesson, variablesLesson, operatorsLesson, inputLesson, decisionsLesson, loopsLesson, nestedLesson, methodsLesson, recursionLesson, arraysLesson, arrayAlgosLesson, gridsLesson, stringsLesson, ledgerLesson, classesLesson, constructorsLesson, encapsulationLesson, staticsLesson, objectMethodsLesson, inheritanceLesson, polymorphismLesson, abstractsLesson],
 };

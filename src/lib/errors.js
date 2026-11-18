@@ -1329,6 +1329,57 @@ const RULES = [
     }),
   },
   {
+    id: 'java-override',
+    languages: ['java'],
+    match: /error: (?:method does not override or implement a method from a supertype|[^\n]*cannot override[^\n]*(?:\n[^\n]*)?return type)/,
+    build: () => ({
+      en: {
+        title: 'This method does not override anything',
+        why: 'You wrote @Override (or a method that should replace one from the parent class or an interface), but Java found no method with exactly that name, those parameter types and that return type to replace. The usual causes are a small spelling or capital letter difference (tostring instead of toString), a different parameter (equals(Member m) instead of equals(Object o)), or a different return type.',
+        fix: 'Compare your method letter by letter with the one you want to replace. For the Object methods use exactly: public String toString(), public boolean equals(Object o) and public int hashCode(). The @Override line is a friend: it makes Java check this for you.',
+      },
+      sw: {
+        title: 'Method hii haibadilishi chochote',
+        why: 'Uliandika @Override (au method inayopaswa kuchukua nafasi ya ile ya class mzazi au interface), lakini Java haikupata method yenye jina hilo hasa, aina hizo za vigezo na aina hiyo ya kurudisha. Sababu za kawaida ni tofauti ndogo ya tahajia au herufi kubwa (tostring badala ya toString), kigezo tofauti (equals(Member m) badala ya equals(Object o)), au aina tofauti ya kurudisha.',
+        fix: 'Linganisha method yako herufi kwa herufi na ile unayotaka kuibadilisha. Kwa method za Object tumia hasa: public String toString(), public boolean equals(Object o) na public int hashCode(). Mstari wa @Override ni rafiki: unaifanya Java ikague hili kwa ajili yako.',
+      },
+    }),
+  },
+  {
+    id: 'java-weaker',
+    languages: ['java'],
+    match: /attempting to assign weaker access privileges/,
+    build: () => ({
+      en: {
+        title: 'An overriding method must be at least as visible',
+        why: 'The method you are replacing is public (for example toString in Object, or a method of an interface). A replacement is not allowed to be less visible than the original, because code that holds the parent type expects to be able to call it.',
+        fix: 'Write the word public in front of the method: public String toString() { ... }. Methods of an interface are always public, so their implementations must say public as well.',
+      },
+      sw: {
+        title: 'Method inayobadilisha lazima ionekane angalau kama ya asili',
+        why: 'Method unayoibadilisha ni public (kwa mfano toString ndani ya Object, au method ya interface). Mbadala hauruhusiwi kuonekana kidogo kuliko ya asili, kwa sababu msimbo unaoshikilia aina ya mzazi unatarajia kuweza kuiita.',
+        fix: 'Andika neno public mbele ya method: public String toString() { ... }. Method za interface siku zote ni public, kwa hiyo utekelezaji wake lazima useme public pia.',
+      },
+    }),
+  },
+  {
+    id: 'java-abstract-impl',
+    languages: ['java'],
+    match: /error: ([\w$]+) is not abstract and does not override abstract method ([\w$]+\([^)]*\)) in ([\w$]+)/,
+    build: (m) => ({
+      en: {
+        title: `${m[1]} must finish the abstract method ${m[2]}`,
+        why: `${m[3]} declares ${m[2]} as abstract: a promise that every real subclass will supply the body. ${m[1]} is a normal (not abstract) class, but it has not done so, so Java refuses to build it.`,
+        fix: `Write the method in ${m[1]} with exactly the same header and a body (and @Override), or make ${m[1]} abstract as well if it is only another half-finished step. If the method was never meant to be abstract, give it a body in ${m[3]} instead.`,
+      },
+      sw: {
+        title: `${m[1]} lazima ikamilishe method ya abstract ${m[2]}`,
+        why: `${m[3]} imetangaza ${m[2]} kuwa abstract: ahadi kwamba kila subclass halisi itatoa mwili wake. ${m[1]} ni class ya kawaida (si abstract), lakini haijafanya hivyo, kwa hiyo Java inakataa kuijenga.`,
+        fix: `Andika method hiyo ndani ya ${m[1]} kwa kichwa kile kile na mwili (pamoja na @Override), au fanya ${m[1]} iwe abstract pia kama ni hatua nyingine isiyokamilika. Kama method haikukusudiwa kuwa abstract, ipe mwili ndani ya ${m[3]}.`,
+      },
+    }),
+  },
+  {
     id: 'java-lossy',
     languages: ['java'],
     match: /incompatible types: possible lossy conversion from (\w+) to (\w+)/,
