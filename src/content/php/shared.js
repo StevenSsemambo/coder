@@ -198,3 +198,186 @@ function money(int $n): string {
     return number_format($n);
 }
 `;
+
+// ---- Level 4 helpers: the Wallet project (lessons 23 and 24) ---------------------------------------------------------
+/**
+ * The wallet session of the project, as output lines. Commands: deposit N, withdraw N, balance, statement.
+ * Withdrawals cost the booth fee on top. `limit` (optional) is a per-withdrawal limit (exercise php24-limit).
+ */
+export function walletSession(commands, { limit = null } = {}) {
+  const outLines = [];
+  let balance = 0;
+  const history = [];
+  for (const raw of commands) {
+    const parts = raw.trim().split(/\s+/);
+    const cmd = parts[0].toLowerCase();
+    if (cmd === '') continue;
+    try {
+      const amountOf = () => {
+        const t = parts[1] ?? '';
+        if (!/^\d+$/.test(t)) throw new Error(`Not a whole number: ${t}`);
+        return Number(t);
+      };
+      const positive = (a) => {
+        if (a <= 0) throw new Error('Amount must be above zero');
+      };
+      if (cmd === 'deposit') {
+        const a = amountOf();
+        positive(a);
+        balance += a;
+        history.push({ kind: 'Deposit', amount: a, fee: 0 });
+        outLines.push(`Deposited UGX ${money(a)}. Balance: UGX ${money(balance)}`);
+      } else if (cmd === 'withdraw') {
+        const a = amountOf();
+        positive(a);
+        if (limit !== null && a > limit) throw new Error(`Limit is UGX ${money(limit)} per withdrawal`);
+        const fee = boothFee('withdraw', a);
+        if (a + fee > balance) throw new Error(`Short by UGX ${money(a + fee - balance)}`);
+        balance -= a + fee;
+        history.push({ kind: 'Withdraw', amount: a, fee });
+        outLines.push(`Withdrew UGX ${money(a)} (fee UGX ${money(fee)}). Balance: UGX ${money(balance)}`);
+      } else if (cmd === 'balance') {
+        outLines.push(`Balance: UGX ${money(balance)}`);
+      } else if (cmd === 'statement') {
+        if (history.length === 0) outLines.push('No transactions yet');
+        else {
+          outLines.push('Statement');
+          history.forEach((h, i) => outLines.push(`${i + 1}. ${h.kind} UGX ${money(h.amount)}${h.kind === 'Withdraw' ? ` (fee UGX ${money(h.fee)})` : ''}`));
+          outLines.push(`Fees paid: UGX ${money(history.reduce((s, h) => s + h.fee, 0))}`);
+        }
+      } else {
+        outLines.push(`Unknown command: ${cmd}`);
+      }
+    } catch (e) {
+      outLines.push(`Declined: ${e.message}`);
+    }
+  }
+  return { lines: outLines, balance, history };
+}
+
+/** The PHP classes of the Wallet project, as one piece of PHP code (no command loop). */
+export const WALLET_LIB = php`<?php
+declare(strict_types=1);
+
+enum Kind: string {
+    case Deposit = "deposit";
+    case Withdraw = "withdraw";
+
+    public function label(): string {
+        return ucfirst($this->value);
+    }
+}
+
+final class Transaction {
+    public function __construct(
+        public readonly Kind $kind,
+        public readonly int $amount,
+        public readonly int $fee = 0,
+    ) {}
+}
+
+class InvalidAmountException extends InvalidArgumentException {}
+
+class InsufficientFundsException extends RuntimeException {
+    public function __construct(public readonly int $missing) {
+        parent::__construct("Short by UGX " . number_format($missing));
+    }
+}
+
+final class Wallet {
+    private int $balance = 0;
+    private array $history = [];
+
+    public function balance(): int {
+        return $this->balance;
+    }
+
+    public function history(): array {
+        return $this->history;
+    }
+
+    public function deposit(int $amount): void {
+        $this->requirePositive($amount);
+        $this->balance += $amount;
+        $this->history[] = new Transaction(Kind::Deposit, $amount);
+    }
+
+    public function withdraw(int $amount): int {
+        $this->requirePositive($amount);
+        $fee = self::feeFor($amount);
+        $needed = $amount + $fee;
+        if ($needed > $this->balance) {
+            throw new InsufficientFundsException($needed - $this->balance);
+        }
+        $this->balance -= $needed;
+        $this->history[] = new Transaction(Kind::Withdraw, $amount, $fee);
+        return $fee;
+    }
+
+    private function requirePositive(int $amount): void {
+        if ($amount <= 0) {
+            throw new InvalidAmountException("Amount must be above zero");
+        }
+    }
+
+    private static function feeFor(int $amount): int {
+        if ($amount <= 50000) {
+            return 1000;
+        }
+        return $amount <= 200000 ? 2000 : 3500;
+    }
+}
+
+function parseAmount(string $text): int {
+    if (!ctype_digit($text)) {
+        throw new InvalidAmountException("Not a whole number: " . $text);
+    }
+    return (int) $text;
+}
+`;
+
+/** The command loop of the Wallet project. `catches` is the text inside catch ( ... ). */
+export const walletMain = (catches = 'InvalidAmountException | InsufficientFundsException') => php`
+$wallet = new Wallet();
+while (($line = fgets(STDIN)) !== false) {
+    $parts = preg_split('/\s+/', trim($line));
+    $command = strtolower($parts[0]);
+    if ($command === "") {
+        continue;
+    }
+    try {
+        if ($command === "deposit") {
+            $amount = parseAmount($parts[1] ?? "");
+            $wallet->deposit($amount);
+            echo "Deposited UGX ", number_format($amount), ". Balance: UGX ", number_format($wallet->balance()), "\n";
+        } elseif ($command === "withdraw") {
+            $amount = parseAmount($parts[1] ?? "");
+            $fee = $wallet->withdraw($amount);
+            echo "Withdrew UGX ", number_format($amount), " (fee UGX ", number_format($fee), "). Balance: UGX ", number_format($wallet->balance()), "\n";
+        } elseif ($command === "balance") {
+            echo "Balance: UGX ", number_format($wallet->balance()), "\n";
+        } elseif ($command === "statement") {
+            $history = $wallet->history();
+            if (count($history) === 0) {
+                echo "No transactions yet\n";
+            } else {
+                echo "Statement\n";
+                $fees = 0;
+                foreach ($history as $i => $tx) {
+                    echo $i + 1, ". ", $tx->kind->label(), " UGX ", number_format($tx->amount);
+                    if ($tx->kind === Kind::Withdraw) {
+                        echo " (fee UGX ", number_format($tx->fee), ")";
+                    }
+                    echo "\n";
+                    $fees += $tx->fee;
+                }
+                echo "Fees paid: UGX ", number_format($fees), "\n";
+            }
+        } else {
+            echo "Unknown command: ", $command, "\n";
+        }
+    } catch (${catches} $e) {
+        echo "Declined: ", $e->getMessage(), "\n";
+    }
+}
+`;

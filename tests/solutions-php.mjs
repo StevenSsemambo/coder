@@ -1,6 +1,6 @@
 // Reference solutions for the PHP course (see docs/PHP-TRACK.md). Every PHP exercise must have one here,
 // it must pass all its tests, and the starter must NOT pass.
-import { MOMO_LIB } from '../src/content/php/shared.js';
+import { MOMO_LIB, WALLET_LIB, walletMain } from '../src/content/php/shared.js';
 
 const php = String.raw;
 
@@ -1122,4 +1122,271 @@ while (($line = fgets(STDIN)) !== false) {
     echo $c->describe(), "\n";
 }
 `,
+
+  'php22-service': php`<?php
+enum Service: string {
+    case Deposit = "deposit";
+    case Withdraw = "withdraw";
+    case Send = "send";
+
+    public function label(): string {
+        return ucfirst($this->value);
+    }
+
+    public function fee(int $amount): int {
+        return match ($this) {
+            self::Deposit => 0,
+            self::Withdraw => $amount <= 50000 ? 1000 : ($amount <= 200000 ? 2000 : 3500),
+            self::Send => max(100, (int) ceil($amount / 100)),
+        };
+    }
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    [$name, $amount] = explode(",", trim($line));
+    $service = Service::tryFrom($name);
+    if ($service === null) {
+        echo "Unknown service: ", $name, "\n";
+    } else {
+        echo $service->label(), ": fee UGX ", number_format($service->fee((int) $amount)), "\n";
+    }
+}
+`,
+  'php22-printable': php`<?php
+interface Printable {
+    public function render(): string;
+}
+
+class Slip implements Printable {
+    public function __construct(private string $name, private int $amount) {}
+
+    public function render(): string {
+        return "RECEIPT " . $this->name . " UGX " . number_format($this->amount);
+    }
+}
+
+class SmsText implements Printable {
+    public function __construct(private string $name, private string $phone, private int $amount) {}
+
+    public function render(): string {
+        return "SMS to " . $this->phone . ": " . $this->name . ", you paid UGX " . number_format($this->amount);
+    }
+}
+
+function show(Printable $p): void {
+    echo $p->render(), "\n";
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    [$name, $phone, $amount] = explode(",", trim($line));
+    show(new Slip($name, (int) $amount));
+    show(new SmsText($name, $phone, (int) $amount));
+}
+`,
+  'php22-trait': php`<?php
+trait Money {
+    public function ugx(int $n): string {
+        return "UGX " . number_format($n);
+    }
+}
+
+class Receipt {
+    use Money;
+    public function __construct(private string $name, private int $amount) {}
+    public function line(): string {
+        return "Receipt: " . $this->name . " " . $this->ugx($this->amount);
+    }
+}
+
+class Invoice {
+    use Money;
+    public function __construct(private string $name, private int $amount) {}
+    public function line(): string {
+        return "Invoice: " . $this->name . " " . $this->ugx($this->amount) . " due";
+    }
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    [$name, $amount] = explode(",", trim($line));
+    echo (new Receipt($name, (int) $amount))->line(), "\n";
+    echo (new Invoice($name, (int) $amount))->line(), "\n";
+}
+`,
+  'php22-status': php`<?php
+enum Status: string {
+    case Pending = "pending";
+    case Paid = "paid";
+    case Failed = "failed";
+
+    public function isFinal(): bool {
+        return match ($this) {
+            self::Pending => false,
+            self::Paid, self::Failed => true,
+        };
+    }
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    $text = strtolower(trim($line));
+    $status = Status::tryFrom($text);
+    if ($status === null) {
+        echo $text, ": unknown status\n";
+    } else {
+        echo $text, ": ", $status->isFinal() ? "final" : "waiting", "\n";
+    }
+}
+`,
+  'php23-handle': php`<?php
+class InsufficientFundsException extends Exception {
+    public function __construct(public readonly int $missing) {
+        parent::__construct("Short by UGX " . number_format($missing));
+    }
+}
+
+class Wallet {
+    private int $balance = 0;
+
+    public function deposit(int $amount): void {
+        if ($amount <= 0) {
+            throw new InvalidArgumentException("Amount must be above zero");
+        }
+        $this->balance += $amount;
+    }
+
+    public function withdraw(int $amount): void {
+        if ($amount <= 0) {
+            throw new InvalidArgumentException("Amount must be above zero");
+        }
+        if ($amount > $this->balance) {
+            throw new InsufficientFundsException($amount - $this->balance);
+        }
+        $this->balance -= $amount;
+    }
+
+    public function balance(): int {
+        return $this->balance;
+    }
+}
+
+$wallet = new Wallet();
+$attempts = 0;
+while (($line = fgets(STDIN)) !== false) {
+    [$command, $amount] = explode(" ", trim($line));
+    try {
+        if ($command === "deposit") {
+            $wallet->deposit((int) $amount);
+        } else {
+            $wallet->withdraw((int) $amount);
+        }
+        echo "OK: balance UGX ", number_format($wallet->balance()), "\n";
+    } catch (InvalidArgumentException | InsufficientFundsException $e) {
+        echo "Declined: ", $e->getMessage(), "\n";
+    } finally {
+        $attempts++;
+    }
+}
+echo "Attempts: ", $attempts, "\n";
+`,
+  'php23-parse-throw': php`<?php
+function parseAmount(string $text): int {
+    if (!ctype_digit($text)) {
+        throw new InvalidArgumentException("Not a whole number: " . $text);
+    }
+    $n = (int) $text;
+    if ($n === 0) {
+        throw new InvalidArgumentException("Amount must be above zero");
+    }
+    return $n;
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    $text = trim($line);
+    try {
+        $amount = parseAmount($text);
+        echo "UGX ", number_format($amount), "\n";
+    } catch (InvalidArgumentException $e) {
+        echo "Error: ", $e->getMessage(), "\n";
+    }
+}
+`,
+  'php23-custom': php`<?php
+class LimitExceededException extends Exception {
+    public function __construct(public readonly int $limit) {
+        parent::__construct("Limit of UGX " . number_format($limit) . " exceeded");
+    }
+}
+
+class Atm {
+    public function pay(int $amount): void {
+        if ($amount > 1000000) {
+            throw new LimitExceededException(1000000);
+        }
+    }
+}
+
+$atm = new Atm();
+while (($line = fgets(STDIN)) !== false) {
+    $amount = (int) trim($line);
+    try {
+        $atm->pay($amount);
+        echo "Approved UGX ", number_format($amount), "\n";
+    } catch (LimitExceededException $e) {
+        echo "Declined: ", $e->getMessage(), "\n";
+    }
+}
+`,
+  'php24-session': WALLET_LIB + walletMain(),
+  'php24-summary': WALLET_LIB.replace('    private function requirePositive', php`    public function count(Kind $kind): int {
+        $n = 0;
+        foreach ($this->history as $tx) {
+            if ($tx->kind === $kind) {
+                $n++;
+            }
+        }
+        return $n;
+    }
+
+    public function feesPaid(): int {
+        $sum = 0;
+        foreach ($this->history as $tx) {
+            $sum += $tx->fee;
+        }
+        return $sum;
+    }
+
+    private function requirePositive`) + php`
+$wallet = new Wallet();
+while (($line = fgets(STDIN)) !== false) {
+    $parts = preg_split('/\s+/', trim($line));
+    try {
+        if ($parts[0] === "deposit") {
+            $wallet->deposit(parseAmount($parts[1] ?? ""));
+        } elseif ($parts[0] === "withdraw") {
+            $wallet->withdraw(parseAmount($parts[1] ?? ""));
+        }
+    } catch (InvalidAmountException | InsufficientFundsException $e) {
+        // refused commands are not counted
+    }
+}
+echo "Deposits: ", $wallet->count(Kind::Deposit), "\n";
+echo "Withdrawals: ", $wallet->count(Kind::Withdraw), "\n";
+echo "Fees paid: UGX ", number_format($wallet->feesPaid()), "\n";
+`,
+  'php24-limit': WALLET_LIB.replace(
+    'class InsufficientFundsException',
+    php`class LimitExceededException extends RuntimeException {
+    public function __construct(int $limit) {
+        parent::__construct("Limit is UGX " . number_format($limit) . " per withdrawal");
+    }
+}
+
+class InsufficientFundsException`
+  ).replace(
+    '        $fee = self::feeFor($amount);\n',
+    php`        if ($amount > 1000000) {
+            throw new LimitExceededException(1000000);
+        }
+        $fee = self::feeFor($amount);
+`
+  ) + walletMain('InvalidAmountException | InsufficientFundsException | LimitExceededException'),
 };

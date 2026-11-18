@@ -2,7 +2,7 @@
 
 Planned course id `php-start`, language id `php`. Files (when created): `src/content/php/` (lessons),
 `src/content/php-course.js` (course list), `tests/solutions-php.mjs` (reference solutions).
-Owner: the PHP account. Status: **runner built; Levels 1 to 3 written (18 lessons, 69 exercises). Next: Level 4 (objects, lessons 19 to 24).**
+Owner: the PHP account. Status: **runner built; Levels 1 to 4 written (24 lessons, 92 exercises). Next: Level 5, market-ready PHP (lessons 25 to 33).**
 
 Running project: **Nambi's Mobile Money Booth**, a small agent booth in a trading centre. Learners start
 by printing a receipt in lesson 1 and finish with a tested payment-and-wallet application (deposits,
@@ -98,12 +98,12 @@ exercises with exactly 3 hints and at least one hidden test (an exercise that ta
 - [x] 18. `php-fees` Project: Mobile Money fee calculator
 
 **Level 4: Objects**
-- [ ] 19. `php-classes` Classes, objects, properties, methods, constructor promotion
-- [ ] 20. `php-encapsulation` `public`, `private`, `readonly`, getters
-- [ ] 21. `php-inherit` Inheritance, `abstract`, `parent::`
-- [ ] 22. `php-interfaces` Interfaces, traits, `enum`
-- [ ] 23. `php-exceptions` `try`, `catch`, `finally`, custom exceptions
-- [ ] 24. `php-wallet` Project: the `Wallet` class (deposit, withdraw, insufficient funds)
+- [x] 19. `php-classes` Classes, objects, properties, methods, constructor promotion
+- [x] 20. `php-encapsulation` `public`, `private`, `readonly`, getters
+- [x] 21. `php-inherit` Inheritance, `abstract`, `parent::`
+- [x] 22. `php-interfaces` Interfaces, traits, `enum`
+- [x] 23. `php-exceptions` `try`, `catch`, `finally`, custom exceptions
+- [x] 24. `php-wallet` Project: the `Wallet` class (deposit, withdraw, insufficient funds)
 
 **Level 5: Market-ready PHP** (web requests are simulated with plain arrays, because there is no web server in the app)
 - [ ] 25. `php-requests` How the web works for PHP (`$_GET`, `$_POST`, `$_SERVER`, simulated requests)
@@ -160,6 +160,22 @@ Lessons 14 to 18 are done and tested: 23 exercises (`php14-` to `php18-`). Do no
 - `reorder` blocks: PHP hoists top-level functions, so a reorder block whose only order rule is "function before call" has several correct orders
   and fails the "only one order is correct" test. Use 7 or more lines (the permutation check only runs for 6 or fewer).
 - A `predict` answer must be exactly the text the code prints (the test compares).
+
+## Level 4 as written (files: `src/content/php/level4.js` lessons 19 to 21, `level4b.js` lessons 22 to 24)
+
+Lessons 19 to 24 are done and tested: 23 exercises (`php19-` to `php24-`). Do not rewrite them. Facts later lessons can rely on:
+
+- Taught: classes, objects, `new`, `$this`, constructor promotion, `return $this` chaining, handles vs `clone`, class constants and static methods (mentioned),
+  `public`/`private`/`protected`, getters, `readonly`, `final`, `__toString`, static factories (`fromLine`), `extends`, `parent::`, `abstract`, polymorphism,
+  `instanceof`, interfaces, traits, backed enums (`from`, `tryFrom`, `cases`, methods, `match ($this)`), `throw`, `try`/`catch`/`finally`, custom exceptions with
+  readonly data, catching several kinds, `Throwable`, the null-safe `?->` (mentioned in a mistake).
+- NOT yet taught: namespaces, autoloading, `use` imports, static properties, `__get`/magic methods, generators, `DateTime`, PDO, JSON, sessions.
+- The Wallet project: PHP in `WALLET_LIB` and `walletMain()` in `shared.js` (the lesson, the exercise starters and the solutions all use them);
+  the expected outputs come from `walletSession()`. Commands: `deposit N`, `withdraw N` (booth fee on top), `balance`, `statement`. Messages are
+  `Deposited UGX x. Balance: UGX y`, `Withdrew UGX x (fee UGX f). Balance: UGX y`, `Declined: <message>`, `Unknown command: c`.
+- Lesson 25 onwards can build on the wallet and on `Kind`, `Transaction`, `InvalidAmountException`, `InsufficientFundsException`.
+- PHP trap seen in a test: `echo "UGX ", f()` prints `UGX ` BEFORE `f()` throws. Exercise php23-parse-throw warns about it in a hint.
+- Enum and `fill` blocks: every wrong option of a `fill` must really fail (the test checks), so "private vs public" cannot be a fill.
 
 ## Style notes specific to PHP
 
