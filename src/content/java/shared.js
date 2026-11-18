@@ -24,3 +24,10 @@ export const TAIL = ['    }', '}'];
  * `body` goes inside main (indent it by 8 spaces).
  */
 export const progM = (methods, body, imports = '') => `${imports ? `${imports}\n\n` : ''}public class Main {\n${methods}\n\n    public static void main(String[] args) {\n${body}\n    }\n}\n`;
+
+/**
+ * A complete program with its own classes. `classes` go above `public class Main` (top-level, not public);
+ * `methods` are optional static methods inside Main before main (indent by 4); `body` goes inside main (indent by 8).
+ */
+export const progC = (classes, body, imports = '', methods = '') =>
+  `${imports ? `${imports}\n\n` : ''}${classes}\n\npublic class Main {\n${methods ? `${methods}\n\n` : ''}    public static void main(String[] args) {\n${body}\n    }\n}\n`;

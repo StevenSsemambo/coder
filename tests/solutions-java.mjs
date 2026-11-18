@@ -1,11 +1,13 @@
 // Reference solutions for the Java course (Java track). Every Java exercise must have one here.
-import { prog, progM } from '../src/content/java/shared.js';
+import { prog, progM, progC } from '../src/content/java/shared.js';
 import { ledgerProgram } from '../src/content/java/ledger-program.js';
 
 const J = (body) => prog(body);
 const S = (body) => prog(body, 'import java.util.Scanner;');
 const MS = (methods, body) => progM(methods, body, 'import java.util.Scanner;');
 const M = (methods, body) => progM(methods, body);
+const C = (classes, body, imports = '', methods = '') => progC(classes, body, imports, methods);
+const SCAN = 'import java.util.Scanner;';
 
 export const javaSolutions = {
   // Level 1, lesson 1: j-what
@@ -635,4 +637,366 @@ export const javaSolutions = {
                     }
                 }`,
   }),
+
+  // Level 3, lesson 16: j-classes
+  'j16-member-card': C(String.raw`class Member {
+    String name;
+    int balance;
+
+    String summary() {
+        return "Name: " + name + ", Balance: " + balance;
+    }
+}`, String.raw`        Member m = new Member();
+        m.name = "Amina";
+        m.balance = 50000;
+        System.out.println(m.summary());`),
+  'j16-loan': C(String.raw`class Loan {
+    int remaining;
+
+    void pay(int amount) {
+        remaining -= amount;
+    }
+
+    boolean isCleared() {
+        return remaining <= 0;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        Loan loan = new Loan();
+        loan.remaining = in.nextInt();
+        loan.pay(in.nextInt());
+        loan.pay(in.nextInt());
+        System.out.println("Remaining: " + loan.remaining);
+        System.out.println("Cleared: " + loan.isCleared());`, SCAN),
+  'j16-items': C(String.raw`class Item {
+    int price;
+    int quantity;
+
+    int total() {
+        return price * quantity;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        Item[] items = new Item[n];
+        for (int i = 0; i < n; i++) {
+            items[i] = new Item();
+            items[i].price = in.nextInt();
+            items[i].quantity = in.nextInt();
+        }
+        int sum = 0;
+        for (Item item : items) {
+            sum += item.total();
+        }
+        System.out.println("Total: " + sum);`, SCAN),
+  'j16-rectangle': C(String.raw`class Rectangle {
+    int width;
+    int height;
+
+    int area() {
+        return width * height;
+    }
+
+    boolean isSquare() {
+        return width == height;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        Rectangle r = new Rectangle();
+        r.width = in.nextInt();
+        r.height = in.nextInt();
+        System.out.println("Area: " + r.area());
+        System.out.println("Square: " + r.isSquare());`, SCAN),
+
+  // Level 3, lesson 17: j-constructors
+  'j17-account': C(String.raw`class Account {
+    String owner;
+    int balance;
+
+    Account(String owner, int balance) {
+        this.owner = owner;
+        this.balance = Math.max(0, balance);
+    }
+
+    String describe() {
+        return owner + ": " + balance;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        String owner = in.next();
+        int start = in.nextInt();
+        Account account = new Account(owner, start);
+        System.out.println(account.describe());`, SCAN),
+  'j17-overload': C(String.raw`class Member {
+    String name;
+    int balance;
+
+    Member(String name, int balance) {
+        this.name = name;
+        this.balance = balance;
+    }
+
+    Member(String name) {
+        this(name, 0);
+    }
+
+    String describe() {
+        return name + " has " + balance;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        Member a = new Member(in.next());
+        Member b = new Member(in.next(), in.nextInt());
+        System.out.println(a.describe());
+        System.out.println(b.describe());`, SCAN),
+  'j17-duration': C(String.raw`class Duration {
+    int hours;
+    int minutes;
+
+    Duration(int total) {
+        this.hours = total / 60;
+        this.minutes = total % 60;
+    }
+
+    String describe() {
+        return hours + "h " + minutes + "m";
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        Duration d = new Duration(in.nextInt());
+        System.out.println(d.describe());`, SCAN),
+  'j17-monthly': C(String.raw`class Loan {
+    int amount;
+    int months;
+    int monthly;
+
+    Loan(int amount, int months) {
+        this.amount = amount;
+        this.months = months;
+        this.monthly = amount / months;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        Loan loan = new Loan(in.nextInt(), in.nextInt());
+        System.out.println("Monthly: " + loan.monthly);`, SCAN),
+
+  // Level 3, lesson 18: j-encapsulation
+  'j18-wallet': C(String.raw`class Wallet {
+    private int cash;
+
+    int getCash() {
+        return cash;
+    }
+
+    void deposit(int amount) {
+        if (amount > 0) {
+            cash += amount;
+        }
+    }
+
+    boolean spend(int amount) {
+        if (amount <= 0 || amount > cash) {
+            return false;
+        }
+        cash -= amount;
+        return true;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        Wallet w = new Wallet();
+        int n = in.nextInt();
+        for (int i = 0; i < n; i++) {
+            String op = in.next();
+            int amount = in.nextInt();
+            if (op.equals("D")) {
+                w.deposit(amount);
+                System.out.println("OK");
+            } else if (w.spend(amount)) {
+                System.out.println("OK");
+            } else {
+                System.out.println("Refused");
+            }
+        }
+        System.out.println("Cash: " + w.getCash());`, SCAN),
+  'j18-thermometer': C(String.raw`class Thermometer {
+    private double celsius = 0;
+
+    void setCelsius(double c) {
+        if (c >= -273.15) {
+            celsius = c;
+        }
+    }
+
+    double getFahrenheit() {
+        return celsius * 9 / 5 + 32;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        Thermometer t = new Thermometer();
+        t.setCelsius(in.nextDouble());
+        System.out.printf("%.1f%n", t.getFahrenheit());
+        t.setCelsius(in.nextDouble());
+        System.out.printf("%.1f%n", t.getFahrenheit());`, SCAN),
+  'j18-safe': C(String.raw`class Safe {
+    private final int code;
+    private int failed = 0;
+
+    Safe(int code) {
+        this.code = code;
+    }
+
+    boolean isLocked() {
+        return failed >= 3;
+    }
+
+    boolean open(int attempt) {
+        if (isLocked()) {
+            return false;
+        }
+        if (attempt == code) {
+            failed = 0;
+            return true;
+        }
+        failed++;
+        return false;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        Safe safe = new Safe(in.nextInt());
+        int n = in.nextInt();
+        for (int i = 0; i < n; i++) {
+            int attempt = in.nextInt();
+            if (safe.isLocked()) {
+                System.out.println("Locked");
+            } else if (safe.open(attempt)) {
+                System.out.println("Opened");
+            } else {
+                System.out.println("Wrong");
+            }
+        }`, SCAN),
+  'j18-gradebook': C(String.raw`class Gradebook {
+    private int[] marks = new int[10];
+    private int count = 0;
+
+    void add(int mark) {
+        if (count < marks.length && mark >= 0 && mark <= 100) {
+            marks[count] = mark;
+            count++;
+        }
+    }
+
+    double average() {
+        if (count == 0) {
+            return 0;
+        }
+        int sum = 0;
+        for (int i = 0; i < count; i++) {
+            sum += marks[i];
+        }
+        return sum / (double) count;
+    }
+
+    int highest() {
+        int best = 0;
+        for (int i = 0; i < count; i++) {
+            if (marks[i] > best) {
+                best = marks[i];
+            }
+        }
+        return best;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        Gradebook book = new Gradebook();
+        while (in.hasNextInt()) {
+            book.add(in.nextInt());
+        }
+        System.out.printf("Average: %.2f%n", book.average());
+        System.out.println("Highest: " + book.highest());`, SCAN),
+
+  // Level 3, lesson 19: j-static
+  'j19-tickets': C(String.raw`class Ticket {
+    private static int issued = 0;
+    private final int number;
+
+    Ticket() {
+        issued++;
+        number = issued;
+    }
+
+    String label() {
+        return "Ticket #" + number;
+    }
+
+    static int getIssued() {
+        return issued;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        for (int i = 0; i < n; i++) {
+            Ticket t = new Ticket();
+            System.out.println(t.label());
+        }
+        System.out.println("Issued: " + Ticket.getIssued());`, SCAN),
+  'j19-converter': C(String.raw`class Currency {
+    static final double RATE = 3700;
+
+    static double toUgx(double usd) {
+        return usd * RATE;
+    }
+
+    static double toUsd(double ugx) {
+        return ugx / RATE;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        double usd = in.nextDouble();
+        double ugx = in.nextDouble();
+        System.out.printf("%.2f%n", Currency.toUgx(usd));
+        System.out.printf("%.2f%n", Currency.toUsd(ugx));`, SCAN),
+  'j19-mathutil': C(String.raw`class MathUtil {
+    static boolean isPrime(int n) {
+        if (n < 2) {
+            return false;
+        }
+        for (int i = 2; i * i <= n; i++) {
+            if (n % i == 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static int gcd(int a, int b) {
+        if (b == 0) {
+            return a;
+        }
+        return gcd(b, a % b);
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        int a = in.nextInt();
+        int b = in.nextInt();
+        if (MathUtil.isPrime(n)) {
+            System.out.println(n + " is prime");
+        } else {
+            System.out.println(n + " is not prime");
+        }
+        System.out.println("GCD: " + MathUtil.gcd(a, b));`, SCAN),
+  'j19-sacco-stats': C(String.raw`class Member {
+    private static int count = 0;
+    private static int total = 0;
+    private final int balance;
+
+    Member(int balance) {
+        this.balance = balance;
+        count++;
+        total += balance;
+    }
+
+    static int average() {
+        if (count == 0) {
+            return 0;
+        }
+        return total / count;
+    }
+
+    static int getCount() {
+        return count;
+    }
+}`, String.raw`        Scanner in = new Scanner(System.in);
+        int n = in.nextInt();
+        for (int i = 0; i < n; i++) {
+            new Member(in.nextInt());
+        }
+        System.out.println("Members: " + Member.getCount());
+        System.out.println("Average: " + Member.average());`, SCAN),
 };

@@ -1291,6 +1291,40 @@ const RULES = [
     }),
   },
   {
+    id: 'java-args',
+    languages: ['java'],
+    match: /error: (constructor|method) ([\w$]+) in (?:class|enum|record|interface) ([\w$]+) cannot be applied to given types/,
+    build: (m) => ({
+      en: {
+        title: `Wrong arguments for ${m[1] === 'constructor' ? 'the constructor' : 'the method'} ${m[2]}`,
+        why: `The ${m[1]} ${m[2]} of ${m[3]} needs different arguments from the ones you gave: too many, too few, the wrong types, or the right values in the wrong order.`,
+        fix: `Look at how ${m[2]} is defined and give exactly the parameters it lists, in the same order and of the same types. If you want to call it with no arguments (or fewer), the class needs another ${m[1]} for that.`,
+      },
+      sw: {
+        title: `Vigezo si sahihi kwa ${m[1] === 'constructor' ? 'constructor' : 'method'} ${m[2]}`,
+        why: `${m[1] === 'constructor' ? 'Constructor' : 'Method'} ${m[2]} ya ${m[3]} inahitaji vigezo tofauti na ulivyovitoa: vingi mno, vichache mno, aina isiyo sahihi, au thamani sahihi kwa mpangilio usio sahihi.`,
+        fix: `Angalia ${m[2]} ilivyofafanuliwa na toa vigezo vile vile inavyoorodhesha, kwa mpangilio ule ule na aina zile zile. Kama unataka kuiita bila vigezo (au vichache), class inahitaji ${m[1]} nyingine kwa hilo.`,
+      },
+    }),
+  },
+  {
+    id: 'java-private',
+    languages: ['java'],
+    match: /error: ([\w$]+)(?:\([^)]*\))? has private access in ([\w$]+)/,
+    build: (m) => ({
+      en: {
+        title: `${m[1]} is private to ${m[2]}`,
+        why: `${m[1]} was declared private, which means only code inside the class ${m[2]} may use it. This line is outside the class, so Java refuses. That is the whole point of private: the class decides how its data is used.`,
+        fix: `Use a public method of ${m[2]} instead, such as a getter (getBalance()) to read it or a method such as deposit(...) to change it. If outside code really should reach it, the class can make it public, but think first.`,
+      },
+      sw: {
+        title: `${m[1]} ni ya faragha ndani ya ${m[2]}`,
+        why: `${m[1]} ilitangazwa private, yaani ni msimbo ulio ndani ya class ${m[2]} tu unaoweza kuitumia. Mstari huu uko nje ya class, kwa hiyo Java inakataa. Hiyo ndiyo maana ya private: class yenyewe huamua data yake itumikeje.`,
+        fix: `Tumia method ya public ya ${m[2]} badala yake, kama getter (getBalance()) kusoma au method kama deposit(...) kubadilisha. Kama msimbo wa nje unapaswa kuifikia kweli, class inaweza kuifanya public, lakini fikiria kwanza.`,
+      },
+    }),
+  },
+  {
     id: 'java-lossy',
     languages: ['java'],
     match: /incompatible types: possible lossy conversion from (\w+) to (\w+)/,
