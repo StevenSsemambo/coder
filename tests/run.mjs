@@ -406,6 +406,7 @@ section('Error translator (real messages from the runtimes)');
     ['java', 'public class Main { public static void main(String[] a) { Thread.sleep(10); } }', 'java-checked', 'Java unhandled checked exception'],
     ['java', 'public class Main { void hi() { } public static void main(String[] a) { hi(); } }', 'java-static', 'Java non-static from main'],
     ['java', 'public class Main { public static void main(String[] a) { final int x = 1; x = 2; } }', 'java-final', 'Java assigning a final'],
+    ['java', 'class S { static final int P = 1; }\npublic class Main { public static void main(String[] a) { S.P = 2; } }', 'java-final', 'Java assigning a static final constant'],
     ['java', 'abstract class Shape { } public class Main { public static void main(String[] a) { Shape s = new Shape(); } }', 'java-abstract', 'Java new on abstract class'],
     ['java', 'public class Main { public static void main(String[] a) { System.out.println("hi"); }', 'java-syntax', 'Java missing closing brace'],
     ['java', 'public class Main { public static void main(String[] a) { int[] x = new int[2]; x[5] = 1; } }', 'java-array-index', 'Java index out of bounds'],
@@ -797,6 +798,30 @@ section('PHP engine (the shared core, on real PHP 8.3 WebAssembly)');
   const again = await r('<?php echo isset($leak) ? "leak" : "clean";');
   check('variables never leak between runs', (await r('<?php $leak = 1;')).error === null && again.stdout === 'clean');
   check('a fatal error does not break the next run', (await r('<?php echo 1 / 0;')).error !== null && (await r('<?php echo "ok";')).stdout === 'ok');
+}
+
+section('SQL lessons: the right answer is not always in the same place');
+{
+  const { sqlCourse } = await import('../src/content/sql-course.js');
+  const spots = { 2: {}, 3: {}, 4: {}, 5: {} };
+  let first = 0;
+  let total = 0;
+  const fillSpots = [0, 0, 0];
+  for (const lesson of sqlCourse.lessons) {
+    for (const b of lesson.blocks) {
+      if (['quiz', 'predict', 'bug'].includes(b.t)) {
+        total += 1;
+        if (b.answer === 0) first += 1;
+        (spots[b.options.length] ||= {})[b.answer] = ((spots[b.options.length] || {})[b.answer] || 0) + 1;
+      }
+      if (b.t === 'fill') b.blanks.forEach((bl) => { if (bl.options.length === 3) fillSpots[bl.options.indexOf(bl.answer)] += 1; });
+    }
+  }
+  check('at most 40 percent of SQL questions have the right answer first', first / total <= 0.4, `${first} of ${total}`);
+  const four = Object.values(spots[4]);
+  const fourTotal = four.reduce((a, b) => a + b, 0);
+  check('every position of a 4-option SQL question is used about equally', Object.keys(spots[4]).length === 4 && Math.max(...four) / fourTotal <= 0.32, JSON.stringify(spots[4]));
+  check('SQL fill dropdowns do not always list the right answer first', Math.max(...fillSpots) / fillSpots.reduce((a, b) => a + b, 0) <= 0.45, JSON.stringify(fillSpots));
 }
 
 section('Dates');

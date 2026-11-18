@@ -6,6 +6,8 @@ import { level7Solution as L7 } from '../src/content/py/level7a.js';
 import { level7bSolution as L7B } from '../src/content/py/level7b.js';
 import { level8Solution as L8 } from '../src/content/py/level8a.js';
 import { level8bSolution as L8B } from '../src/content/py/level8b.js';
+import { level9aSolution as L9A } from '../src/content/py/level9a.js';
+import { level9bSolution as L9B } from '../src/content/py/level9b.js';
 
 export const pySolutions = {
   // ---- lesson 36: decorators
@@ -669,5 +671,170 @@ n = int(input())
 stock = Stock()
 for i in range(n):
     run(input().split(), stock)
+`,
+
+  // ---- lesson 53: concurrency with asyncio
+  'py52-gather': `import asyncio
+
+PRICES = {"sugar": 4500, "rice": 3000, "tea": 500}
+
+async def get_price(item):
+    await asyncio.sleep(0)
+    return PRICES.get(item)
+
+async def fetch_all(items):
+    return await asyncio.gather(*[get_price(item) for item in items])
+
+items = input().split()
+prices = await fetch_all(items)
+for item, price in zip(items, prices):
+    print(f"{item}: {price if price is not None else 'not found'}")
+`,
+  'py52-workers': `import asyncio
+
+async def worker(name, steps):
+    for i in range(1, steps + 1):
+        print(name, "step", i)
+        await asyncio.sleep(0)
+
+a, b = [int(x) for x in input().split()]
+await asyncio.gather(worker("A", a), worker("B", b))
+`,
+  'py52-timeout': `import asyncio
+
+async def slow_call(delay):
+    await asyncio.sleep(delay)
+    return "done"
+
+async def call_with_limit(delay, limit):
+    try:
+        return await asyncio.wait_for(slow_call(delay), timeout=limit)
+    except asyncio.TimeoutError:
+        return "timeout"
+
+delay, limit = [float(x) for x in input().split()]
+print(await call_with_limit(delay, limit))
+`,
+
+  // ---- lesson 54: a web backend from scratch
+  'py53-route': `${L9A.MINI_APP}
+
+app = MiniApp()
+${L9A.ITEMS3}
+
+${L9A.LIST_ROUTE}
+
+${L9A.GET_ROUTE}
+
+n = int(input())
+for i in range(n):
+    print(*app.handle("GET", input()))
+`,
+  'py53-validate': `import json
+
+${L9A.MINI_APP}
+
+app = MiniApp()
+${L9A.ITEMS2}
+
+@app.route("POST", "/items")
+def create_item(request):
+${L9A.POST_BODY}
+
+n = int(input())
+for i in range(n):
+    print(*app.handle("POST", "/items", json.loads(input())))
+`,
+  'py53-auth': `${L9A.MINI_APP}
+
+app = MiniApp()
+
+${L9A.REQUIRES_KEY}
+
+@app.route("GET", "/report")
+@requires_key
+def report(request):
+    return 200, {"total": 12000}
+
+n = int(input())
+for i in range(n):
+    line = input()
+    headers = {} if line == "-" else {"x-api-key": line}
+    print(*app.handle("GET", "/report", headers=headers))
+`,
+
+  // ---- lesson 55: packaging and versions
+  'py54-toml': `import tomllib
+
+n = int(input())
+text = "\\n".join(input() for i in range(n))
+project = tomllib.loads(text)["project"]
+print(project["name"], project["version"])
+print("Dependencies:", len(project.get("dependencies", [])))
+`,
+  'py54-version': `${L9A.PARSE_VERSION}
+
+versions = input().split()
+ordered = sorted(versions, key=parse_version)
+print("Newest:", ordered[-1])
+print("Order:", " < ".join(ordered))
+`,
+  'py54-entry': `${L8.MAKE_PACKAGE}
+
+make_package("shopapp", {
+    "__init__.py": "",
+    "tools.py": """def greet():
+    return "Welcome to the shop"
+
+def total():
+    return 42
+""",
+})
+
+def load_entry_point(spec):
+    module_name, function_name = spec.split(":")
+    module = importlib.import_module(module_name)
+    return getattr(module, function_name)
+
+function = load_entry_point(input())
+print(function())
+`,
+
+  // ---- lesson 56: where to go next
+  'py55-stats': `import statistics
+
+numbers = [int(x) for x in input().split()]
+mean = statistics.mean(numbers)
+median = statistics.median(numbers)
+mode = statistics.mode(numbers)
+print(f"Mean: {mean:.2f}")
+print(f"Median: {median:.1f}")
+print(f"Mode: {mode}")
+`,
+  'py55-group': `from collections import Counter
+from pathlib import PurePosixPath
+
+n = int(input())
+names = [input() for i in range(n)]
+counts = Counter(PurePosixPath(name).suffix or "(none)" for name in names)
+for kind in sorted(counts):
+    print(f"{kind}: {counts[kind]}")
+`,
+  'py55-similar': `a = input()
+b = input()
+wa = set(a.lower().split())
+wb = set(b.lower().split())
+print(f"Similarity: {len(wa & wb) / len(wa | wb):.2f}")
+`,
+
+  // ---- lesson 57: the final capstone
+  'py56-capstone': `${L9B.businessCode(L9B.SELL_REAL)}
+
+${L9B.COMMANDS_CODE}
+
+n = int(input())
+shop = Business()
+for i in range(n):
+    print(run_line(shop, input()))
 `,
 };

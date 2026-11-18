@@ -30,6 +30,13 @@ try {
   const { courses } = await server.ssrLoadModule('/src/content/index.js');
   const { renderBlock } = await server.ssrLoadModule('/src/ui/lesson-blocks.js');
   const { lessonView } = await server.ssrLoadModule('/src/ui/views/lesson.js');
+  const { outputView, testResultsView } = await server.ssrLoadModule('/src/ui/components.js');
+  const sqlOut = outputView({ stdout: 'a | b\n--+--\n1 | 2\n', stderr: '', ms: 1 }, 'sql');
+  const pyOut = outputView({ stdout: 'hi\n', stderr: '', ms: 1 }, 'python');
+  if (!sqlOut.classList.contains('lang-sql')) failures.push('SQL run output is missing the lang-sql class');
+  if (pyOut.classList.contains('lang-sql')) failures.push('lang-sql must be only for SQL (other languages keep wrapping)');
+  const sqlTests = testResultsView({ passed: false, passedCount: 0, total: 1, cases: [{ name: 't', passed: false, expected: 'a', actual: 'b' }] }, 'sql');
+  if (!sqlTests.classList.contains('lang-sql')) failures.push('SQL test results are missing the lang-sql class');
   for (const course of courses) {
     for (const lesson of course.lessons) {
       const where = `${course.id} / ${lesson.id}`;
@@ -43,7 +50,8 @@ try {
       const ctx = { cleanups: [] };
       lesson.blocks.forEach((block, index) => {
         try {
-          renderBlock(block, { language: course.language, index, ctx });
+          const node = renderBlock(block, { language: course.language, index, ctx });
+          if (course.language === 'sql' && node && node.classList && !node.classList.contains('lang-sql')) failures.push(`${where} block ${index + 1} (${block.t}): SQL block is missing the lang-sql class (its result tables would wrap on a phone)`);
         } catch (e) {
           failures.push(`${where} block ${index + 1} (${block.t}): ${e.message}`);
         }
