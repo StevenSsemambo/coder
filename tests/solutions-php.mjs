@@ -1389,4 +1389,190 @@ class InsufficientFundsException`
         $fee = self::feeFor($amount);
 `
   ) + walletMain('InvalidAmountException | InsufficientFundsException | LimitExceededException'),
+  // Level 5: Market-ready PHP (lessons 25-27)
+  'php25-parse-request': php`<?php
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    if ($line === "") {
+        continue;
+    }
+    [$method, $target] = explode(" ", $line);
+    $parts = parse_url($target);
+    echo $method, " ", $parts["path"], "\n";
+    if (isset($parts["query"])) {
+        parse_str($parts["query"], $params);
+        foreach ($params as $key => $value) {
+            echo "  ", $key, " = ", $value, "\n";
+        }
+    }
+}
+`,
+  'php25-router': php`<?php
+function statusText(int $code): string {
+    return match ($code) {
+        200 => "OK",
+        201 => "Created",
+        404 => "Not Found",
+        405 => "Method Not Allowed",
+    };
+}
+
+function route(string $method, string $path): int {
+    $routes = [
+        "/balance" => ["GET", 200],
+        "/deposit" => ["POST", 201],
+        "/withdraw" => ["POST", 200],
+        "/transactions" => ["GET", 200],
+    ];
+    if (!isset($routes[$path])) {
+        return 404;
+    }
+    return $routes[$path][0] === $method ? $routes[$path][1] : 405;
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    if ($line === "") {
+        continue;
+    }
+    [$method, $path] = explode(" ", $line);
+    $status = route($method, $path);
+    echo $method, " ", $path, " -> ", $status, " ", statusText($status), "\n";
+}
+`,
+  'php25-build-url': php`<?php
+$base = trim(fgets(STDIN));
+$params = [];
+while (($line = fgets(STDIN)) !== false) {
+    $line = rtrim($line, "\r\n");
+    if ($line === "") {
+        continue;
+    }
+    [$key, $value] = explode("=", $line, 2);
+    $params[$key] = $value;
+}
+echo $params === [] ? $base : $base . "?" . http_build_query($params), "\n";
+`,
+  'php26-validate-deposit': php`<?php
+$name = trim(fgets(STDIN));
+$amount = trim(fgets(STDIN));
+$phone = trim(fgets(STDIN));
+$errors = [];
+if ($name === "") {
+    $errors[] = "name: Name is required";
+} elseif (mb_strlen($name) > 40) {
+    $errors[] = "name: Name is too long";
+}
+$n = filter_var($amount, FILTER_VALIDATE_INT, ["options" => ["min_range" => 1000, "max_range" => 5000000]]);
+if ($n === false) {
+    $errors[] = "amount: Amount must be a whole number from 1,000 to 5,000,000";
+}
+if (preg_match('/^0[0-9]{9}$/', $phone) !== 1) {
+    $errors[] = "phone: Phone must be 10 digits starting with 0";
+}
+if ($errors === []) {
+    echo "OK: ", $name, " deposits UGX ", number_format($n), " from ", $phone, "\n";
+} else {
+    echo implode("\n", $errors), "\n";
+}
+`,
+  'php26-service-form': php`<?php
+enum Service: string {
+    case Deposit = "deposit";
+    case Withdraw = "withdraw";
+    case Send = "send";
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    if ($line === "") {
+        continue;
+    }
+    [$text, $amountText] = array_map("trim", explode(",", $line, 2));
+    $service = Service::tryFrom(strtolower($text));
+    $amount = filter_var($amountText, FILTER_VALIDATE_INT, ["options" => ["min_range" => 1]]);
+    $errors = [];
+    if ($service === null) {
+        $errors[] = 'service: Unknown service "' . $text . '"';
+    }
+    if ($amount === false) {
+        $errors[] = "amount: Invalid amount";
+    }
+    if ($errors === []) {
+        echo $service->name, " UGX ", number_format($amount), "\n";
+    } else {
+        echo implode("\n", $errors), "\n";
+    }
+}
+`,
+  'php26-form-errors': php`<?php
+function required(array $input, array $fields): array {
+    $missing = [];
+    foreach ($fields as $field) {
+        if (trim($input[$field] ?? "") === "") {
+            $missing[] = $field;
+        }
+    }
+    return $missing;
+}
+
+$fields = explode(",", trim(fgets(STDIN)));
+$input = [];
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    if ($line === "") {
+        continue;
+    }
+    [$key, $value] = explode("=", $line, 2);
+    $input[$key] = $value;
+}
+$missing = required($input, $fields);
+echo $missing === [] ? "All fields present" : "Missing: " . implode(", ", $missing), "\n";
+`,
+  'php27-escape': php`<?php
+function e(string $t): string {
+    return htmlspecialchars($t, ENT_QUOTES | ENT_SUBSTITUTE, "UTF-8");
+}
+
+echo "<ul>\n";
+while (($line = fgets(STDIN)) !== false) {
+    $name = rtrim($line, "\r\n");
+    echo "<li>", e($name), "</li>\n";
+}
+echo "</ul>\n";
+`,
+  'php27-login': php`<?php
+$users = [];
+while (($line = fgets(STDIN)) !== false) {
+    $parts = explode(" ", trim($line));
+    if (count($parts) !== 3) {
+        continue;
+    }
+    [$command, $name, $password] = $parts;
+    if ($command === "register") {
+        if (isset($users[$name])) {
+            echo "Name taken\n";
+        } else {
+            $users[$name] = password_hash($password, PASSWORD_DEFAULT);
+            echo "Registered ", $name, "\n";
+        }
+    } elseif ($command === "login") {
+        if (isset($users[$name]) && password_verify($password, $users[$name])) {
+            echo "Welcome ", $name, "\n";
+        } else {
+            echo "Wrong name or password\n";
+        }
+    }
+}
+`,
+  'php27-token-check': php`<?php
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    if ($line === "") {
+        continue;
+    }
+    [$expected, $given] = explode(" ", $line);
+    echo hash_equals($expected, $given) ? "valid" : "invalid", "\n";
+}
+`,
 };
