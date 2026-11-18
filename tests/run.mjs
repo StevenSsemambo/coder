@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { courses as allCourses, flatExercises } from '../src/content/index.js';
+import { allCourses, flatExercises } from '../src/content/index.js';
 // While writing lessons, ONLY_COURSE=java-start node tests/run.mjs runs just that course's lessons and exercises.
 const courses = process.env.ONLY_COURSE ? allCourses.filter((c) => c.id === process.env.ONLY_COURSE) : allCourses;
 import { gradeExercise, normalizeOutput } from '../src/lib/grader.js';
@@ -14,6 +14,7 @@ import { normalizeC, prepareSource } from '../src/lib/csource.js';
 import { dayKey } from '../src/lib/storage.js';
 import { solutions } from './solutions.mjs';
 import { runJava, closeJava, javaStats } from './java-node.mjs';
+import { runRealCpp, prefetchRealCpp, closeRealCpp, collectPrograms, realCppBackend } from './realcpp.mjs';
 import { normalizeJava, javaRunInfo } from '../src/lib/javasource.js';
 import { validateBlock, fillTemplate, reorderProgram, shuffleOrder } from '../src/content/blocks.js';
 import { JSDOM, VirtualConsole } from 'jsdom';
@@ -128,9 +129,17 @@ async function runPhpTest(code, stdin = '') {
   const r = await runPhpCore(phpInstance, code, stdin);
   return { stdout: r.stdout, error: r.error, timedOut: false };
 }
-const runLang = (language, code, stdin) => (language === 'cx' ? runCx(code, stdin) : language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'java' ? runJava(code, stdin) : language === 'sql' ? runSql(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : language === 'php' ? runPhpTest(code, stdin) : runPython(code, stdin));
+const runLang = (language, code, stdin) => (language === 'cppfull' ? runRealCpp(code, stdin) : language === 'cx' ? runCx(code, stdin) : language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'java' ? runJava(code, stdin) : language === 'sql' ? runSql(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : language === 'php' ? runPhpTest(code, stdin) : runPython(code, stdin));
 
 // ---- 1. every exercise: solution passes, starter fails ----------------------------
+{
+  // Real C++ ("C++ Pro"): compile every program of those courses in parallel first, so the checks below only run them.
+  const programs = collectPrograms(courses, solutions);
+  if (programs.length) {
+    console.log(`  (real C++: compiling ${new Set(programs).size} programs with the ${realCppBackend()} compiler)`);
+    await prefetchRealCpp(programs);
+  }
+}
 section('Exercises (reference solution must pass, untouched starter must fail)');
 const all = courses.flatMap((c) => flatExercises(c));
 const ids = new Set();
@@ -834,6 +843,7 @@ section('Dates');
 }
 
 closeJava();
+closeRealCpp();
 console.log(`\n${passed} checks passed, ${failures.length} failed`);
 // the PHP runtime keeps Node alive after the last check, so end the process explicitly
 if (!failures.length) process.exit(0);

@@ -5,6 +5,7 @@ import { cSolutions } from './solutions-c.mjs';
 import { javaSolutions } from './solutions-java.mjs';
 import { cxSolutions } from './solutions-cx.mjs';
 import { cppSolutions } from './solutions-cpp.mjs';
+import { cppProSolutions } from './solutions-cpp-pro.mjs';
 import { sqlSolutions } from './solutions-sql.mjs';
 import { phpSolutions } from './solutions-php.mjs';
 import { pySolutions } from './solutions-py.mjs';
@@ -23,6 +24,7 @@ export const solutions = {
   ...javaSolutions,
   ...cxSolutions,
   ...cppSolutions,
+  ...cppProSolutions,
   ...sqlSolutions,
   ...phpSolutions,
   ...pySolutions,

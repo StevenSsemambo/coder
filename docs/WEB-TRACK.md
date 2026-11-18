@@ -21,12 +21,12 @@ Each lesson follows the usual pattern (story first, recap last, at least 2 inter
 
 | Id | Lesson | Goes in | Done |
 |---|---|---|---|
-| w46 | Navigation that works on phones (hamburger menu, sticky header, dropdown, `aria-expanded`, active link) | Level 4, after w41 | [ ] |
-| w47 | Forms that really send (form services, `action`/`method`, `mailto:`, honeypot, thank-you page, success/error states) | Level 6 | [ ] |
-| w48 | Domains, DNS, hosting and the files search engines read (`robots.txt`, `sitemap.xml`, canonical, 404, redirects, Search Console) | Level 6 | [ ] |
-| w49 | Trust and the law (privacy policy, cookie consent banner, terms, Uganda Data Protection and Privacy Act 2019, licensing) | Level 6 | [ ] |
-| w50 | Measuring success (analytics events, conversions, UTM links with `URLSearchParams`) | Level 6 | [ ] |
-| w51 | CSS frameworks and design systems (reading Bootstrap and Tailwind, utility classes, design tokens, spacing and type scales, wireframes) | Level 6 | [ ] |
+| w46 | Navigation that works on phones (hamburger menu, sticky header, dropdown, `aria-expanded`, active link) | Level 4, after w41 | [x] |
+| w47 | Forms that really send (form services, `action`/`method`, `mailto:`, honeypot, thank-you page, success/error states) | Level 6 | [x] |
+| w48 | Domains, DNS, hosting and the files search engines read (`robots.txt`, `sitemap.xml`, canonical, 404, redirects, Search Console) | Level 6 | [x] |
+| w49 | Trust and the law (privacy policy, cookie consent banner, terms, Uganda Data Protection and Privacy Act 2019, licensing) | Level 6 | [x] |
+| w50 | Measuring success (analytics events, conversions, UTM links with `URLSearchParams`) | Level 6 | [x] |
+| w51 | CSS frameworks and design systems (reading Bootstrap and Tailwind, utility classes, design tokens, spacing and type scales, wireframes) | Level 6 | [x] |
 | w52 | Content management (what a CMS is, WordPress, headless CMS, a JSON file as a CMS, when to use a site builder) | Level 6 | [ ] |
 | w53 | Websites in many languages (`lang`, `hreflang`, `dir`, `Intl`, a language switcher) | Level 6 | [ ] |
 | w54 | Modern CSS, part 2 (container queries, nesting, `@layer`, `:has()`, logical properties, print styles) | Level 2, after w38 | [ ] |

@@ -1,0 +1,13 @@
+// C++ Pro: real C++ (a real compiler running offline), from strings and vectors to classes, templates and the standard
+// library. The roadmap, the limits and the way it is tested are in docs/CPP-PRO-TRACK.md.
+// The course is written and tested, but it is not offered in the app until the compiler pack is wired in
+// (see `pendingCourses` in src/content/index.js).
+import { stringsLesson } from './cpp-pro/strings.js';
+
+export const cppProCourse = {
+  id: 'cpp-pro',
+  language: 'cppfull',
+  title: 'C++ Pro: Real C++',
+  subtitle: 'Strings, vectors, classes, templates and the standard library, with a real compiler',
+  lessons: [stringsLesson],
+};
