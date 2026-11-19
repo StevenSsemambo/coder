@@ -30,9 +30,9 @@ Each lesson follows the usual pattern (story first, recap last, at least 2 inter
 | w52 | Content management (what a CMS is, WordPress, headless CMS, a JSON file as a CMS, when to use a site builder) | Level 6 | [x] |
 | w53 | Websites in many languages (`lang`, `hreflang`, `dir`, `Intl`, a language switcher) | Level 6 | [x] |
 | w54 | Modern CSS, part 2 (container queries, nesting, `@layer`, `:has()`, logical properties, print styles) | Level 2, after w38 | [x] |
-| w55 | Browser APIs (`IntersectionObserver`, `FormData`, `URLSearchParams`, hash routing, clipboard and share, `AbortController`) | Level 4, after w42 | [ ] |
-| w56 | SVG: icons, logos and simple charts | Level 2, after w54 | [ ] |
-| w57 | Speed in depth (Core Web Vitals, image formats, fonts, CDN, caching headers) | Level 6 | [ ] |
+| w55 | Browser APIs (`IntersectionObserver`, `FormData`, `URLSearchParams`, hash routing, clipboard and share, `AbortController`) | Level 4, after w42 | [x] |
+| w56 | SVG: icons, logos and simple charts | Level 2, after w54 | [x] |
+| w57 | Speed in depth (Core Web Vitals, image formats, fonts, CDN, caching headers) | Level 6 | [x] |
 | w58 | Security, part 2 (CSP, CORS, CSRF, cookies, sessions and login ideas, security headers) | Level 6 | [ ] |
 | w59 | Quality, maintenance and handover (cross-browser testing, validation, launch checklist, backups, monitoring, care plan, handover document) | Level 6 | [ ] |
 | w60 | Capstone 2: launch a company website | Level 6 | [ ] |
