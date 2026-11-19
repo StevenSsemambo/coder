@@ -19,6 +19,7 @@ import { launch1Lessons } from './web/launch1.js';
 import { launch2Lessons } from './web/launch2.js';
 import { launch3Lessons } from './web/launch3.js';
 import { launch4Lessons } from './web/launch4.js';
+import { launch5Lessons } from './web/launch5.js';
 
 // Lessons added after the coverage audit are slotted in where they belong in the learning order.
 function place(list, afterId, items) {
@@ -40,7 +41,7 @@ lessons = place(lessons, 'w34-publishing', [byId(extra4Lessons, 'w44-installable
 lessons = place(lessons, 'w41-ui-patterns', [byId(launch1Lessons, 'w46-mobile-navigation')]);
 lessons = place(lessons, 'w42-promises-patterns', [byId(launch4Lessons, 'w55-browser-apis')]);
 lessons = place(lessons, 'w38-modern-css', [byId(launch3Lessons, 'w54-modern-css-2'), byId(launch4Lessons, 'w56-svg')]);
-lessons = [...lessons, byId(launch1Lessons, 'w47-forms-that-send'), byId(launch1Lessons, 'w48-domains-hosting-seo-files'), byId(launch2Lessons, 'w49-trust-and-the-law'), byId(launch2Lessons, 'w50-measuring-success'), byId(launch2Lessons, 'w51-css-frameworks-design-systems'), byId(launch3Lessons, 'w52-content-management'), byId(launch3Lessons, 'w53-multilingual-sites'), byId(launch4Lessons, 'w57-speed-in-depth')];
+lessons = [...lessons, byId(launch1Lessons, 'w47-forms-that-send'), byId(launch1Lessons, 'w48-domains-hosting-seo-files'), byId(launch2Lessons, 'w49-trust-and-the-law'), byId(launch2Lessons, 'w50-measuring-success'), byId(launch2Lessons, 'w51-css-frameworks-design-systems'), byId(launch3Lessons, 'w52-content-management'), byId(launch3Lessons, 'w53-multilingual-sites'), byId(launch4Lessons, 'w57-speed-in-depth'), byId(launch5Lessons, 'w58-security-2'), byId(launch5Lessons, 'w59-quality-maintenance-handover'), byId(launch5Lessons, 'w60-capstone-2')];
 
 export const webCourse = {
   id: 'web-start',
