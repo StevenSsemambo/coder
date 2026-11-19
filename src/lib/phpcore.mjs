@@ -69,6 +69,28 @@ function tidy(text) {
 // A fatal error ends the script. Everything before it is normal output; the error itself is reported separately.
 const FATAL = /\n?(?:PHP )?(Fatal error|Parse error): /;
 
+// php-wasm opens /request/stdout and /request/stderr for every run and never closes them, so after about
+// 2,000 runs the file-descriptor table is full and every run dies with "File descriptor value too large"
+// (found by the lesson tests; a long session in the app would hit it too). Close them after each run.
+function closeLeakedStreams(php) {
+  try {
+    const sym = Object.getOwnPropertySymbols(php).find((x) => x.description === '__private__dont__use');
+    const FS = sym && php[sym] && php[sym].FS;
+    if (!FS || !FS.streams) return;
+    FS.streams.forEach((stream, fd) => {
+      if (fd > 2 && stream && typeof stream.path === 'string' && stream.path.startsWith('/request/')) {
+        try {
+          FS.close(stream);
+        } catch {
+          /* already closed */
+        }
+      }
+    });
+  } catch {
+    /* if this ever fails the only cost is the old limit */
+  }
+}
+
 /**
  * Run a learner's program. Resolves { stdout, error } and never rejects.
  * `error` is the fatal or parse error text (what PHP printed from "Fatal error:" or "Parse error:" on), or null.
@@ -88,6 +110,7 @@ export async function runPhp(php, code, stdin = '') {
     thrown = true;
     text = e && e.response && typeof e.response.text === 'string' ? e.response.text : String((e && e.message) || e);
   }
+  closeLeakedStreams(php);
   text = tidy(text);
   let stdout = text;
   let error = null;

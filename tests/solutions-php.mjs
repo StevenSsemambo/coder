@@ -1,6 +1,7 @@
 // Reference solutions for the PHP course (see docs/PHP-TRACK.md). Every PHP exercise must have one here,
 // it must pass all its tests, and the starter must NOT pass.
 import { MOMO_LIB, WALLET_LIB, walletMain } from '../src/content/php/shared.js';
+import { API_SOLUTION } from '../src/content/php/level5b.js';
 
 const php = String.raw;
 
@@ -1573,6 +1574,216 @@ while (($line = fgets(STDIN)) !== false) {
     }
     [$expected, $given] = explode(" ", $line);
     echo hash_equals($expected, $given) ? "valid" : "invalid", "\n";
+}
+`,
+  // Level 5 (lessons 28-30)
+  'php28-ledger-file': php`<?php
+$h = fopen("ledger.csv", "w");
+while (($line = fgets(STDIN)) !== false) {
+    $parts = explode(" ", trim($line));
+    if (count($parts) === 3) {
+        fputcsv($h, [$parts[1], $parts[2]]);
+    }
+}
+fclose($h);
+
+$totals = [];
+$h = fopen("ledger.csv", "r");
+while (($row = fgetcsv($h)) !== false) {
+    $totals[$row[0]] = ($totals[$row[0]] ?? 0) + (int) $row[1];
+}
+fclose($h);
+foreach ($totals as $name => $total) {
+    echo $name, ": UGX ", number_format($total), "\n";
+}
+`,
+  'php28-json-statement': php`<?php
+$text = trim(stream_get_contents(STDIN));
+try {
+    $data = json_decode($text, true, 512, JSON_THROW_ON_ERROR);
+} catch (JsonException) {
+    echo "Invalid JSON\n";
+    exit;
+}
+if (!is_array($data)) {
+    echo "Invalid JSON\n";
+    exit;
+}
+$net = 0;
+echo "Statement for ", $data["name"], "\n";
+foreach ($data["transactions"] ?? [] as $t) {
+    if ($t["type"] === "deposit") {
+        $net += $t["amount"];
+        echo "+ ", number_format($t["amount"]), "\n";
+    } else {
+        $net -= $t["amount"];
+        echo "- ", number_format($t["amount"]), "\n";
+    }
+}
+echo "Net: ", number_format($net), "\n";
+`,
+  'php28-json-out': php`<?php
+$customers = [];
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    if ($line === "") {
+        continue;
+    }
+    [$name, $amount] = explode(",", $line);
+    $customers[] = ["name" => $name, "amount" => (int) $amount];
+}
+echo json_encode([
+    "count" => count($customers),
+    "total" => array_sum(array_column($customers, "amount")),
+    "customers" => $customers,
+], JSON_PRETTY_PRINT), "\n";
+`,
+  'php29-ledger': php`<?php
+$db = new PDO("sqlite::memory:");
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+$db->exec("create table tx (id integer primary key autoincrement, name text not null, kind text not null, amount integer not null)");
+
+while (($line = fgets(STDIN)) !== false) {
+    $parts = explode(" ", trim($line));
+    if ($parts[0] === "deposit" || $parts[0] === "withdraw") {
+        $stmt = $db->prepare("insert into tx (name, kind, amount) values (?, ?, ?)");
+        $stmt->execute([$parts[1], $parts[0], (int) $parts[2]]);
+    } elseif ($parts[0] === "report") {
+        $rows = $db->query("select name, sum(case kind when 'deposit' then amount else -amount end) as balance from tx group by name order by name")->fetchAll();
+        if ($rows === []) {
+            echo "No transactions\n";
+        }
+        foreach ($rows as $row) {
+            echo $row["name"], ": UGX ", number_format($row["balance"]), "\n";
+        }
+    }
+}
+`,
+  'php29-transfer': php`<?php
+$db = new PDO("sqlite::memory:");
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+$db->exec("create table acct (name text primary key, balance integer not null check (balance >= 0))");
+
+function transfer(PDO $db, string $from, string $to, int $amount): void {
+    if ($amount <= 0) {
+        throw new InvalidArgumentException("Amount must be above zero");
+    }
+    $db->beginTransaction();
+    try {
+        $give = $db->prepare("update acct set balance = balance + ? where name = ?");
+        $give->execute([$amount, $to]);
+        if ($give->rowCount() !== 1) {
+            throw new RuntimeException("No such account: " . $to);
+        }
+        $take = $db->prepare("update acct set balance = balance - ? where name = ?");
+        $take->execute([$amount, $from]);
+        if ($take->rowCount() !== 1) {
+            throw new RuntimeException("No such account: " . $from);
+        }
+        $db->commit();
+    } catch (Throwable $e) {
+        $db->rollBack();
+        throw $e;
+    }
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    $parts = explode(" ", trim($line));
+    if ($parts[0] === "open") {
+        $stmt = $db->prepare("insert into acct (name, balance) values (?, ?)");
+        $stmt->execute([$parts[1], (int) $parts[2]]);
+        echo "Opened ", $parts[1], "\n";
+    } elseif ($parts[0] === "transfer") {
+        try {
+            transfer($db, $parts[1], $parts[2], (int) $parts[3]);
+            echo "Transferred UGX ", number_format((int) $parts[3]), " from ", $parts[1], " to ", $parts[2], "\n";
+        } catch (Throwable) {
+            echo "Transfer refused\n";
+        }
+    } elseif ($parts[0] === "balances") {
+        foreach ($db->query("select name, balance from acct order by name") as $r) {
+            echo $r["name"], " ", number_format($r["balance"]), "\n";
+        }
+    }
+}
+`,
+  'php29-safe-search': php`<?php
+$db = new PDO("sqlite::memory:");
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$db->exec("create table customers (name text, town text)");
+$db->exec("insert into customers values ('Amina Nakato','Mukono'),('Brian Ssali','Kampala'),('Grace Namukasa','Mukono'),('Dan Okello','Jinja')");
+
+while (($line = fgets(STDIN)) !== false) {
+    $term = trim($line);
+    if ($term === "") {
+        continue;
+    }
+    $stmt = $db->prepare("select name from customers where name like ? or town like ? order by name");
+    $like = "%" . $term . "%";
+    $stmt->execute([$like, $like]);
+    $names = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    echo $term, " -> ", $names === [] ? "No match" : implode(", ", $names), "\n";
+}
+`,
+  'php30-services-api': php`<?php
+function reply(int $status, array $body, array $headers = []): array {
+    return ["status" => $status, "headers" => $headers, "body" => json_encode($body)];
+}
+
+function handle(string $method, string $path): array {
+    $paths = ["/health", "/services"];
+    if (!in_array($path, $paths, true)) {
+        return reply(404, ["error" => "Not found"]);
+    }
+    if ($method !== "GET") {
+        return reply(405, ["error" => "Method not allowed"], ["Allow" => "GET"]);
+    }
+    return $path === "/health"
+        ? reply(200, ["status" => "ok"])
+        : reply(200, ["services" => ["deposit", "withdraw", "send"]]);
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    if ($line === "") {
+        continue;
+    }
+    [$method, $path] = explode(" ", $line);
+    $r = handle($method, $path);
+    echo $r["status"], " ", $r["body"], "\n";
+    foreach ($r["headers"] as $name => $value) {
+        echo "  ", $name, ": ", $value, "\n";
+    }
+}
+`,
+  'php30-api-wallet': API_SOLUTION(),
+  'php30-paginate': php`<?php
+$ids = range(1, 10);
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    if ($line === "") {
+        continue;
+    }
+    $parts = parse_url($line);
+    if (($parts["path"] ?? "") !== "/customers") {
+        echo "404 ", json_encode(["error" => "Not found"]), "\n";
+        continue;
+    }
+    parse_str($parts["query"] ?? "", $q);
+    $page = filter_var($q["page"] ?? "1", FILTER_VALIDATE_INT, ["options" => ["min_range" => 1]]);
+    if ($page === false) {
+        echo "422 ", json_encode(["error" => "Invalid page"]), "\n";
+        continue;
+    }
+    $perPage = filter_var($q["per_page"] ?? "3", FILTER_VALIDATE_INT, ["options" => ["min_range" => 1, "max_range" => 5]]);
+    if ($perPage === false) {
+        echo "422 ", json_encode(["error" => "Invalid per_page"]), "\n";
+        continue;
+    }
+    $items = array_slice($ids, ($page - 1) * $perPage, $perPage);
+    echo "200 ", json_encode(["page" => $page, "per_page" => $perPage, "total" => count($ids), "items" => $items]), "\n";
 }
 `,
 };
