@@ -27,9 +27,9 @@ Each lesson follows the usual pattern (story first, recap last, at least 2 inter
 | w49 | Trust and the law (privacy policy, cookie consent banner, terms, Uganda Data Protection and Privacy Act 2019, licensing) | Level 6 | [x] |
 | w50 | Measuring success (analytics events, conversions, UTM links with `URLSearchParams`) | Level 6 | [x] |
 | w51 | CSS frameworks and design systems (reading Bootstrap and Tailwind, utility classes, design tokens, spacing and type scales, wireframes) | Level 6 | [x] |
-| w52 | Content management (what a CMS is, WordPress, headless CMS, a JSON file as a CMS, when to use a site builder) | Level 6 | [ ] |
-| w53 | Websites in many languages (`lang`, `hreflang`, `dir`, `Intl`, a language switcher) | Level 6 | [ ] |
-| w54 | Modern CSS, part 2 (container queries, nesting, `@layer`, `:has()`, logical properties, print styles) | Level 2, after w38 | [ ] |
+| w52 | Content management (what a CMS is, WordPress, headless CMS, a JSON file as a CMS, when to use a site builder) | Level 6 | [x] |
+| w53 | Websites in many languages (`lang`, `hreflang`, `dir`, `Intl`, a language switcher) | Level 6 | [x] |
+| w54 | Modern CSS, part 2 (container queries, nesting, `@layer`, `:has()`, logical properties, print styles) | Level 2, after w38 | [x] |
 | w55 | Browser APIs (`IntersectionObserver`, `FormData`, `URLSearchParams`, hash routing, clipboard and share, `AbortController`) | Level 4, after w42 | [ ] |
 | w56 | SVG: icons, logos and simple charts | Level 2, after w54 | [ ] |
 | w57 | Speed in depth (Core Web Vitals, image formats, fonts, CDN, caching headers) | Level 6 | [ ] |

@@ -17,6 +17,7 @@ import { extra3Lessons } from './web/extra3.js';
 import { extra4Lessons } from './web/extra4.js';
 import { launch1Lessons } from './web/launch1.js';
 import { launch2Lessons } from './web/launch2.js';
+import { launch3Lessons } from './web/launch3.js';
 
 // Lessons added after the coverage audit are slotted in where they belong in the learning order.
 function place(list, afterId, items) {
@@ -36,7 +37,8 @@ lessons = place(lessons, 'w34-publishing', [byId(extra4Lessons, 'w44-installable
 
 // Level 6 "Launch-ready" extension (docs/WEB-TRACK.md): lessons that belong earlier are slotted in, the rest go at the end.
 lessons = place(lessons, 'w41-ui-patterns', [byId(launch1Lessons, 'w46-mobile-navigation')]);
-lessons = [...lessons, byId(launch1Lessons, 'w47-forms-that-send'), byId(launch1Lessons, 'w48-domains-hosting-seo-files'), byId(launch2Lessons, 'w49-trust-and-the-law'), byId(launch2Lessons, 'w50-measuring-success'), byId(launch2Lessons, 'w51-css-frameworks-design-systems')];
+lessons = place(lessons, 'w38-modern-css', [byId(launch3Lessons, 'w54-modern-css-2')]);
+lessons = [...lessons, byId(launch1Lessons, 'w47-forms-that-send'), byId(launch1Lessons, 'w48-domains-hosting-seo-files'), byId(launch2Lessons, 'w49-trust-and-the-law'), byId(launch2Lessons, 'w50-measuring-success'), byId(launch2Lessons, 'w51-css-frameworks-design-systems'), byId(launch3Lessons, 'w52-content-management'), byId(launch3Lessons, 'w53-multilingual-sites')];
 
 export const webCourse = {
   id: 'web-start',
