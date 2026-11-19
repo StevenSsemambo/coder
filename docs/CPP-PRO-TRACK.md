@@ -39,19 +39,27 @@ reference solution passes (`npm test`). The runner for language `cppfull` is `te
   compiles with the very compiler learners will use. It needs `npm install --no-save @yowasp/clang@22.0.0-git20542-10`
   and takes about 3 s per program. **Run it before pushing a batch of lessons.** Lesson 1 passes identically on both
   (32 programs, 93 s).
+* **What the parity run has already taught us (rules for every lesson):**
+  * **Never teach "missing `#include`" as a compile error.** g++ (libstdc++) refuses `vector` or `sort` without their header,
+    but the WebAssembly Clang (libc++) lets them through because other headers pull them in. Two such mistakes passed on
+    g++ and failed the parity run. Teach "include what you use" in a tip instead.
+  * **Never depend on the order of equal items:** plain `sort` may order ties differently on different compilers. Use
+    `stable_sort`, or make every key different.
+  * Do not print an uninitialised variable, read `v[i]` out of range, or rely on any other undefined behaviour: the answer
+    differs per compiler. Use `at()` (which stops the program here) when a lesson needs to show an out-of-range stop.
 * Avoid `reorder` blocks with more than 4 lines in this course: the test tries every other order, and each try is a compile.
 
 ## Roadmap
 
 `[x]` written and tested on both compilers, `[ ]` still to write. Lesson ids start with `cppp-`, exercise ids with `cppp<n>-`.
 
-**Level 1: Real strings and vectors**
+**Level 1: Real strings and vectors** (complete: 6 lessons, 22 exercises)
 - [x] 1. `cppp-strings` `std::string`: joining, `getline`, characters, `find`/`substr`, comparing, `to_string`
-- [ ] 2. `cppp-vectors` `std::vector`: `push_back`, size, range-for, `auto`, 2D vectors
-- [ ] 3. `cppp-algorithms` `<algorithm>`: `sort`, `find`, `count`, `reverse`, `min_element`/`max_element`, lambdas as sort rules
-- [ ] 4. `cppp-references` references (`int &`), const references, passing big things cheaply
-- [ ] 5. `cppp-structs` `struct`, `enum class`, a `vector` of structs
-- [ ] 6. `cppp-ledger` project: Mama Rose's ledger (strings, vectors, structs, sorting, a text menu)
+- [x] 2. `cppp-vectors` `std::vector`: `push_back`, size, range-for, `auto`, 2D vectors
+- [x] 3. `cppp-algorithms` `<algorithm>`: `sort`, `find`, `count`, `reverse`, `min_element`/`max_element`, lambdas as sort rules
+- [x] 4. `cppp-references` references (`int &`), const references, passing big things cheaply
+- [x] 5. `cppp-structs` `struct`, `enum class`, a `vector` of structs
+- [x] 6. `cppp-ledger` project: Mama Rose's ledger (strings, vectors, structs, sorting, a text menu)
 
 **Level 2: Classes and objects**
 - [ ] 7. `cppp-classes` classes, `private`/`public`, member functions, `this`

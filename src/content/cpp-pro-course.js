@@ -3,11 +3,16 @@
 // The course is written and tested, but it is not offered in the app until the compiler pack is wired in
 // (see `pendingCourses` in src/content/index.js).
 import { stringsLesson } from './cpp-pro/strings.js';
+import { vectorsLesson } from './cpp-pro/vectors.js';
+import { algorithmsLesson } from './cpp-pro/algorithms.js';
+import { referencesLesson } from './cpp-pro/references.js';
+import { structsLesson } from './cpp-pro/structs.js';
+import { ledgerLesson } from './cpp-pro/ledger.js';
 
 export const cppProCourse = {
   id: 'cpp-pro',
   language: 'cppfull',
   title: 'C++ Pro: Real C++',
   subtitle: 'Strings, vectors, classes, templates and the standard library, with a real compiler',
-  lessons: [stringsLesson],
+  lessons: [stringsLesson, vectorsLesson, algorithmsLesson, referencesLesson, structsLesson, ledgerLesson],
 };
