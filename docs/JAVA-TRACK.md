@@ -4,8 +4,8 @@ Course id `java-start` (proposed), language `java`. The Java account owns the le
 `src/content/java-course.js`, `tests/solutions-java.mjs`) **and the Java engine and app code** (see the Java row in
 `docs/TRACKS.md`, decision of the project owner on 2026-11-15).
 
-Last updated: 2026-11-15. Status: **the runtime is built into the app and verified in a real browser. Level 1 (lessons 1 to 6) and Level 2
-lessons 7 to 10 are written and tested. Lessons 11 to 15 are next.**
+Last updated: 2026-11-15. Status: **the runtime is built into the app and verified in a real browser. Levels 1 and 2 (lessons 1 to 15) and
+Level 3 lessons 16 to 19 are written and tested. Lessons 20 to 27 are next.**
 
 ## 1. Verdict
 
@@ -90,6 +90,7 @@ but nothing survives to the next run (the engine has an optional IndexedDB mode,
 | G12 | Uncaught exceptions print only the message | **Improved in the app.** The worker now writes `Exception in thread "main" java.lang.IllegalStateException: boom` followed by `\tat Main.main(Main.java)` lines for the user's own methods (no line numbers: the engine does not provide them). Traps are named after the Java exception they stand for (`NullPointerException`, `ArrayIndexOutOfBoundsException`, `StackOverflowError`), but they still **cannot be caught** (G1, G2, G4). `e.printStackTrace()` inside a `catch` still prints TeaVM-style lines |
 | G13 | Library exception messages differ | `Integer.parseInt("x1")` says `String contains digits out of radix 10: x1`, real Java says `For input string: "x1"`. `ArrayList.get(3)`, `charAt(9)`, `Optional.get()` and others give `null` as the message, where real Java gives text such as `Index 3 out of bounds for length 0` |
 | G14 | `Math.round` of a negative half rounds the wrong way | `Math.round(-2.5)` gives `-3` here; real Java gives `-2` (it rounds halves up). Positive values (`2.5` gives `3`) match. Lessons never round negative halves |
+| G15 | `Enum.compareTo` returns the sign only | `Level.GOLD.compareTo(Level.BRONZE)` gives `1` here; real Java gives `2` (the difference of the ordinals). `String`, `Integer`, `Character` and the other wrappers match real Java. Lessons compare enums with `==`, `ordinal()` or only the sign of `compareTo` |
 
 Also seen, smaller:
 - `"abc".substring(5)` throws `IndexOutOfBoundsException` (real Java: its subclass `StringIndexOutOfBoundsException`), so `catch (StringIndexOutOfBoundsException e)` misses it. `charAt(9)` does throw `StringIndexOutOfBoundsException`.
@@ -112,7 +113,7 @@ Also seen, smaller:
    `NoSuchElementException`, `InputMismatchException`, and **custom exceptions that the program throws itself**
    (the best teaching case anyway: `InsufficientFundsException`). Do not write
    `try { a[5] = 1; } catch (ArrayIndexOutOfBoundsException e)` in a runnable block: it would crash.
-5. **Never print `e.getMessage()` of a library exception** (G13), and never round a negative half with `Math.round` (G14). Print `e.getClass().getSimpleName()` or your own
+5. **Never print `e.getMessage()` of a library exception** (G13), and never round a negative half with `Math.round` (G14), and never print the number that `compareTo` returns for two enums (G15). Print `e.getClass().getSimpleName()` or your own
    message. Your own exceptions' messages are always fine.
 6. **Recursion:** show a base case and a missing base case as a crash, never as a `catch` (G4).
 7. **No `System.exit`, no GUI, no `ExecutorService`** (G7, G8, G9). Exit by returning from `main`. Concurrency
@@ -172,7 +173,7 @@ Headless Chromium 153, driving the **built** app (`vite build` then `vite previe
 ## 7. Roadmap
 
 `[x]` written and tested, `[ ]` still to write. Lesson ids never change once published. Exercise ids start with
-`j<lesson number>-`. This order is a proposal for the owner to approve, not a promise. **Lessons 1 to 10 are written and tested; the rest is still to write.**
+`j<lesson number>-`. This order is a proposal for the owner to approve, not a promise. **Lessons 1 to 19 are written and tested; the rest of Level 3 and Levels 4 to 6 are still to write.**
 
 **Running project: the Village SACCO.** A savings and credit group (members, savings accounts, loans,
 interest, a monthly report). It is the most Ugandan example I can think of that also needs everything
@@ -196,17 +197,17 @@ Java course distinct.)
 - [x] 8. `j-nested` Loops inside loops: patterns and tables
 - [x] 9. `j-methods` Methods: parameters, return values, scope, overloading, varargs
 - [x] 10. `j-recursion` Recursion (and what a missing base case looks like)
-- [ ] 11. `j-arrays` Arrays and the enhanced `for`
-- [ ] 12. `j-array-algos` Array algorithms: search, minimum, maximum, sorting
-- [ ] 13. `j-2d` Two-dimensional arrays
-- [ ] 14. `j-strings` Strings in depth, `StringBuilder`, `printf` and `String.format`
-- [ ] 15. `j-ledger` Project: a SACCO ledger on the console (no classes yet)
+- [x] 11. `j-arrays` Arrays and the enhanced `for`
+- [x] 12. `j-array-algos` Array algorithms: search, minimum, maximum, sorting
+- [x] 13. `j-2d` Two-dimensional arrays
+- [x] 14. `j-strings` Strings in depth, `StringBuilder`, `printf` and `String.format`
+- [x] 15. `j-ledger` Project: a SACCO ledger on the console (no classes yet)
 
 ### Level 3: Object-oriented Java
-- [ ] 16. `j-classes` Classes and objects
-- [ ] 17. `j-constructors` Constructors and `this`
-- [ ] 18. `j-encapsulation` Private fields, getters and setters, validation
-- [ ] 19. `j-static` `static` members and constants
+- [x] 16. `j-classes` Classes and objects
+- [x] 17. `j-constructors` Constructors and `this`
+- [x] 18. `j-encapsulation` Private fields, getters and setters, validation
+- [x] 19. `j-static` `static` members and constants
 - [ ] 20. `j-object` `toString`, `equals`, `hashCode`
 - [ ] 21. `j-inherit` Inheritance, `super`, overriding
 - [ ] 22. `j-poly` Polymorphism and `instanceof`

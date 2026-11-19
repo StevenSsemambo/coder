@@ -308,7 +308,7 @@ export const level1 = [
       {
         id: 'sql2-categories',
         title: 'What do we sell?',
-        prompt: 'Show each different `category` of product once.',
+        prompt: 'Show each different `category` of product once. Do not sort them: they come out in the order SQL first meets them in the table.',
         starter: '-- Each category only once\nSELECT category FROM products;\n',
         usesInput: true,
         sampleInput: DUUKA,

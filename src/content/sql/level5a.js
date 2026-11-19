@@ -192,7 +192,7 @@ export const level5a = [
         hints: [
           'The same recipe as for customers, with the product columns.',
           '`INSERT INTO products (name, price) SELECT DISTINCT product, price FROM messy_sales ORDER BY product;`',
-          'A similar example: lesson 26 filled customers from the sheet this way. Yours uses the product and price columns.',
+          "A similar example: `INSERT INTO suppliers (name, town) SELECT DISTINCT supplier, town FROM purchases ORDER BY supplier;` fills a suppliers table once per supplier. Yours fills products from messy_sales with the name and price.",
         ],
       },
       {
@@ -495,7 +495,7 @@ export const level5a = [
         hints: [
           'Write the spending query first (you did in lesson 22), then put CREATE VIEW name AS in front of it.',
           '`CREATE VIEW customer_spend AS SELECT c.name AS name, SUM(i.qty * p.price) AS spent FROM customers c JOIN orders o ... GROUP BY c.id;`',
-          'A similar example: `CREATE VIEW order_totals AS SELECT ...` in the lesson wraps the order-total query. Yours wraps the customer-spend query.',
+          "A similar example: `CREATE VIEW class_sizes AS SELECT class, COUNT(*) AS pupils FROM students GROUP BY class;` saves a grouped query under a name. Yours saves the spending query.",
         ],
       },
       {
@@ -635,7 +635,7 @@ export const level5a = [
         hints: [
           'Four statements in a row: BEGIN, two UPDATEs, COMMIT. Then the SELECT.',
           '`UPDATE accounts SET balance = balance - 15000 WHERE id = 1;` and `UPDATE accounts SET balance = balance + 15000 WHERE id = 2;`',
-          'A similar example: the first try of the lesson moves 10000 the same way. Change the amount to 15000.',
+          "A similar example: moving 500 litres from tank 1 to tank 2: `BEGIN; UPDATE tanks SET litres = litres - 500 WHERE id = 1; UPDATE tanks SET litres = litres + 500 WHERE id = 2; COMMIT;` Yours moves 15000 shillings between accounts.",
         ],
       },
       {
@@ -652,7 +652,7 @@ export const level5a = [
         hints: [
           'The same two UPDATEs as a transfer, but the transaction ends with the word that undoes it.',
           'BEGIN; two UPDATEs; SELECT owner, balance FROM accounts ORDER BY id; ROLLBACK; and the same SELECT again.',
-          'A similar example: the second try of the lesson does this with a debit only. Yours has both halves.',
+          "A similar example: `BEGIN; UPDATE tanks SET litres = litres - 500 WHERE id = 1; SELECT * FROM tanks; ROLLBACK; SELECT * FROM tanks;` shows the change, then undoes it and shows again. Yours has both UPDATEs of a transfer.",
         ],
       },
       {

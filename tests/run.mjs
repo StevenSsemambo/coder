@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { courses as allCourses, flatExercises } from '../src/content/index.js';
+import { allCourses, flatExercises } from '../src/content/index.js';
 // While writing lessons, ONLY_COURSE=java-start node tests/run.mjs runs just that course's lessons and exercises.
 const courses = process.env.ONLY_COURSE ? allCourses.filter((c) => c.id === process.env.ONLY_COURSE) : allCourses;
 import { gradeExercise, normalizeOutput } from '../src/lib/grader.js';
@@ -14,6 +14,7 @@ import { normalizeC, prepareSource } from '../src/lib/csource.js';
 import { dayKey } from '../src/lib/storage.js';
 import { solutions } from './solutions.mjs';
 import { runJava, closeJava, javaStats } from './java-node.mjs';
+import { runRealCpp, prefetchRealCpp, closeRealCpp, collectPrograms, realCppBackend } from './realcpp.mjs';
 import { normalizeJava, javaRunInfo } from '../src/lib/javasource.js';
 import { validateBlock, fillTemplate, reorderProgram, shuffleOrder } from '../src/content/blocks.js';
 import { JSDOM, VirtualConsole } from 'jsdom';
@@ -128,9 +129,17 @@ async function runPhpTest(code, stdin = '') {
   const r = await runPhpCore(phpInstance, code, stdin);
   return { stdout: r.stdout, error: r.error, timedOut: false };
 }
-const runLang = (language, code, stdin) => (language === 'cx' ? runCx(code, stdin) : language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'java' ? runJava(code, stdin) : language === 'sql' ? runSql(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : language === 'php' ? runPhpTest(code, stdin) : runPython(code, stdin));
+const runLang = (language, code, stdin) => (language === 'cppfull' ? runRealCpp(code, stdin) : language === 'cx' ? runCx(code, stdin) : language === 'c' || language === 'cpp' ? runC(code, stdin) : language === 'java' ? runJava(code, stdin) : language === 'sql' ? runSql(code, stdin) : language === 'web' ? runWebConsole(code, stdin) : language === 'php' ? runPhpTest(code, stdin) : runPython(code, stdin));
 
 // ---- 1. every exercise: solution passes, starter fails ----------------------------
+{
+  // Real C++ ("C++ Pro"): compile every program of those courses in parallel first, so the checks below only run them.
+  const programs = collectPrograms(courses, solutions);
+  if (programs.length) {
+    console.log(`  (real C++: compiling ${new Set(programs).size} programs with the ${realCppBackend()} compiler)`);
+    await prefetchRealCpp(programs);
+  }
+}
 section('Exercises (reference solution must pass, untouched starter must fail)');
 const all = courses.flatMap((c) => flatExercises(c));
 const ids = new Set();
@@ -395,6 +404,9 @@ section('Error translator (real messages from the runtimes)');
     ['java', 'public class Main { public static void main(String[] a) {\n System.out.println(\'Karibu\');\n } }', 'java-quote', 'Java single quotes for text'],
     ['java', 'public class Main { public static void main(String[] a) { System.out.println(total); } }', 'java-symbol', 'Java unknown variable'],
     ['java', 'public class Main { public static void main(String[] a) { system.out.println("hi"); } }', 'java-package', 'Java lowercase system'],
+    ['java', 'class M { M(String n) { } }\npublic class Main { public static void main(String[] a) { new M(); } }', 'java-args', 'Java constructor needs an argument'],
+    ['java', 'public class Main { static int f(int a, int b) { return a; } public static void main(String[] a) { f(1); } }', 'java-args', 'Java method needs two arguments'],
+    ['java', 'class M { private int v = 1; }\npublic class Main { public static void main(String[] a) { System.out.println(new M().v); } }', 'java-private', 'Java private field'],
     ['java', 'public class Main { public static void main(String[] a) { int x = "hello"; } }', 'java-types', 'Java wrong type'],
     ['java', 'public class Main { public static void main(String[] a) { int x = 3.5; } }', 'java-lossy', 'Java double into int'],
     ['java', 'public class Main { static int f(int a) { if (a > 0) { return 1; } } public static void main(String[] a) { f(1); } }', 'java-return', 'Java missing return'],
@@ -403,6 +415,7 @@ section('Error translator (real messages from the runtimes)');
     ['java', 'public class Main { public static void main(String[] a) { Thread.sleep(10); } }', 'java-checked', 'Java unhandled checked exception'],
     ['java', 'public class Main { void hi() { } public static void main(String[] a) { hi(); } }', 'java-static', 'Java non-static from main'],
     ['java', 'public class Main { public static void main(String[] a) { final int x = 1; x = 2; } }', 'java-final', 'Java assigning a final'],
+    ['java', 'class S { static final int P = 1; }\npublic class Main { public static void main(String[] a) { S.P = 2; } }', 'java-final', 'Java assigning a static final constant'],
     ['java', 'abstract class Shape { } public class Main { public static void main(String[] a) { Shape s = new Shape(); } }', 'java-abstract', 'Java new on abstract class'],
     ['java', 'public class Main { public static void main(String[] a) { System.out.println("hi"); }', 'java-syntax', 'Java missing closing brace'],
     ['java', 'public class Main { public static void main(String[] a) { int[] x = new int[2]; x[5] = 1; } }', 'java-array-index', 'Java index out of bounds'],
@@ -796,6 +809,42 @@ section('PHP engine (the shared core, on real PHP 8.3 WebAssembly)');
   check('a fatal error does not break the next run', (await r('<?php echo 1 / 0;')).error !== null && (await r('<?php echo "ok";')).stdout === 'ok');
 }
 
+section('Choices are shown shuffled (the right answer is written first, but must not be shown first every time)');
+{
+  const { choiceOrder } = await import('../src/content/blocks.js');
+  let allOk = true;
+  const overall = {};
+  for (const course of allCourses) {
+    const spots = {};
+    let n = 0;
+    for (const lesson of course.lessons) {
+      lesson.blocks.forEach((b, index) => {
+        const sets = [];
+        if (['quiz', 'predict', 'bug', 'see'].includes(b.t) && b.options) sets.push([b.options, b.question, index, b.answer]);
+        if (b.t === 'fill') b.blanks.forEach((bl, gap) => sets.push([bl.options, `${b.template}|${bl.answer}`, gap, bl.options.indexOf(bl.answer)]));
+        for (const [options, key, at, right] of sets) {
+          const order = choiceOrder(options, key, at);
+          const isPermutation = order.length === options.length && [...order].sort((x, y) => x - y).every((v, i) => v === i);
+          const same = JSON.stringify(order) === JSON.stringify(choiceOrder(options, key, at));
+          if (!isPermutation || !same) allOk = false;
+          if (options.length === 4 && right >= 0) {
+            const shown = order.indexOf(right);
+            spots[shown] = (spots[shown] || 0) + 1;
+            overall[shown] = (overall[shown] || 0) + 1;
+            n += 1;
+          }
+        }
+      });
+    }
+    if (n >= 20) check(`${course.id}: the right answer is shown first in at most 40 percent of its 4-option questions`, (spots[0] || 0) / n <= 0.4, `${JSON.stringify(spots)} of ${n}`);
+  }
+  check('every shuffled choice order is a permutation and is the same every time', allOk);
+  const total = Object.values(overall).reduce((a, b) => a + b, 0);
+  check('across all courses each of the 4 positions holds 18 to 32 percent of the right answers', [0, 1, 2, 3].every((k) => (overall[k] || 0) / total >= 0.18 && (overall[k] || 0) / total <= 0.32), JSON.stringify(overall));
+  check('options that refer to each other keep their written order', JSON.stringify(choiceOrder(['It is red', 'It is blue', 'All of the above'], 'q', 1)) === '[0,1,2]');
+  check('a different question gives a different order', new Set(Array.from({ length: 12 }, (_, i) => JSON.stringify(choiceOrder(['a', 'b', 'c', 'd'], `question ${i}`, i)))).size > 4);
+}
+
 section('Dates');
 {
   check('dayKey format', dayKey(new Date(2026, 10, 9)) === '2026-11-09');
@@ -803,6 +852,7 @@ section('Dates');
 }
 
 closeJava();
+closeRealCpp();
 console.log(`\n${passed} checks passed, ${failures.length} failed`);
 // the PHP runtime keeps Node alive after the last check, so end the process explicitly
 if (!failures.length) process.exit(0);

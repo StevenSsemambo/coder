@@ -70,6 +70,7 @@ export const level3 = [
         output: info([[0, 'id', 'INTEGER', 0, null, 1], [1, 'name', 'TEXT', 0, null, 0], [2, 'town', 'TEXT', 0, null, 0], [3, 'phone', 'TEXT', 0, null, 0]]),
       },
       { t: 'analogy', text: "Designing a table is like ruling a page before you write. A good design asks: what headings do I need, and what kind of thing goes under each one? Numbers you add up are INTEGER. Names, towns and phone numbers are TEXT. The id column is the line number of the page: it is how you point at exactly one row." },
+      { t: 'p', text: 'One thing you have not met yet: `INSERT INTO` puts a row into a table. The next lesson teaches it. For now, just read the next example.' },
       {
         t: 'predict',
         code: "CREATE TABLE contacts (phone INTEGER);\nINSERT INTO contacts VALUES ('0700123456');\nSELECT phone FROM contacts;\n",
@@ -800,7 +801,7 @@ export const level3 = [
       {
         t: 'story',
         title: 'Day one',
-        text: "A new shop opens next to the bus park. Its owner has no database at all. “Build me the stock book from nothing,” she says. “I want it to refuse a product with no name, or with a price of zero, and it must never let me add the same product twice.”\n\nYou now know how to do all of that. This project does it in four steps: design, fill, sell, check.",
+        text: "A new shop opens next to the bus park. Its owner has no database at all. “Build me the stock book from nothing,” she says. “It must refuse a product with no name. It must refuse a price of zero. And it must never let me add the same product twice.”\n\nYou now know how to do all of that. This project does it in four steps: design, fill, sell, check.",
       },
       { t: 'h', text: 'Step 1: design the table and fill it' },
       { t: 'p', text: 'The rules go in `CREATE TABLE`: the name is required and unique, the price is required and must be above zero, the stock is required and starts at 0.' },

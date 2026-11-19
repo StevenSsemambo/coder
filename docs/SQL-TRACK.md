@@ -201,3 +201,33 @@ Same rules as every track (`docs/TRACKS.md`), plus:
 - Level 5 expected plans (`SEARCH ... USING INDEX ...`) are exact text for the bundled SQLite. If `sql.js` is upgraded
   and the tests fail on a plan line, update the expected text in `level5a.js` (`plan(...)`).
 - No lesson has been run on a real phone yet (see "Engine requests").
+
+## Polish and review pass (done)
+
+Checked by scripts (so the next author can rerun the idea), then fixed:
+
+- **Answer position.** Every correct answer was the first option, and the app did not shuffle. This is now fixed for
+  EVERY track in the app itself: `choiceOrder` in `src/content/blocks.js` shows the options of quiz, predict, bug, web
+  `see` blocks and fill-in gaps in a deterministic shuffled order (different for each question), and `lesson-blocks.js`
+  still checks the option's original index. Authors keep writing the right answer FIRST. Across all tracks the right
+  answer is now shown 26, 25, 27 and 23 percent of the time in positions 1 to 4. `tests/render.mjs` clicks through
+  every choice block of every track (right answer accepted, wrong refused), and `tests/run.mjs` keeps the spread even.
+- **Wide tables on a phone.** `pre` text wraps in this app, which breaks the aligned columns of SQL results (25 results
+  are wider than 44 characters, the widest 75). SQL blocks, run output and the expected-versus-actual view now carry a
+  `lang-sql` class and scroll sideways (`styles.css`, `components.js`, `lesson-blocks.js`). `tests/render.mjs` checks the
+  class on every SQL block and that Python output is untouched. **Not yet seen in a real browser or phone.**
+- **An unfair exercise.** `sql2-categories` expects SQLite's natural order, so a learner who correctly added `ORDER BY`
+  would fail. The prompt now says not to sort (ORDER BY is taught in lesson 5).
+- **Hints.** Nine third hints only pointed back at a lesson; they now give a worked example from another domain, as the
+  style rules require. Two more flagged by the script already had real examples.
+- **Curriculum order.** Checked every exercise solution and lesson example against the lesson that teaches each feature.
+  One real gap: an `INSERT` appeared in lesson 13, one lesson before it is taught (now introduced in a sentence).
+  Also lesson 21 now explains why `GROUP BY c.id` may show `c.name` (lesson 9 says plain columns must be grouped).
+- **Reading level.** Three over-long sentences shortened (four remain; all dialogue in stories).
+- **Kiswahili.** `docs/SQL-SWAHILI-REVIEW.md` lists all 19 SQL error messages in English and Kiswahili for a native speaker.
+  Fixed one defect: the "already exists" message left the English word "table" in the Kiswahili title.
+- Verified clean: no exercise prompt hides a result heading (the six flagged are `SELECT *` and `PRAGMA` outputs whose
+  headings come from SQLite), no explanation refers to an option by position, no stray whitespace in prose.
+
+Still open: a native-speaker read of the Kiswahili file, and a real-phone look at lesson 1, a predict block and a failed
+exercise (sideways scrolling).

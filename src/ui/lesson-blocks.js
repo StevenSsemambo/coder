@@ -3,7 +3,7 @@ import { h, replace, richText } from './dom.js';
 import { createEditor } from '../lib/editor.js';
 import { runCode } from '../lib/runners.js';
 import { stdinField, outputView, symbolBar } from './components.js';
-import { shuffleOrder } from '../content/blocks.js';
+import { choiceOrder, shuffleOrder } from '../content/blocks.js';
 import { editorLanguage } from '../lib/symbols.js';
 import { createWorkspace, renderOnce } from './web-workspace.js';
 import { filesFrom, FILE_NAMES } from '../lib/webgrade.js';
@@ -61,12 +61,14 @@ function tryBlock(block, language, ctx, label = 'Try it yourself') {
 }
 
 // ---- multiple choice (predict / bug / quiz) -----------------------------------
-function choiceBlock(block) {
+function choiceBlock(block, blockIndex = 0) {
   const feedback = h('div', { class: 'feedback', 'aria-live': 'polite' });
   const buttons = [];
   const finish = () => buttons.forEach((b) => { b.disabled = true; });
 
-  block.options.forEach((option, index) => {
+  // shown shuffled, but `index` stays the option's ORIGINAL position, which is what block.answer refers to
+  choiceOrder(block.options, block.question, blockIndex).forEach((index) => {
+    const option = block.options[index];
     const btn = h(
       'button',
       {
@@ -103,8 +105,8 @@ function choiceBlock(block) {
 // ---- fill the gaps ---------------------------------------------------------------
 function fillBlock(block) {
   const feedback = h('div', { class: 'feedback', 'aria-live': 'polite' });
-  const selects = block.blanks.map((blank) =>
-    h('select', { class: 'gap', 'aria-label': 'Choose the missing part' }, h('option', { value: '' }, '…'), blank.options.map((o) => h('option', { value: o }, o))),
+  const selects = block.blanks.map((blank, gap) =>
+    h('select', { class: 'gap', 'aria-label': 'Choose the missing part' }, h('option', { value: '' }, '…'), choiceOrder(blank.options, `${block.template}|${blank.answer}`, gap).map((i) => h('option', { value: blank.options[i] }, blank.options[i]))),
   );
   const parts = block.template.split('___');
   const line = [];
@@ -201,12 +203,13 @@ function webBlock(block, ctx) {
 }
 
 // ---- "what will the browser show?" (web track) ----------------------------------------------------
-function seeBlock(block, ctx) {
+function seeBlock(block, ctx, blockIndex = 0) {
   const feedback = h('div', { class: 'feedback', 'aria-live': 'polite' });
   const reveal = h('div', { class: 'see-reveal' });
   const buttons = [];
   const files = filesFrom(block.files);
-  block.options.forEach((option, index) => {
+  choiceOrder(block.options, block.question, blockIndex).forEach((index) => {
+    const option = block.options[index];
     const btn = h(
       'button',
       {
@@ -244,7 +247,14 @@ function seeBlock(block, ctx) {
 }
 
 // ---- the block switch ----------------------------------------------------------------------
-export function renderBlock(block, { language, index = 0, ctx }) {
+export function renderBlock(block, opts) {
+  const node = renderBlockInner(block, opts);
+  // SQL results are tables aligned with spaces: the `lang-sql` class lets the CSS scroll them sideways on a phone.
+  if (opts.language === 'sql' && node && node.classList) node.classList.add('lang-sql');
+  return node;
+}
+
+function renderBlockInner(block, { language, index = 0, ctx }) {
   switch (block.t) {
     case 'p':
       return h('p', null, richText(block.text));
@@ -301,7 +311,7 @@ export function renderBlock(block, { language, index = 0, ctx }) {
     case 'predict':
     case 'bug':
     case 'quiz':
-      return choiceBlock(block);
+      return choiceBlock(block, index);
     case 'fill':
       return fillBlock(block);
     case 'reorder':
@@ -309,7 +319,7 @@ export function renderBlock(block, { language, index = 0, ctx }) {
     case 'web':
       return webBlock(block, ctx);
     case 'see':
-      return seeBlock(block, ctx);
+      return seeBlock(block, ctx, index);
     default:
       return null;
   }

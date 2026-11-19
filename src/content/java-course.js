@@ -11,11 +11,20 @@ import { loopsLesson } from './java/loops.js';
 import { nestedLesson } from './java/nested.js';
 import { methodsLesson } from './java/methods.js';
 import { recursionLesson } from './java/recursion.js';
+import { arraysLesson } from './java/arrays.js';
+import { arrayAlgosLesson } from './java/arrayalgos.js';
+import { gridsLesson } from './java/grids.js';
+import { stringsLesson } from './java/strings.js';
+import { ledgerLesson } from './java/ledger.js';
+import { classesLesson } from './java/classes.js';
+import { constructorsLesson } from './java/constructors.js';
+import { encapsulationLesson } from './java/encapsulation.js';
+import { staticsLesson } from './java/statics.js';
 
 export const javaCourse = {
   id: 'java-start',
   language: 'java',
   title: 'Java from Zero to Market-Ready',
   subtitle: 'Learn real Java offline, and build the Village SACCO system step by step',
-  lessons: [whatLesson, firstLesson, variablesLesson, operatorsLesson, inputLesson, decisionsLesson, loopsLesson, nestedLesson, methodsLesson, recursionLesson],
+  lessons: [whatLesson, firstLesson, variablesLesson, operatorsLesson, inputLesson, decisionsLesson, loopsLesson, nestedLesson, methodsLesson, recursionLesson, arraysLesson, arrayAlgosLesson, gridsLesson, stringsLesson, ledgerLesson, classesLesson, constructorsLesson, encapsulationLesson, staticsLesson],
 };

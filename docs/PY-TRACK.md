@@ -1,6 +1,6 @@
 # Python track (course id `py-start`)
 
-Owner: Python account. Files: `src/content/py/`, `src/content/python-course.js`, `tests/solutions-py.mjs`
+STATUS: COMPLETE (57 lessons, 125 exercises). Owner: Python account. Files: `src/content/py/`, `src/content/python-course.js`, `tests/solutions-py.mjs`
 (Python solutions from Level 6 on), this file.
 
 Levels 1 to 5 (35 lessons, 68 exercises) were written first. This file plans the rest, agreed with the
@@ -43,12 +43,12 @@ is run by `npm test`, so nothing is taught that does not work.
 - [x] 51 `py-logging`: logging, debugging, counting calls and timing
 - [x] 52 `py-project-duuka`: Project: Duuka Manager (SQLite + command line + logging + tests)
 
-### Level 9: Capstones and the path forward (lessons 53 to 57)
-- [ ] 53 Concurrency basics (threads vs async, explained simply)
-- [ ] 54 How a web backend thinks (Flask ideas, simulated)
-- [ ] 55 Packaging and shipping a Python app
-- [ ] 56 Where to go next: web, data, AI, automation
-- [ ] 57 Final capstone: a small business system
+### Level 9: Capstones and the path forward (lessons 53 to 57) - DONE
+- [x] 53 `py-async`: concurrency with real asyncio (top-level `await`; threads are explained, not run)
+- [x] 54 `py-backend`: how a web backend thinks (a 25-line MiniApp stands in for Flask)
+- [x] 55 `py-shipping`: packaging and shipping (tomllib, versions, entry points, zipfile, checksums)
+- [x] 56 `py-next`: where to go next: data, automation, web and AI (a working first step on each road)
+- [x] 57 `py-capstone`: final capstone: a small business system (stock, cash and credit sales, payments, commands, JSON export, tests)
 
 Lesson 38 carries special methods and dataclasses together; if the exercises show it is too much, it is
 split and later lessons are renumbered here.
@@ -58,6 +58,7 @@ split and later lessons are renumbered here.
 - An uncaught `SystemExit` (what `argparse` does on bad input) ends the whole test process. Always catch it.
 - `sys.modules` keeps imported modules between runs, so lessons write modules with a helper that forgets the old copy first.
 - The editor program has no `__name__ == "__main__"` of its own, so the main guard is taught inside module files (run with `runpy`).
+- The editor runs code with `runPythonAsync`: top-level `await` works, `asyncio.run()` does not. A coroutine that is created and never awaited prints a `RuntimeWarning` later, in whichever run happens to trigger garbage collection, so never leave one behind in a runnable example.
 - `logging.disable(...)` and `basicConfig` state leak between runs, so examples start with `logging.disable(logging.NOTSET)` and `force=True`.
 - Print `Row` or `with con:` results only after `commit()`: a rollback also undoes uncommitted setup.
 

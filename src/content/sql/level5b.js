@@ -80,7 +80,7 @@ export const level5b = [
       {
         t: 'story',
         title: 'The running total',
-        text: "At the end of each day Nakato writes the day's takings in her book and, beside it, the total so far this month. Her sister asks, “Which product is the most expensive in each category?” Both questions have something in common: GROUP BY would collapse the rows into one per day or per category, but here every row must STAY, with an extra number computed from its neighbours.\n\nThis lesson has two tools. `WITH` gives a name to a step of a query so a long query reads top to bottom. **Window functions** work out a number across a group of rows without collapsing them.",
+        text: "At the end of each day Nakato writes the day's takings in her book and, beside it, the total so far this month. Her sister asks a second question: “Which product is the most expensive in each category?” The two questions have something in common. GROUP BY would collapse the rows into one per day or per category. Here every row must STAY, with an extra number computed from its neighbours.\n\nThis lesson has two tools. `WITH` gives a name to a step of a query so a long query reads top to bottom. **Window functions** work out a number across a group of rows without collapsing them.",
       },
       { t: 'p', text: '`WITH name AS ( query )` defines a temporary named result that the main query can use like a table. It is the tidy way to write a subquery in FROM.' },
       {
@@ -209,7 +209,7 @@ export const level5b = [
         hints: [
           'Number the products inside each category, most expensive first, in a WITH. Then keep number 1.',
           '`ROW_NUMBER() OVER (PARTITION BY category ORDER BY price DESC) AS rn`',
-          'A similar example: lesson 30 does exactly this. Write it from memory, then compare.',
+          "A similar example: the best-paid worker in each department: `WITH r AS (SELECT dept, name, pay, ROW_NUMBER() OVER (PARTITION BY dept ORDER BY pay DESC) AS rn FROM workers) SELECT dept, name, pay FROM r WHERE rn = 1;` Yours is about products and prices.",
         ],
       },
       {
@@ -361,7 +361,7 @@ export const level5b = [
         hints: [
           'The trigger body is one INSERT between BEGIN and END;. Use OLD.qty and NEW.qty for the two quantities.',
           '`CREATE TRIGGER log_stock AFTER UPDATE OF qty ON stock BEGIN INSERT INTO stock_log (item, old_qty, new_qty) VALUES (OLD.item, OLD.qty, NEW.qty); END;`',
-          'A similar example: the lesson\'s log_price trigger records the old and new price. Yours records the old and new qty.',
+          "A similar example: `CREATE TRIGGER log_mark AFTER UPDATE OF mark ON results BEGIN INSERT INTO mark_log (pupil, old_mark, new_mark) VALUES (OLD.pupil, OLD.mark, NEW.mark); END;` records every change of a mark. Yours records changes of qty.",
         ],
       },
       {
@@ -635,7 +635,7 @@ export const level5b = [
         hints: [
           'Three data changes between BEGIN and COMMIT: two UPDATEs on accounts and one INSERT into transfers.',
           "`INSERT INTO transfers (from_id, to_id, amount, made_on) VALUES (2, 3, 7000, '2026-11-20');`",
-          'The step 2 project of the lesson does the same for accounts 1 and 2. Change the ids, the amount and the date.',
+          "A similar example: a wallet payment is two UPDATEs and a record, all inside BEGIN ... COMMIT: `UPDATE wallets SET coins = coins - 5 WHERE id = 1; UPDATE wallets SET coins = coins + 5 WHERE id = 2; INSERT INTO payments (from_id, to_id, coins) VALUES (1, 2, 5);` Yours moves 7000 between accounts 2 and 3 and records the date.",
         ],
       },
       {

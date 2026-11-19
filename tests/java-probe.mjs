@@ -72,6 +72,7 @@ G('assertions are ON (real Java: off by default)', M('int x=5; assert x>10 : "x 
 G('main class must be called Main (public class Shop fails)', `public class Shop { public static void main(String[] a){ System.out.println("shop"); } }`, 'compile error: class Shop is public, should be declared in a file named Shop.java', says(/should be declared in a file named/));
 G('uncaught exception shows only its message, no class name or stack', M('throw new IllegalArgumentException("bad input");'), 'stderr is just "bad input"', (r) => !r.ok && r.stderr.trim() === 'bad input');
 G('Math.round of a negative half rounds away from zero', M('System.out.println(Math.round(-2.5));'), 'prints -3; real Java prints -2 (it rounds halves upwards)', (r) => r.ok && r.stdout === '-3\\n');
+G('Enum.compareTo returns the sign, not the ordinal difference', `public class Main { enum E { A, B, C } public static void main(String[] a) { System.out.println(E.C.compareTo(E.A)); } }`, 'prints 1; real Java prints 2 (ordinal difference)', (r) => r.ok && r.stdout === '1\\n');
 G('library exception messages differ from real Java', M('try { Integer.parseInt("x1"); } catch (NumberFormatException e){ System.out.println(e.getMessage()); }'), 'real Java says: For input string: "x1"', (r) => r.ok && !/For input string/.test(r.stdout));
 
 let bad = 0;
