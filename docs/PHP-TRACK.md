@@ -2,7 +2,7 @@
 
 Planned course id `php-start`, language id `php`. Files (when created): `src/content/php/` (lessons),
 `src/content/php-course.js` (course list), `tests/solutions-php.mjs` (reference solutions).
-Owner: the PHP account. Status: **runner built; Levels 1 to 4 written (24 lessons, 92 exercises). Next: Level 5, market-ready PHP (lessons 25 to 33).**
+Owner: the PHP account. Status: **runner built; all 5 levels written (33 lessons, 107 exercises). The PHP course is complete. Next: review, real-device testing and polish.**
 
 Running project: **Nambi's Mobile Money Booth**, a small agent booth in a trading centre. Learners start
 by printing a receipt in lesson 1 and finish with a tested payment-and-wallet application (deposits,
@@ -106,15 +106,15 @@ exercises with exactly 3 hints and at least one hidden test (an exercise that ta
 - [x] 24. `php-wallet` Project: the `Wallet` class (deposit, withdraw, insufficient funds)
 
 **Level 5: Market-ready PHP** (web requests are simulated with plain arrays, because there is no web server in the app)
-- [ ] 25. `php-requests` How the web works for PHP (`$_GET`, `$_POST`, `$_SERVER`, simulated requests)
-- [ ] 26. `php-forms` Forms and validation (`filter_var`, trimming, error lists)
-- [ ] 27. `php-security` XSS (`htmlspecialchars`), SQL injection, `password_hash`, `password_verify`
-- [ ] 28. `php-files-json` Files and JSON (`file_put_contents`, `json_encode`, `json_decode`)
-- [ ] 29. `php-pdo` PDO with SQLite (prepared statements, transactions)
-- [ ] 30. `php-api` Building a JSON API (routes, status codes, error responses)
-- [ ] 31. `php-structure` Namespaces, autoloading, Composer in plain words, project layout, tests
-- [ ] 32. `php-momo-api` Integrating a payment API (simulated Mobile Money collection, webhooks, idempotency)
-- [ ] 33. `php-capstone` Capstone: the booth ledger application
+- [x] 25. `php-requests` How the web works for PHP (`$_GET`, `$_POST`, `$_SERVER`, simulated requests)
+- [x] 26. `php-forms` Forms and validation (`filter_var`, trimming, error lists)
+- [x] 27. `php-security` XSS (`htmlspecialchars`), SQL injection, `password_hash`, `password_verify`
+- [x] 28. `php-files-json` Files and JSON (`file_put_contents`, `json_encode`, `json_decode`)
+- [x] 29. `php-pdo` PDO with SQLite (prepared statements, transactions)
+- [x] 30. `php-api` Building a JSON API (routes, status codes, error responses)
+- [x] 31. `php-structure` Namespaces, autoloading, Composer in plain words, project layout, tests
+- [x] 32. `php-momo-api` Integrating a payment API (simulated Mobile Money collection, webhooks, idempotency)
+- [x] 33. `php-capstone` Capstone: the booth ledger application
 
 ## Level 1 as written (files: `src/content/php/level1.js` lessons 1 to 3, `level1b.js` lessons 4 to 7, helpers in `shared.js`)
 
@@ -176,6 +176,22 @@ Lessons 19 to 24 are done and tested: 23 exercises (`php19-` to `php24-`). Do no
 - Lesson 25 onwards can build on the wallet and on `Kind`, `Transaction`, `InvalidAmountException`, `InsufficientFundsException`.
 - PHP trap seen in a test: `echo "UGX ", f()` prints `UGX ` BEFORE `f()` throws. Exercise php23-parse-throw warns about it in a hint.
 - Enum and `fill` blocks: every wrong option of a `fill` must really fail (the test checks), so "private vs public" cannot be a fill.
+
+## Level 5 as written (files: `src/content/php/level5.js` lessons 25 to 27, `level5b.js` lessons 28 to 30, `level5c.js` lessons 31 to 33)
+
+Lessons 25 to 33 are done and tested: 15 exercises (`php25-` to `php33-`). Facts for anyone extending or reviewing:
+
+- **No web server in the app.** Requests are simulated: a request is a line of text (`POST /deposit {"amount":50000}`) or an array, and a response is `["status", "headers", "body"]` returned by `handle()`. No run block calls `header()` or `http_response_code(code)` (`header()` fails after output, and there is no server). The real-server front door (`public/index.php`) is shown in non-run `code` blocks (a `code` block without `output` is not executed).
+- Taught: URLs (`parse_url`, `parse_str`, `http_build_query`, `urlencode`), `$_GET`/`$_POST`/`$_SERVER` (simulated), status codes, routers; `filter_var`, trimming, error lists, whitelists with `tryFrom`; `htmlspecialchars`, SQL injection and prepared statements, `password_hash`/`password_verify`, `random_bytes`, `hash_equals`; files, CSV (`fputcsv`/`fgetcsv`), JSON (`JSON_THROW_ON_ERROR`, `JSON_PRETTY_PRINT`); PDO with SQLite (prepared statements, fetch modes, transactions, repository class); a JSON API over the Level 4 `WALLET_LIB`; namespaces (braced form in one file), PSR-4 autoloading (files written to the run folder), Composer and project layout (explained, not run), a tiny test runner; payments as a state machine, idempotency, HMAC-SHA256 signed webhooks; the capstone app (Ledger + HTTP layer + front door).
+- Helpers: `API_SOLUTION()` in `level5b.js` (wallet API), `boothApp(options)`, `boothData`, `boothHttp`, `BOOTH_MAIN` in `level5c.js` (capstone; options `fees: 'new'`, `transactions: false`, `escape: false` produce the exercise starters and solutions).
+- Expected outputs for the capstone, API, payments and so on are computed by JavaScript models in the lesson files (`boothModel`, `apiSession`, `momoModel`), never by running the PHP. HMAC signatures (secret `booth-secret`) were computed once with Node's `crypto` and pasted in as constants (the content files must not import Node modules: they are bundled for the browser).
+- Real MTN MoMo / Airtel Money APIs are NOT used. Lesson 32 says so plainly and teaches the pattern only (state machine, idempotency, signature, trusting your own recorded amount).
+- Password hashes are random, so no exercise test prints a hash; tests check only behaviour (`login` results).
+- Traps found while writing: SQLite reserves the word `nothing`; PDO does not complain about too few values for `?` placeholders on SQLite (the value becomes NULL); `parse_str` needs both arguments in PHP 8.
+
+## Engine bug found and fixed in this level
+
+`@php-wasm` opens `/request/stdout` and `/request/stderr` for every `php.run()` and never closes them. After about 2,000 runs on one instance every run died with `File descriptor value too large` / `Aborted()`. The tests hit it because they share one instance; a long session in the app could too (the worker keeps one instance). Fixed in `src/lib/phpcore.mjs` (`closeLeakedStreams`, called after every run); verified with 6,000 runs for six kinds of program.
 
 ## Style notes specific to PHP
 

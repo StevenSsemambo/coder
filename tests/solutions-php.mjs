@@ -2,6 +2,7 @@
 // it must pass all its tests, and the starter must NOT pass.
 import { MOMO_LIB, WALLET_LIB, walletMain } from '../src/content/php/shared.js';
 import { API_SOLUTION } from '../src/content/php/level5b.js';
+import { boothApp } from '../src/content/php/level5c.js';
 
 const php = String.raw;
 
@@ -1786,4 +1787,159 @@ while (($line = fgets(STDIN)) !== false) {
     echo "200 ", json_encode(["page" => $page, "per_page" => $perPage, "total" => count($ids), "items" => $items]), "\n";
 }
 `,
+  // Level 5 (lessons 31-33)
+  'php31-autoload-path': php`<?php
+function classToPath(string $class, string $prefix, string $baseDir): ?string {
+    if (!str_starts_with($class, $prefix)) {
+        return null;
+    }
+    $rest = substr($class, strlen($prefix));
+    return $baseDir . str_replace("\\", "/", $rest) . ".php";
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    $class = trim($line);
+    if ($class === "") {
+        continue;
+    }
+    echo classToPath($class, "Booth\\", "src/") ?? "not ours", "\n";
+}
+`,
+  'php31-test-runner': php`<?php
+function fee(int $amount): int {
+    return $amount <= 50000 ? 1000 : ($amount <= 200000 ? 2000 : 3500);
+}
+
+function check(string $name, int $expected, int $actual): bool {
+    if ($expected === $actual) {
+        echo "ok - ", $name, "\n";
+        return true;
+    }
+    echo "FAIL - ", $name, " (expected ", $expected, ", got ", $actual, ")\n";
+    return false;
+}
+
+$results = [];
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    if ($line === "") {
+        continue;
+    }
+    [$name, $amount, $expected] = explode("|", $line);
+    $results[] = check($name, (int) $expected, fee((int) $amount));
+}
+$passed = count(array_filter($results));
+echo $passed, " passed, ", count($results) - $passed, " failed\n";
+`,
+  'php31-namespaces': php`<?php
+namespace Booth\Money {
+    final class Fee {
+        public static function forAmount(int $amount): int {
+            if ($amount <= 50000) {
+                return 1000;
+            }
+            return $amount <= 200000 ? 2000 : 3500;
+        }
+    }
+}
+
+namespace Booth\Report {
+    use Booth\Money\Fee;
+
+    final class Receipt {
+        public function line(string $name, int $amount): string {
+            return $name . ": UGX " . number_format($amount) . " (fee " . number_format(Fee::forAmount($amount)) . ")";
+        }
+    }
+}
+
+namespace {
+    use Booth\Report\Receipt;
+
+    $receipt = new Receipt();
+    while (($line = fgets(STDIN)) !== false) {
+        $parts = explode(" ", trim($line));
+        if (count($parts) === 2) {
+            echo $receipt->line($parts[0], (int) $parts[1]), "\n";
+        }
+    }
+}
+`,
+  'php32-signature': php`<?php
+const SECRET = "booth-secret";
+
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    if ($line === "") {
+        continue;
+    }
+    [$signature, $body] = explode(" ", $line, 2);
+    echo hash_equals(hash_hmac("sha256", $body, SECRET), $signature) ? "valid" : "invalid", "\n";
+}
+`,
+  'php32-idempotent': php`<?php
+$payments = [];
+$balance = 0;
+
+while (($line = fgets(STDIN)) !== false) {
+    $parts = explode(" ", trim($line));
+    if ($parts[0] === "pay" && count($parts) === 4) {
+        [, $ref, $phone, $amount] = $parts;
+        if (isset($payments[$ref])) {
+            echo "Already requested ", $ref, " (", $payments[$ref]["status"], ")\n";
+        } else {
+            $payments[$ref] = ["phone" => $phone, "amount" => (int) $amount, "status" => "PENDING"];
+            echo "Requested ", $ref, ": UGX ", number_format((int) $amount), " from ", $phone, " (PENDING)\n";
+        }
+    } elseif ($parts[0] === "webhook" && count($parts) === 3) {
+        [, $ref, $status] = $parts;
+        if (!isset($payments[$ref])) {
+            echo "Unknown reference ", $ref, "\n";
+        } elseif (!in_array($status, ["PENDING", "SUCCESSFUL", "FAILED"], true)) {
+            echo "Invalid status ", $status, "\n";
+        } elseif ($payments[$ref]["status"] !== "PENDING" || $status === "PENDING") {
+            echo "Ignored ", $ref, " (already ", $payments[$ref]["status"], ")\n";
+        } else {
+            $payments[$ref]["status"] = $status;
+            if ($status === "SUCCESSFUL") {
+                $balance += $payments[$ref]["amount"];
+                echo "Credited UGX ", number_format($payments[$ref]["amount"]), " for ", $ref, "\n";
+            } else {
+                echo "Failed ", $ref, "\n";
+            }
+        }
+    } elseif ($parts[0] === "balance") {
+        echo "Balance: UGX ", number_format($balance), "\n";
+    }
+}
+`,
+  'php32-state-machine': php`<?php
+enum Status: string {
+    case Pending = "PENDING";
+    case Successful = "SUCCESSFUL";
+    case Failed = "FAILED";
+
+    public function canMoveTo(self $next): bool {
+        return $this === self::Pending && $next !== self::Pending;
+    }
+}
+
+while (($line = fgets(STDIN)) !== false) {
+    $line = trim($line);
+    if ($line === "") {
+        continue;
+    }
+    [$from, $to] = explode(" ", $line);
+    $a = Status::tryFrom($from);
+    $b = Status::tryFrom($to);
+    if ($a === null || $b === null) {
+        echo "unknown status\n";
+    } else {
+        echo $a->value, " -> ", $b->value, ": ", $a->canMoveTo($b) ? "allowed" : "not allowed", "\n";
+    }
+}
+`,
+  'php33-new-fees': boothApp({ fees: 'new', transactions: false }),
+  'php33-transactions-route': boothApp({ transactions: true }),
+  'php33-escape-statement': boothApp({ transactions: false, escape: true }),
 };
