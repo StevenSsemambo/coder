@@ -812,28 +812,40 @@ section('PHP engine (the shared core, on real PHP 8.3 WebAssembly)');
   check('a fatal error does not break the next run', (await r('<?php echo 1 / 0;')).error !== null && (await r('<?php echo "ok";')).stdout === 'ok');
 }
 
-section('SQL lessons: the right answer is not always in the same place');
+section('Choices are shown shuffled (the right answer is written first, but must not be shown first every time)');
 {
-  const { sqlCourse } = await import('../src/content/sql-course.js');
-  const spots = { 2: {}, 3: {}, 4: {}, 5: {} };
-  let first = 0;
-  let total = 0;
-  const fillSpots = [0, 0, 0];
-  for (const lesson of sqlCourse.lessons) {
-    for (const b of lesson.blocks) {
-      if (['quiz', 'predict', 'bug'].includes(b.t)) {
-        total += 1;
-        if (b.answer === 0) first += 1;
-        (spots[b.options.length] ||= {})[b.answer] = ((spots[b.options.length] || {})[b.answer] || 0) + 1;
-      }
-      if (b.t === 'fill') b.blanks.forEach((bl) => { if (bl.options.length === 3) fillSpots[bl.options.indexOf(bl.answer)] += 1; });
+  const { choiceOrder } = await import('../src/content/blocks.js');
+  let allOk = true;
+  const overall = {};
+  for (const course of allCourses) {
+    const spots = {};
+    let n = 0;
+    for (const lesson of course.lessons) {
+      lesson.blocks.forEach((b, index) => {
+        const sets = [];
+        if (['quiz', 'predict', 'bug', 'see'].includes(b.t) && b.options) sets.push([b.options, b.question, index, b.answer]);
+        if (b.t === 'fill') b.blanks.forEach((bl, gap) => sets.push([bl.options, `${b.template}|${bl.answer}`, gap, bl.options.indexOf(bl.answer)]));
+        for (const [options, key, at, right] of sets) {
+          const order = choiceOrder(options, key, at);
+          const isPermutation = order.length === options.length && [...order].sort((x, y) => x - y).every((v, i) => v === i);
+          const same = JSON.stringify(order) === JSON.stringify(choiceOrder(options, key, at));
+          if (!isPermutation || !same) allOk = false;
+          if (options.length === 4 && right >= 0) {
+            const shown = order.indexOf(right);
+            spots[shown] = (spots[shown] || 0) + 1;
+            overall[shown] = (overall[shown] || 0) + 1;
+            n += 1;
+          }
+        }
+      });
     }
+    if (n >= 20) check(`${course.id}: the right answer is shown first in at most 40 percent of its 4-option questions`, (spots[0] || 0) / n <= 0.4, `${JSON.stringify(spots)} of ${n}`);
   }
-  check('at most 40 percent of SQL questions have the right answer first', first / total <= 0.4, `${first} of ${total}`);
-  const four = Object.values(spots[4]);
-  const fourTotal = four.reduce((a, b) => a + b, 0);
-  check('every position of a 4-option SQL question is used about equally', Object.keys(spots[4]).length === 4 && Math.max(...four) / fourTotal <= 0.32, JSON.stringify(spots[4]));
-  check('SQL fill dropdowns do not always list the right answer first', Math.max(...fillSpots) / fillSpots.reduce((a, b) => a + b, 0) <= 0.45, JSON.stringify(fillSpots));
+  check('every shuffled choice order is a permutation and is the same every time', allOk);
+  const total = Object.values(overall).reduce((a, b) => a + b, 0);
+  check('across all courses each of the 4 positions holds 18 to 32 percent of the right answers', [0, 1, 2, 3].every((k) => (overall[k] || 0) / total >= 0.18 && (overall[k] || 0) / total <= 0.32), JSON.stringify(overall));
+  check('options that refer to each other keep their written order', JSON.stringify(choiceOrder(['It is red', 'It is blue', 'All of the above'], 'q', 1)) === '[0,1,2]');
+  check('a different question gives a different order', new Set(Array.from({ length: 12 }, (_, i) => JSON.stringify(choiceOrder(['a', 'b', 'c', 'd'], `question ${i}`, i)))).size > 4);
 }
 
 section('Dates');

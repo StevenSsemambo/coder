@@ -26,6 +26,7 @@ if (!w.Range.prototype.getClientRects) { w.Range.prototype.getClientRects = () =
 const server = await createServer({ server: { middlewareMode: true }, appType: 'custom', logLevel: 'error' });
 let ok = 0;
 const failures = [];
+let clickTested = 0; // choice blocks that were really clicked through (shown shuffled, must still check the right answer)
 try {
   const { allCourses: courses } = await server.ssrLoadModule('/src/content/index.js');
   const { renderBlock } = await server.ssrLoadModule('/src/ui/lesson-blocks.js');
@@ -52,6 +53,28 @@ try {
         try {
           const node = renderBlock(block, { language: course.language, index, ctx });
           if (course.language === 'sql' && node && node.classList && !node.classList.contains('lang-sql')) failures.push(`${where} block ${index + 1} (${block.t}): SQL block is missing the lang-sql class (its result tables would wrap on a phone)`);
+          const at = `${where} block ${index + 1} (${block.t})`;
+          const sameSet = (a, b) => JSON.stringify([...a].sort()) === JSON.stringify([...b].sort());
+          if (['quiz', 'predict', 'bug', 'see'].includes(block.t) && block.options && new Set(block.options).size === block.options.length) {
+            // the options are shown shuffled: every option must still be there exactly once...
+            const shown = [...node.querySelectorAll('button.choice')].map((b) => b.textContent);
+            if (!sameSet(shown, block.options)) failures.push(`${at}: the options shown are not the options written`);
+            // ...and the button showing the right answer must still be the right one, wherever it is shown
+            if (block.t !== 'see') {
+              const right = [...node.querySelectorAll('button.choice')].find((b) => b.textContent === block.options[block.answer]);
+              right.click();
+              if (!right.classList.contains('ok') || !node.querySelector('.feedback-ok')) failures.push(`${at}: the right answer was not accepted after shuffling`);
+              const again = renderBlock(block, { language: course.language, index, ctx });
+              const wrong = [...again.querySelectorAll('button.choice')].find((b) => b.textContent !== block.options[block.answer]);
+              wrong.click();
+              if (!wrong.classList.contains('wrong') || again.querySelector('.feedback-ok')) failures.push(`${at}: a wrong answer was accepted after shuffling`);
+              clickTested += 1;
+            }
+          }
+          if (block.t === 'fill') {
+            const selects = [...node.querySelectorAll('select.gap')];
+            block.blanks.forEach((bl, i) => { if (!selects[i] || !sameSet([...selects[i].options].map((o) => o.value).filter(Boolean), bl.options)) failures.push(`${at}: the gap ${i + 1} options shown are not the options written`); });
+          }
         } catch (e) {
           failures.push(`${where} block ${index + 1} (${block.t}): ${e.message}`);
         }
@@ -62,6 +85,8 @@ try {
   await server.close();
 }
 console.log(`\nLesson screens (every lesson view is rendered)\n  ${ok} lesson views rendered`);
+console.log(`  ${clickTested} choice blocks clicked through (right answer accepted, wrong answer refused, in shuffled order)`);
+if (clickTested < 300) failures.push(`only ${clickTested} choice blocks were clicked through: the click test did not run properly`);
 process.removeAllListeners('uncaughtException');
 if (failures.length) {
   console.log(`\nFAILURES:\n${failures.map((f) => `  - ${f}`).join('\n')}`);
