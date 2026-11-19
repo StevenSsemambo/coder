@@ -33,9 +33,9 @@ Each lesson follows the usual pattern (story first, recap last, at least 2 inter
 | w55 | Browser APIs (`IntersectionObserver`, `FormData`, `URLSearchParams`, hash routing, clipboard and share, `AbortController`) | Level 4, after w42 | [x] |
 | w56 | SVG: icons, logos and simple charts | Level 2, after w54 | [x] |
 | w57 | Speed in depth (Core Web Vitals, image formats, fonts, CDN, caching headers) | Level 6 | [x] |
-| w58 | Security, part 2 (CSP, CORS, CSRF, cookies, sessions and login ideas, security headers) | Level 6 | [ ] |
-| w59 | Quality, maintenance and handover (cross-browser testing, validation, launch checklist, backups, monitoring, care plan, handover document) | Level 6 | [ ] |
-| w60 | Capstone 2: launch a company website | Level 6 | [ ] |
+| w58 | Security, part 2 (CSP, CORS, CSRF, cookies, sessions and login ideas, security headers) | Level 6 | [x] |
+| w59 | Quality, maintenance and handover (cross-browser testing, validation, launch checklist, backups, monitoring, care plan, handover document) | Level 6 | [x] |
+| w60 | Capstone 2: launch a company website | Level 6 | [x] |
 
 Still deliberately out of scope here (needs a runtime this app does not have): a real backend with a database and login
 (Node and Express), React or Vue, TypeScript, test frameworks, a real WordPress. They are explained, with a simulated version
