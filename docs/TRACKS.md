@@ -52,6 +52,30 @@ which interpreter or compiler, how big the download is, what subset of the langu
 and whether it runs in a Web Worker. Do not write lessons until that note says the runtime works.
 Runtime work touches the engine files, so coordinate it with the engine owner.
 
+## The app shell: UI/UX and product owner
+
+One account is the **product owner** and the UI/UX designer. It decides what the app looks and feels like, and it is the
+overall boss of the experience. **Read `docs/PRODUCT.md`**: the product promise, the design principles, how your lessons
+become screens on a phone, and the checklist for lessons that fit. In short:
+
+| Who | Owns | Does not touch |
+|---|---|---|
+| **Product owner (UI/UX)** | `src/ui/**`, `src/styles.css`, `src/main.js`, `src/state.js`, `src/lib/storage.js`, `src/lib/game.js`, `index.html`, `public/` icons, the PWA settings in `vite.config.js`, `README.md`, `docs/PRODUCT.md`, `tools/ux-audit.mjs` | Lessons, solutions, language runners and workers, error rules, and any UI file named for one language (for example the web workspace files) |
+| **Track accounts** | their content, solutions, runner, workers and error rules (the table above) | The app shell. Ask for a change in "UI requests" below instead of editing it |
+
+**Compatibility promise:** every UI change works with every lesson exactly as written today. Nobody is ever asked to edit a lesson
+because the UI changed. New content fields (an `emoji`, a `tagline`, a lesson `goal`...) are **optional**.
+
+**Before you push new lessons, run `npm run ux-audit -- --course=<your-course-id>`.** It is advisory (it never fails the build) and
+shows which lessons are too long or too heavy for the step-by-step mode. New lessons should have no flags under `--ideal`.
+
+### UI requests
+
+Add a row when you need something from the app shell. The product owner answers in the same row. Do not edit the UI yourself.
+
+| Date | Track | Request (what you need, and which lesson shows it) | Answer |
+|---|---|---|---|
+
 ## Shared files (be careful)
 
 These are used by every track. Do not reformat or reorganise them.
@@ -59,10 +83,10 @@ These are used by every track. Do not reformat or reorganise them.
 | File | Rule |
 |---|---|
 | `src/content/index.js` | The course registry. A new track adds **one** import and **one** entry. Nothing else. |
-| `src/content/blocks.js` | The lesson block format. Changing it affects every course. Engine owner only. |
+| `src/content/blocks.js` | The lesson block format. Changing it affects every course. Engine owner only. (Optional course and lesson metadata fields are listed in `docs/PRODUCT.md`.) |
 | `tests/run.mjs`, `tests/render.mjs` | The test suite. Engine owner only. |
 | `tests/solutions.mjs` | Merges the per-track solution files. Do not add solutions here; add them to your track's file (`tests/solutions-c.mjs`, and so on). |
-| `README.md` | Engine owner updates it. Tracks report their status in this file instead. |
+| `README.md` | The product owner updates it. Tracks report their status in this file instead. |
 | `src/lib/errors.js` | Plain-language error messages. Add rules for your language, never edit another language's. |
 | `scripts/prepare-runtimes.mjs` | Each runtime has a list of small patches. The account that owns a language may add a patch for **its own** runtime when a lesson is blocked by a bug, if the patch has a clear `why` and a lesson exercises it (the build stops loudly if a patch stops applying). Never edit another language's patches or the build logic. |
 
@@ -87,6 +111,8 @@ enforce it. In short:
   **ends with a recap**. It has at least two interactive blocks (`try`, `predict`, `fill`, `reorder`,
   `bug`, `quiz`, `project`).
 - It includes a **mistake museum** (`mistakes`): the errors beginners really make, with why and the fix.
+- It **fits the app**: at most 24 blocks and 30 minutes, no more than about 900 characters of reading in a row, a story of at most 90
+  words. Check with `npm run ux-audit -- --course=<id> --ideal` (advisory). The reasons are in `docs/PRODUCT.md`.
 - In every `quiz`, `predict`, `bug` and `see` options list, and in every `fill` gap, write the **right answer FIRST**
   (`answer: 0`). The app shows the options in a shuffled order (`choiceOrder` in `src/content/blocks.js`) and still checks
   the original index, so do not shuffle by hand. Never write options that refer to each other by position ("all of the
@@ -132,7 +158,7 @@ If your session can push to GitHub directly, use a branch named after your track
 - `README.md` is out of date (still says "Python Level 1 written" and "C draft").
 - Build warning: one JavaScript chunk is over 900 kB; split with dynamic `import()`.
 - Not built yet: C memory visualizer, lecturer mode, certificates, phone-to-phone sharing,
-  on-device AI tutor.
+  on-device AI tutor. The product roadmap (phases 1 to 4) is in `docs/PRODUCT.md`.
 - A `hello.md` leftover in the repository root can be deleted.
 
 ## Starter prompts
@@ -143,8 +169,8 @@ account has no GitHub access, upload the latest zip of the repository.
 **Any track (put this first):**
 
 > You are one of several Claude accounts building SayMaCoder, an offline-first coding course app for
-> students in Uganda. Read `docs/TRACKS.md` completely before you do anything, then your track's
-> roadmap. You own only the files listed for your track. Do not rewrite lessons that the roadmap
+> students in Uganda. Read `docs/TRACKS.md` and `docs/PRODUCT.md` (the product guide) completely before you do anything, then your track's
+> roadmap. Write lessons that fit the app (`npm run ux-audit -- --course=<your-course-id>` before you push); never edit the app shell (`src/ui`, styles): ask in "UI requests". You own only the files listed for your track. Do not rewrite lessons that the roadmap
 > marks as done. Run `npm test` before and after your work; hand over only when it is green. Deliver
 > a zip with only the files you changed, keep their folder paths, and list them in your reply. Before
 > your usage limit runs out, update the roadmap and the handoff log in `docs/TRACKS.md`.
@@ -254,3 +280,4 @@ Add a row at the **bottom** each session. Newest last.
 | 2026-11-17 | Claude, Java | **Java Level 3 part B: lessons 20 to 23** (`j-object`, `j-inherit`, `j-poly`, `j-abstract`); 16 more exercises (94 in total), 418 code runs on the real engine. New explanation cards: `java-override` (@Override that overrides nothing, or a wrong return type), `java-weaker` (overriding without `public`), `java-abstract-impl` (abstract method not implemented). Care taken with the engine's limits: lesson 22 teaches `instanceof` safe casting and never runs a bad cast (gap G3, said honestly in the lesson), and no lesson prints an enum `compareTo` (G15). One of my own examples was wrong (an overdraft demo that would have printed 100, not -300); the test run caught it and the lesson now teaches it as a real bug | Java account: lessons 24 to 27 (interfaces, nested/inner/anonymous classes, enums and records, then the SACCO rewritten with objects) |
 | 2026-11-17 | Claude, Web | **Launch-ready group D written** (12 of 15 done): `w55-browser-apis` (slotted after w42), `w56-svg` (slotted after w54), `w57-speed-in-depth`, in `src/content/web/launch4.js`. 15 more exercises. Browser-API lessons feature-detect and their checks call small pure functions (reveal, loadImage, showPage...), so the tests give the same answers in jsdom and in a real browser. No engine files touched. Tests green (web part): 4,462 checks | Group E: w58 security part 2, w59 QA and handover, w60 capstone 2 |
 | 2026-11-17 | Claude, Web | **Web track COMPLETE.** Launch-ready group E written: `w58-security-2`, `w59-quality-maintenance-handover`, `w60-capstone-2` (a full clinic website with an 80-check capstone), in `src/content/web/launch5.js`. The Web track is now **60 lessons and 201 exercises** (counted from the course file). Roadmap in `docs/WEB-TRACK.md` fully ticked. No engine files touched. Tests green (web part): 4,659 checks | Nothing pending for Web. Engine owner: README still lists the old Web counts; the CSS linter does not know `container-type`; an engine that rewrites the student's script tag in place means `defer` cannot be tested |
+| 2026-11-20 | Claude, product owner (UI/UX) | **New role: product owner and UI/UX designer.** Added `docs/PRODUCT.md` (promise, design principles, game rules, how lessons become screens, the lesson checklist, optional metadata fields, ownership, roadmap), the section "The app shell" and a "UI requests" table in this file, `npm run ux-audit` (`tools/ux-audit.mjs`, advisory) and `src/lib/game.js` (stars, XP, levels, badges, streak, daily goal, derived from existing progress, with tests). **Phase 1 is being built** (step-by-step lessons, rewards, Continue button); it changes only the app shell and works with every lesson as written. **What every track account should do:** read `docs/PRODUCT.md`, run `npm run ux-audit -- --course=<id>`, write short blocks with something to DO between reading. Baseline from the audit (default thresholds): SQL 2 of 33 lessons flagged, PHP 1 of 13, C 4 of 32, C++ 4 of 18, Web 22 of 57, Java 22 of 23 (long lessons), Python 47 of 57 (too much reading before the first `try`) | Track owners: look at your audit and shorten or split the flagged lessons when you next touch them. Do not rewrite finished lessons just to satisfy the audit |

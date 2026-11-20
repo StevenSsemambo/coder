@@ -11,7 +11,8 @@
     "postbuild": "node scripts/fetch-cpp-compiler.mjs",
     "preview": "vite preview --host",
     "test": "node scripts/prepare-runtimes.mjs && node tests/run.mjs && node tests/render.mjs",
-    "test:cpp-wasm": "CPP_REAL=wasm ONLY_COURSE=cpp-pro node tests/run.mjs"
+    "test:cpp-wasm": "CPP_REAL=wasm ONLY_COURSE=cpp-pro node tests/run.mjs",
+    "ux-audit": "node tools/ux-audit.mjs"
   },
   "devDependencies": {
     "@codemirror/autocomplete": "^6.20.4",

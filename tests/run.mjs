@@ -812,6 +812,47 @@ section('PHP engine (the shared core, on real PHP 8.3 WebAssembly)');
   check('a fatal error does not break the next run', (await r('<?php echo 1 / 0;')).error !== null && (await r('<?php echo "ok";')).stdout === 'ok');
 }
 
+section('Game layer: stars, XP, levels, badges, streaks and the daily goal');
+{
+  const G = await import('../src/lib/game.js');
+  const { kvSet, kvGet } = await import('../src/lib/storage.js');
+  check('0 hints is 3 stars, 1 hint 2 stars, 2 or more hints 1 star, a looked-at solution 1 star', G.starsOf(0) === 3 && G.starsOf(1) === 2 && G.starsOf(2) === 1 && G.starsOf(9) === 1 && G.starsOf(0, true) === 1);
+  check('exercise XP is 10, 15 or 20 by stars', [1, 2, 3].map(G.exerciseXp).join() === '10,15,20');
+  check('level thresholds: 0 XP is level 1, 25 is level 2, 100 is level 3, 2025 is level 10', [0, 24, 25, 99, 100, 2025].map((x) => G.levelInfo(x).level).join() === '1,1,2,2,3,10');
+  check('level progress is a percentage between 0 and 99', [0, 1, 24, 60, 99, 5000].every((x) => { const l = G.levelInfo(x); return l.pct >= 0 && l.pct <= 99 && l.into >= 0 && l.into < l.span; }));
+  const now = new Date('2026-11-20T10:00:00');
+  check('a streak counts back from today or from yesterday', G.streakOf(['2026-11-20', '2026-11-19', '2026-11-18', '2026-11-15'], now).current === 3 && G.streakOf(['2026-11-19', '2026-11-18'], now).current === 2 && G.streakOf(['2026-11-10'], now).current === 0);
+  const progress = { a1: { passed: true, hintsAtFirstPass: 0 }, a2: { passed: true, hintsAtFirstPass: 1 }, a3: { passed: true, hintsAtFirstPass: 4 }, a4: { passed: false, hintsAtFirstPass: 0 } };
+  const stats = G.computeStats({ progress, game: { lessons: { 'c/x': 1 }, solutions: {} }, days: ['2026-11-20'], courseOf: (id) => (id === 'a3' ? 'py' : 'c'), now });
+  check('stats are derived from existing progress: stars, perfect, XP, courses', stats.passed === 3 && stats.stars === 6 && stats.perfect === 1 && stats.xp === 20 + 15 + 10 + 20 && stats.courses === 2, JSON.stringify(stats));
+  check('a looked-at solution lowers the stars of that exercise to 1', G.computeStats({ progress: { a1: { passed: true, hintsAtFirstPass: 0 } }, game: { solutions: { a1: true } } }).stars === 1);
+  check('older progress with no game record still earns XP (nothing to migrate)', G.computeStats({ progress, days: [], now }).xp === 20 + 15 + 10);
+  check('the first exercise earns the First program badge once', G.newBadges(stats, {}).some((b) => b.id === 'first-run') && !G.newBadges(stats, { badges: { 'first-run': 1 } }).some((b) => b.id === 'first-run'));
+  check('no badge is earned before its goal', G.newBadges(G.computeStats({ progress: {}, now }), {}).length === 0);
+  check('every badge has an id, an icon, a title and a description', G.BADGES.every((b) => b.id && b.icon && b.title && b.desc && typeof b.test === 'function') && new Set(G.BADGES.map((b) => b.id)).size === G.BADGES.length);
+  const attempts = [{ exerciseId: 'e1', passed: true, at: +now }, { exerciseId: 'e1', passed: true, at: +now }, { exerciseId: 'e2', passed: false, at: +now }, { exerciseId: 'e3', passed: true, at: +new Date('2026-11-19T10:00:00') }];
+  const day = G.todayProgress({ attempts, game: { goal: 2, lessons: { 'c/x': +now } }, now });
+  check('the daily goal counts distinct exercises passed today plus lessons finished today', day.done === 2 && day.goal === 2 && day.reached === true && day.pct === 100, JSON.stringify(day));
+  check('an invalid daily goal falls back to 1', G.todayProgress({ game: { goal: 99 }, now }).goal === 1);
+
+  // persistence round-trip (memory fallback in Node): rewards are granted ONCE
+  await kvSet('progress', { ex1: { passed: true, hintsAtFirstPass: 0, firstPassedAt: +now } });
+  await kvSet('game', {}); await kvSet('days', ['2026-11-20']); await kvSet('attempts', [{ exerciseId: 'ex1', passed: true, at: +now }]);
+  const r1 = await G.rewardExercise({ exerciseId: 'ex1', firstPass: true, hintsUsed: 0, courseOf: () => 'c', now });
+  check('the first pass is rewarded: 3 stars, 20 XP, the First program badge', r1.firstPass && r1.stars === 3 && r1.xpGained === 20 && r1.badges.some((b) => b.id === 'first-run'), JSON.stringify({ s: r1.stars, x: r1.xpGained, b: r1.badges.map((b) => b.id) }));
+  const r2 = await G.rewardExercise({ exerciseId: 'ex1', firstPass: true, hintsUsed: 0, courseOf: () => 'c', now });
+  check('a badge is never awarded twice', r2.badges.length === 0);
+  const r3 = await G.rewardExercise({ exerciseId: 'ex1', firstPass: false, courseOf: () => 'c', now });
+  check('passing an exercise again earns nothing', !r3.firstPass && r3.xpGained === 0 && r3.stars === 0 && r3.badges.length === 0);
+  const l1 = await G.rewardLesson({ courseId: 'c', lessonId: 'l1', courseOf: () => 'c', now });
+  const l2 = await G.rewardLesson({ courseId: 'c', lessonId: 'l1', courseOf: () => 'c', now });
+  check('finishing a lesson earns 20 XP the first time only', l1.first && l1.xpGained === 20 && !l2.first && l2.xpGained === 0 && (await kvGet('game', {})).lessons['c/l1'] > 0);
+  check('finishing a first lesson earns its badge', l1.badges.some((b) => b.id === 'first-lesson'));
+  await G.setDailyGoal(3);
+  check('the daily goal can be set and is remembered', (await G.getGame()).goal === 3);
+  await kvSet('progress', {}); await kvSet('game', {}); await kvSet('days', []); await kvSet('attempts', []);
+}
+
 section('Choices are shown shuffled (the right answer is written first, but must not be shown first every time)');
 {
   const { choiceOrder } = await import('../src/content/blocks.js');
