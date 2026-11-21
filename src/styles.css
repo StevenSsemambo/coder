@@ -547,3 +547,8 @@ html { font-size: calc(16px * var(--scale)); }
 /* The symbol bar scrolls sideways: leave room after the last key and fade the edge so it is clear there is more. */
 .symbar { padding-right: 24px; scroll-padding-right: 24px; overscroll-behavior-x: contain; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
 .symbar { -webkit-overflow-scrolling: touch; touch-action: pan-x; }
+/* Long lines (for example a long SQL query) must scroll inside their box, never widen the page. */
+.try, .stdin-wrap, .exercise, .stepview, .step-body, .step-in { grid-template-columns: minmax(0, 1fr); }
+.view, .view > *, .step-body, .step-in, .step-in > *, .try > *, .stdin-wrap > * { min-width: 0; max-width: 100%; }
+.try-mount, .try-mount .cm-editor, .editor-mount .cm-editor { max-width: 100%; }
+.stdin { box-sizing: border-box; max-width: 100%; }
