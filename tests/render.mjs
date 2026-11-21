@@ -348,7 +348,28 @@ try {
     for (const c of courses) ok(`white on ${c.id} colour is readable`, ratio('#ffffff', meta.metaOf(c).color) >= 4.5);
     ok('muted text readable on page', ratio('#6a675f', '#f6f5f1') >= 4.5);
     ok('accent button readable', ratio('#ffffff', '#0b6b4f') >= 4.5);
+    // ---- Release 4: paths and certificates
+    const P = await server.ssrLoadModule('/src/lib/paths.js');
+    const ids = new Set(courses.map((c) => c.id));
+    for (const path of P.PATHS) for (const cid of path.courseIds) ok(`path ${path.id} points at a real course (${cid})`, ids.has(cid));
+    ok('every path has at least 2 courses', P.PATHS.every((p) => p.courseIds.length >= 2));
+    const doneAll = (course) => Object.fromEntries(course.lessons.flatMap((l) => l.exercises.map((e) => [e.id, { passed: true }])));
+    const gameAll = (course) => ({ lessons: Object.fromEntries(course.lessons.map((l) => [`${course.id}/${l.id}`, true])), fixed: {}, solutions: {} });
+    const webP = P.PATHS[0];
+    const cs = webP.courseIds.map((id) => courses.find((c) => c.id === id));
+    ok('nothing done: path not finished', !P.pathStatus(webP, courses, {}, {}).finished);
+    const progAll = Object.assign({}, ...cs.map(doneAll));
+    const gAll = { lessons: Object.assign({}, ...cs.map((c) => gameAll(c).lessons)), fixed: {}, solutions: {} };
+    ok('all done: path finished', P.pathStatus(webP, courses, progAll, gAll).finished);
+    ok('one course missing: path not finished', !P.pathStatus(webP, courses, Object.assign({}, doneAll(cs[0])), { lessons: gameAll(cs[0]).lessons }).finished);
+    ok('certificate refused before finishing', P.certificateTarget('course', cs[0].id, courses, {}, {}).finished === false);
+    ok('certificate allowed when finished', P.certificateTarget('course', cs[0].id, courses, doneAll(cs[0]), gameAll(cs[0])).finished === true);
+    ok('unknown certificate id is null', P.certificateTarget('course', 'nope', courses, {}, {}) === null && P.certificateTarget('x', 'y', courses, {}, {}) === null);
+    const { pathsView, certificateView } = await server.ssrLoadModule('/src/ui/views/paths.js');
+    ok('paths screen lists every path', (await pathsView()).node.querySelectorAll('.path-card').length === P.allPathStatus(courses, {}, {}).length);
+    ok('certificate screen refuses an unfinished course kindly', (await certificateView('course', cs[0].id)).node.textContent.includes('Finish every lesson'));
     console.log('  Release 3: review rules, 19 badges, 7-language playground, colour contrast checked');
+    console.log('  Release 4: career paths and certificate rules checked');
   }
   console.log(`  ${stepsChecked} lessons split into ${stepsTotal} steps (every block once, in order); ${walked} lessons walked through step by step`);
 } finally {

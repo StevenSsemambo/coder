@@ -112,8 +112,8 @@ screenshot description). The product owner answers in the same row. Do not edit 
 |---|---|---|
 | 1. Feel like a game (**Release 1, built 2026-11-21**) | Step-by-step lessons with a Continue button (the long page is still at `#/page/...`), a home screen that starts with "Continue", Kato the guide, stars, XP, levels, 19 badges, the daily goal, a celebration with sound and vibration (both can be switched off in Settings), "Show a solution", and lesson-finished tracking | **Done**. Needs real-phone testing |
 | 2. Feel easy (**Release 2, built 2026-11-21**) | First-run welcome ("What do you want to build?" then a first lesson), a visual path per course ("you are here", nothing locked), a face for every course (emoji, colour, tagline), an "offline check" in Settings, a one-tap download banner when a lesson needs Python, PHP or Java, an install card, progress backup and restore (a file that merges, never overwrites) | **Done**. Needs real-phone testing |
-| 3. Trust and reach | Practise-your-mistakes review, more badges, polish for small phones and screen readers | Planned |
-| 4. The long game | Career path across courses, certificates, lecturer mode, memory visualizer, on-device tutor | Planned |
+| 3. Trust and reach (**Release 3, built 2026-11-21**) | Practise-your-mistakes review, 19 badges, a Code playground for all languages, a reading-size setting, polish for small phones and screen readers | **Done**. Needs real-phone testing |
+| 4. The long game (**Release 4 started 2026-11-21**) | **Built:** career paths across courses (`src/lib/paths.js`) and downloadable certificates for a finished course or path. **Still planned:** lecturer mode, memory visualizer, on-device tutor | In progress |
 
 ## 8. What we cannot measure, and what we do instead
 

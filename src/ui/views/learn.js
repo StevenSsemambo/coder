@@ -165,6 +165,7 @@ export async function courseView(courseId) {
       h('p', { class: 'course-hero-stat' }, `${p.done} of ${p.total} exercises · ${finished.filter(Boolean).length} of ${course.lessons.length} lessons`),
       up ? h('a', { class: 'btn btn-light btn-block', href: `#/lesson/${course.id}/${up.id}` }, finished.some(Boolean) || p.done ? 'Continue: ' + up.title : 'Start: ' + up.title) : h('p', { class: 'course-hero-tag' }, '🎉 You finished this course!'),
     ),
+    p.total > 0 && finished.every(Boolean) ? h('a', { class: 'card review-home', href: `#/certificate/course/${course.id}` }, h('span', { class: 'review-emoji', 'aria-hidden': 'true' }, '🎓'), h('div', { class: 'grow' }, h('strong', null, 'Get your certificate'), h('p', { class: 'muted small' }, 'You finished this course. Save it as a picture.')), h('span', { class: 'chevron', 'aria-hidden': 'true' }, '›')) : null,
     course.subtitle ? h('details', { class: 'about-course' }, h('summary', null, 'About this course'), h('p', { class: 'muted' }, course.subtitle)) : null,
     groups.map((g) => {
       const done = g.items.filter(({ i }) => finished[i]).length;

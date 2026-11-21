@@ -93,7 +93,7 @@ export function mergeData(local = {}, incoming = {}) {
 
   const lp = local.profile || {};
   const ip = incoming.profile || {};
-  out.profile = { ...ip, ...lp, welcomed: Boolean(lp.welcomed || ip.welcomed), startCourse: lp.startCourse || ip.startCourse || null, backupAt: Math.max(lp.backupAt || 0, ip.backupAt || 0) };
+  out.profile = { ...ip, ...lp, welcomed: Boolean(lp.welcomed || ip.welcomed), startCourse: lp.startCourse || ip.startCourse || null, name: lp.name || ip.name || '', certs: { ...(ip.certs || {}), ...(lp.certs || {}) }, backupAt: Math.max(lp.backupAt || 0, ip.backupAt || 0) };
 
   out.drafts = { ...(incoming.drafts || {}), ...(local.drafts || {}) }; // a draft already on the phone wins
   return out;

@@ -534,3 +534,9 @@ html { font-size: calc(16px * var(--scale)); }
 /* The symbol bar scrolls inside the dock; it must not stretch the dock wider than a small phone. */
 .dock { grid-template-columns: minmax(0, 1fr); }
 .dock > * { min-width: 0; }
+/* Release 4: paths and certificates */
+.path-card { margin-bottom: 14px; }
+.path-steps { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 6px; }
+.path-steps a { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border-left: 4px solid var(--course, var(--accent)); background: var(--bg); border-radius: 8px; text-decoration: none; color: inherit; }
+.cert-img { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); margin: 12px 0; }
+.text-input { width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font: inherit; color: inherit; }

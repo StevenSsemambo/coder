@@ -11,6 +11,7 @@ import { onAttempt } from './ui/rewards.js';
 import { unlockAudio } from './ui/feedback.js';
 import { welcomeView } from './ui/views/welcome.js';
 import { reviewView } from './ui/views/review.js';
+import { pathsView, certificateView } from './ui/views/paths.js';
 import { captureInstall } from './lib/install.js';
 import { exerciseView } from './ui/views/exercise.js';
 import { playgroundView } from './ui/views/playground.js';
@@ -22,7 +23,7 @@ import { toast } from './ui/components.js';
 const TABS = [
   { path: '/learn', label: 'Learn', icon: 'learn', match: /^\/(learn|course|lesson|page|exercise|review)/ },
   { path: '/code', label: 'Code', icon: 'code', match: /^\/code/ },
-  { path: '/progress', label: 'Progress', icon: 'progress', match: /^\/progress/ },
+  { path: '/progress', label: 'Progress', icon: 'progress', match: /^\/(progress|paths|certificate)/ },
   { path: '/settings', label: 'Settings', icon: 'settings', match: /^\/settings/ },
 ];
 
@@ -64,6 +65,8 @@ async function boot() {
 
   route('/welcome', () => welcomeView());
   route('/review', () => reviewView());
+  route('/paths', () => pathsView());
+  route('/certificate/:kind/:id', (kind, id) => certificateView(kind, id));
   route('/learn', () => learnView());
   route('/course/:id', (id) => courseView(id));
   route('/lesson/:course/:lesson', (c, l) => stepLessonView(c, l));

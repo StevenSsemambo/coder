@@ -49,6 +49,7 @@ export async function progressView() {
         return h('div', { class: `badge ${has ? 'earned' : ''}`, title: b.desc }, h('span', { class: 'badge-icon', 'aria-hidden': 'true' }, has ? b.icon : '🔒'), h('strong', null, b.title), h('span', { class: 'muted small' }, b.desc));
       }),
     ),
+    h('a', { class: 'card review-home', href: '#/paths' }, h('span', { class: 'review-emoji', 'aria-hidden': 'true' }, '🧭'), h('div', { class: 'grow' }, h('strong', null, 'Career paths'), h('p', { class: 'muted small' }, 'Courses in a good order, with a certificate at the end')), h('span', { class: 'chevron', 'aria-hidden': 'true' }, '›')),
     h('h2', { class: 'section-title' }, 'Courses'),
     courses.map((c) => {
       const p = courseProgress(c, state.progress);

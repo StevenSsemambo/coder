@@ -30,6 +30,7 @@ It is built by several Claude accounts, one track each. **Contributors: read `do
 | **Step-by-step lessons**: one idea per screen, a big Continue button, your place saved (the long page is one tap away) | Working |
 | **Home screen** that starts with "Continue" (resume the lesson, the next exercise or the next lesson), your daily goal, streak and level | Working |
 | **Practise your mistakes** (a short review of exercises that were hard; a clean pass fixes one and earns XP), a **Code playground for all 6 languages plus Web**, and a reading-size setting | Working |
+| **Career paths** (Web builder, Software engineer, Systems programmer) and a **certificate** you can save or share when you finish a course or a path | Working |
 | **Kato**, the friendly guide robot, and a **game layer**: stars, XP, levels, 19 badges, a daily goal, a celebration with sound and vibration (switchable in Settings) | Working |
 | **Show a solution** after the hints, so nobody is ever stuck | Working |
 | **First-run welcome and a visual path per course**: "What do you want to build?", a recommended first lesson, a path with "you are here", a colour, emoji and tagline for every course | Working |
