@@ -540,3 +540,10 @@ html { font-size: calc(16px * var(--scale)); }
 .path-steps a { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 6px 10px; border-left: 4px solid var(--course, var(--accent)); background: var(--bg); border-radius: 8px; text-decoration: none; color: inherit; }
 .cert-img { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); margin: 12px 0; }
 .text-input { width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font: inherit; color: inherit; }
+/* Code page on small phones: every language shows at once (wrapping into rows), nothing is cut off. */
+.segmented.play-langs { display: flex; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-right: 28px; scroll-padding: 0 28px; touch-action: pan-x; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 30px), transparent); }
+.segmented.play-langs::-webkit-scrollbar { display: none; }
+.play-langs .seg { flex: 0 0 auto; min-width: 0; min-height: 42px; padding: 0 14px; white-space: nowrap; }
+/* The symbol bar scrolls sideways: leave room after the last key and fade the edge so it is clear there is more. */
+.symbar { padding-right: 24px; scroll-padding-right: 24px; overscroll-behavior-x: contain; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }
+.symbar { -webkit-overflow-scrolling: touch; touch-action: pan-x; }

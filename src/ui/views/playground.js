@@ -106,6 +106,7 @@ export async function playgroundView() {
       const on = t.dataset.lang === language;
       t.classList.toggle('active', on);
       t.setAttribute('aria-selected', String(on));
+      if (on) t.scrollIntoView?.({ inline: 'center', block: 'nearest' });
     });
   }
 
@@ -176,6 +177,7 @@ export async function playgroundView() {
   const dockNode = dock(barSlot, h('div', { class: 'actions' }, runBtn));
   const node = h('div', { class: 'view playground' }, h('h1', null, 'Code'), h('div', { class: 'segmented play-langs', role: 'tablist', 'aria-label': 'Programming language' }, tabs), banner, webBox, mount, stdinSlot, tools, dockNode, runtimeNote, result);
   showWeb(language === 'web');
+  requestAnimationFrame(markTabs); // bring a saved language that is far to the right into view
 
   return {
     node,
