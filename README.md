@@ -29,7 +29,8 @@ It is built by several Claude accounts, one track each. **Contributors: read `do
 | **PHP** (PHP 8.3 on WebAssembly): 33 lessons, 107 exercises. Roadmap in `docs/PHP-TRACK.md` | Complete |
 | **Step-by-step lessons**: one idea per screen, a big Continue button, your place saved (the long page is one tap away) | Working |
 | **Home screen** that starts with "Continue" (resume the lesson, the next exercise or the next lesson), your daily goal, streak and level | Working |
-| **Kato**, the friendly guide robot, and a **game layer**: stars, XP, levels, 12 badges, a daily goal, a celebration with sound and vibration (switchable in Settings) | Working |
+| **Practise your mistakes** (a short review of exercises that were hard; a clean pass fixes one and earns XP), a **Code playground for all 6 languages plus Web**, and a reading-size setting | Working |
+| **Kato**, the friendly guide robot, and a **game layer**: stars, XP, levels, 19 badges, a daily goal, a celebration with sound and vibration (switchable in Settings) | Working |
 | **Show a solution** after the hints, so nobody is ever stuck | Working |
 | **First-run welcome and a visual path per course**: "What do you want to build?", a recommended first lesson, a path with "you are here", a colour, emoji and tagline for every course | Working |
 | **Offline check, download banner and install card**: Settings shows what is ready for offline use; a lesson that needs Python, PHP or Java offers the download on its first screen | Working |

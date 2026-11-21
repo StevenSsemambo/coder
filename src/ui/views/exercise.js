@@ -7,6 +7,8 @@ import { getDraft, saveDraft, clearDraft, recordAttempt, getProgress, setLast } 
 import { getSolution } from '../../lib/solutions.js';
 import { markSolutionUsed } from '../../lib/game.js';
 import { katoSays, pickLine } from '../mascot.js';
+import { nextInReview } from '../rewards.js';
+import { allCourses } from '../../content/index.js';
 import { feel } from '../feedback.js';
 import { state } from '../../state.js';
 import { symbolBar, stdinField, outputView, testResultsView, dock } from '../components.js';
@@ -117,7 +119,16 @@ export function exerciseView(courseId, lessonId, exerciseId) {
   }
 
   function successCard(firstPass) {
-    const next = nextExercise(ex.courseId, ex.id);
+    // During a "practise your mistakes" session, Next follows the review list instead of the course order.
+    const reviewNextId = nextInReview(ex.id);
+    const inReview = Boolean(state.review?.ids?.includes(ex.id));
+    let next = nextExercise(ex.courseId, ex.id);
+    if (inReview) {
+      next = null;
+      if (reviewNextId) {
+        for (const c of allCourses) for (const l of c.lessons) for (const e of l.exercises) if (e.id === reviewNextId) next = { ...e, courseId: c.id, lessonId: l.id };
+      }
+    }
     return h(
       'div',
       { class: 'card success' },
@@ -125,7 +136,9 @@ export function exerciseView(courseId, lessonId, exerciseId) {
       hintsShown ? h('p', { class: 'muted small' }, `You used ${hintsShown} hint${hintsShown > 1 ? 's' : ''}. Try the next one with fewer.`) : h('p', { class: 'muted small' }, 'No hints used. Great work.'),
       next
         ? h('a', { class: 'btn btn-primary', href: `#/exercise/${next.courseId}/${next.lessonId}/${next.id}` }, `Next: ${next.title}`)
-        : h('a', { class: 'btn btn-primary', href: `#/lesson/${ex.courseId}/${ex.lessonId}` }, 'Back to the lesson'),
+        : inReview
+          ? h('a', { class: 'btn btn-primary', href: '#/review' }, 'Back to review')
+          : h('a', { class: 'btn btn-primary', href: `#/lesson/${ex.courseId}/${ex.lessonId}` }, 'Back to the lesson'),
     );
   }
 

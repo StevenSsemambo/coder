@@ -10,6 +10,7 @@ import { stepLessonView } from './ui/views/steps-lesson.js';
 import { onAttempt } from './ui/rewards.js';
 import { unlockAudio } from './ui/feedback.js';
 import { welcomeView } from './ui/views/welcome.js';
+import { reviewView } from './ui/views/review.js';
 import { captureInstall } from './lib/install.js';
 import { exerciseView } from './ui/views/exercise.js';
 import { playgroundView } from './ui/views/playground.js';
@@ -19,7 +20,7 @@ import { registerSW } from 'virtual:pwa-register';
 import { toast } from './ui/components.js';
 
 const TABS = [
-  { path: '/learn', label: 'Learn', icon: 'learn', match: /^\/(learn|course|lesson|page|exercise)/ },
+  { path: '/learn', label: 'Learn', icon: 'learn', match: /^\/(learn|course|lesson|page|exercise|review)/ },
   { path: '/code', label: 'Code', icon: 'code', match: /^\/code/ },
   { path: '/progress', label: 'Progress', icon: 'progress', match: /^\/progress/ },
   { path: '/settings', label: 'Settings', icon: 'settings', match: /^\/settings/ },
@@ -62,6 +63,7 @@ async function boot() {
   );
 
   route('/welcome', () => welcomeView());
+  route('/review', () => reviewView());
   route('/learn', () => learnView());
   route('/course/:id', (id) => courseView(id));
   route('/lesson/:course/:lesson', (c, l) => stepLessonView(c, l));
@@ -72,6 +74,9 @@ async function boot() {
   route('/settings', () => settingsView());
 
   await startRouter(main, (path) => {
+    // Screen readers and the browser history use the page title; keep it in step with the screen.
+    const h1 = main.querySelector('h1');
+    document.title = h1?.textContent ? `${h1.textContent} · SayMaCoder` : 'SayMaCoder';
     TABS.forEach((t, i) => {
       const active = t.match.test(path);
       tabLinks[i].classList.toggle('active', active);

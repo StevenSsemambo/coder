@@ -10,6 +10,7 @@ import { getProfile } from '../../lib/profile.js';
 import { lessonFinished } from '../../lib/journey.js';
 import { packBanner } from '../offline-ui.js';
 import { installCard, backupReminder } from '../offline-ui.js';
+import { reviewList } from '../../lib/review.js';
 import { getLast, getResume } from '../../lib/storage.js';
 import { loadStats, setDailyGoal, todayProgress, DAILY_GOALS, getGame } from '../../lib/game.js';
 import { nextUp } from '../../lib/journey.js';
@@ -62,6 +63,10 @@ function dailyCard(day, goalControl) {
   );
 }
 
+function reviewCard(n) {
+  return h('a', { class: 'card review-home', href: '#/review', onclick: () => feel('tap') }, h('span', { class: 'review-emoji', 'aria-hidden': 'true' }, '🔁'), h('div', { class: 'grow' }, h('strong', null, 'Practise your mistakes'), h('p', { class: 'muted small' }, `${n} exercise${n === 1 ? '' : 's'} to make stronger`)), h('span', { class: 'chevron', 'aria-hidden': 'true' }, '›'));
+}
+
 export async function learnView() {
   const [{ stats, game, attempts }, last, resume, profile] = await Promise.all([loadStats(courseOf), getLast(), getResume(), getProfile()]);
   const brandNew = stats.passed === 0 && stats.lessonsDone === 0 && !last;
@@ -71,6 +76,7 @@ export async function learnView() {
     return { node: h('div', { class: 'view' }) };
   }
   const up = nextUp({ courses, progress: state.progress, game, last, resume, startCourse: profile.startCourse });
+  const waiting = reviewList({ courses, progress: state.progress, game, attempts }).length;
 
   let day = todayProgress({ attempts, game });
   const dayHolder = h('div', null);
@@ -110,7 +116,7 @@ export async function learnView() {
     katoSays(started ? 'cheer' : 'happy', pickLine(started ? 'back' : 'ready', stats.xp + stats.streak), { size: 64 }),
     continueCard(up),
     needBanner,
-    started ? [dayHolder, status] : dayHolder,
+    started ? [dayHolder, waiting ? reviewCard(waiting) : null, status] : dayHolder,
     brandNew || stats.passed + stats.lessonsDone < 1 || profile.installDismissed ? null : installCard(),
     backupReminder(profile, stats),
     h('h2', { class: 'section-title' }, 'Courses'),

@@ -1,6 +1,8 @@
 // Connects the game rules (src/lib/game.js) to the screen: when something is won, work out the reward and celebrate it.
 import { allCourses } from '../content/index.js';
-import { rewardExercise, rewardLesson } from '../lib/game.js';
+import { rewardExercise, rewardLesson, rewardFix, loadStats } from '../lib/game.js';
+import { troubleOf, reviewList, reviewSession } from '../lib/review.js';
+import { state } from '../state.js';
 import { showCelebration } from './celebrate.js';
 import { feel } from './feedback.js';
 
@@ -26,8 +28,15 @@ const KIND = { 1: 'Every solved exercise makes you stronger.', 2: 'Just one hint
 export async function onAttempt(detail) {
   if (!detail.passed) return;
   try {
+    // Was this exercise on the "practise your mistakes" list BEFORE this attempt? A clean pass now fixes it.
+    let wasHard = null;
+    if (!detail.firstPass && !detail.hintsUsed) {
+      const { progress, game, attempts } = await loadStats(courseOf);
+      wasHard = troubleOf({ exerciseId: detail.exerciseId, progress, game, attempts: attempts.filter((a) => a.at !== detail.at) });
+    }
     const r = await rewardExercise({ exerciseId: detail.exerciseId, firstPass: detail.firstPass, hintsUsed: detail.hintsUsed, courseOf });
     if (!r.firstPass) {
+      if (wasHard) return celebrateFix(detail);
       feel('ok');
       return;
     }
@@ -71,3 +80,37 @@ export async function onLessonReached(courseId, lessonId, { firstExercise } = {}
     return null;
   }
 }
+
+/** The next exercise in the current review session, or null when there is none (then Kato sends the learner to the review screen). */
+export function nextInReview(exerciseId) {
+  const ids = state.review?.ids;
+  if (!ids) return null;
+  const i = ids.indexOf(exerciseId);
+  return i >= 0 && i < ids.length - 1 ? ids[i + 1] : null;
+}
+
+async function celebrateFix(detail) {
+  const r = await rewardFix({ exerciseId: detail.exerciseId, courseOf });
+  if (!r.fixed) {
+    feel('ok');
+    return;
+  }
+  const nextId = nextInReview(detail.exerciseId);
+  const nextEx = nextId ? findExercise(nextId) : null;
+  showCelebration({
+    title: 'Mistake fixed!',
+    sub: 'You solved it on your own this time. That is how coders get strong.',
+    xpGained: r.xpGained,
+    levelUp: r.levelUp,
+    badges: r.badges,
+    stats: r.stats,
+    primary: nextEx ? { label: `Next: ${nextEx.title}`, href: `#/exercise/${nextEx.courseId}/${nextEx.lessonId}/${nextEx.id}` } : { label: 'Back to review', href: '#/review' },
+  });
+}
+
+function findExercise(id) {
+  for (const c of allCourses) for (const l of c.lessons) for (const e of l.exercises) if (e.id === id) return { ...e, courseId: c.id, lessonId: l.id };
+  return null;
+}
+
+export { reviewList, reviewSession };

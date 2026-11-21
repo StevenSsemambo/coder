@@ -45,7 +45,7 @@ export function stdinField(initial = '', language = '') {
     spellcheck: 'false',
   });
   box.value = initial;
-  return { node: h('label', { class: 'stdin-wrap' }, h('span', { class: 'label' }, isSql ? 'Practice database (runs first)' : 'Input'), box), get value() { return box.value; } };
+  return { node: h('label', { class: 'stdin-wrap' }, h('span', { class: 'label' }, isSql ? 'Practice database (runs first)' : 'Input'), box), get value() { return box.value; }, set value(v) { box.value = v; } };
 }
 
 // ---- Output / error panels -----------------------------------------------------
@@ -74,6 +74,7 @@ export function errorCard(raw, language) {
     t
       ? [
           h('div', { class: 'error-head' }, h('strong', null, t.title), line ? h('span', { class: 'chip' }, `Line ${line}`) : null),
+          h('p', { class: 'muted small' }, 'Every coder meets errors. Read it slowly. It tells you what to fix.'),
           h('p', null, richText(t.why)),
           h('p', { class: 'fix' }, h('b', null, state.settings.lang === 'sw' ? 'Suluhisho: ' : 'Fix: '), richText(t.fix)),
           t.fellBack ? h('p', { class: 'muted small' }, 'This message is not translated yet. Showing English.') : null,

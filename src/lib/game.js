@@ -9,7 +9,7 @@
 import { kvGet, kvSet, dayKey } from './storage.js';
 
 // ---- the rules ---------------------------------------------------------------------------------------------------
-export const XP = { exercise: 10, extraStar: 5, lesson: 20 };
+export const XP = { exercise: 10, extraStar: 5, lesson: 20, fix: 5 };
 export const DAILY_GOALS = [1, 2, 3];
 export const DEFAULT_DAILY_GOAL = 1;
 
@@ -63,8 +63,16 @@ export function computeStats({ progress = {}, game = {}, days = [], courseOf = (
   }
   const lessonsDone = Object.keys(game.lessons || {}).length;
   xp += lessonsDone * XP.lesson;
+  // Fixing a mistake (solving an exercise you found hard again, with no hints) is effort worth rewarding.
+  const fixed = Object.keys(game.fixed || {}).length;
+  xp += fixed * XP.fix;
+  const byCourse = {};
+  for (const [id] of passedEntries) {
+    const c = courseOf(id);
+    if (c) byCourse[c] = (byCourse[c] || 0) + 1;
+  }
   const streak = streakOf(days, now);
-  return { passed: passedEntries.length, stars, perfect, lessonsDone, courses: courses.size, xp, level: levelInfo(xp), streak: streak.current, activeToday: streak.activeToday, totalDays: streak.totalDays };
+  return { passed: passedEntries.length, stars, perfect, lessonsDone, fixed, byCourse, topCourse: Math.max(0, ...Object.values(byCourse)), courses: courses.size, xp, level: levelInfo(xp), streak: streak.current, activeToday: streak.activeToday, totalDays: streak.totalDays };
 }
 
 // ---- badges ------------------------------------------------------------------------------------------------------
@@ -81,6 +89,13 @@ export const BADGES = [
   { id: 'streak-30', icon: '👑', title: 'Unstoppable', desc: 'Practise 30 days in a row.', test: (s) => s.streak >= 30 },
   { id: 'polyglot', icon: '🌍', title: 'Polyglot', desc: 'Pass exercises in 3 different languages.', test: (s) => s.courses >= 3 },
   { id: 'level-5', icon: '🚀', title: 'Level 5', desc: 'Reach level 5.', test: (s) => s.level.level >= 5 },
+  { id: 'level-3', icon: '🔍', title: 'Bug Hunter', desc: 'Reach level 3.', test: (s) => s.level.level >= 3 },
+  { id: 'level-8', icon: '🏗️', title: 'Engineer', desc: 'Reach level 8.', test: (s) => s.level.level >= 8 },
+  { id: 'stars-50', icon: '✨', title: 'Star collector', desc: 'Earn 50 stars.', test: (s) => s.stars >= 50 },
+  { id: 'explorer', icon: '🧭', title: 'Explorer', desc: 'Pass exercises in 5 different courses.', test: (s) => s.courses >= 5 },
+  { id: 'deep-dive', icon: '🤿', title: 'Deep dive', desc: 'Pass 25 exercises in one course.', test: (s) => s.topCourse >= 25 },
+  { id: 'fixer', icon: '🛠️', title: 'Second chance', desc: 'Fix 3 exercises you found hard.', test: (s) => s.fixed >= 3 },
+  { id: 'fixer-10', icon: '🧰', title: 'Mistake master', desc: 'Fix 10 exercises you found hard.', test: (s) => s.fixed >= 10 },
 ];
 export const badgeById = (id) => BADGES.find((b) => b.id === id);
 
@@ -101,7 +116,7 @@ export function todayProgress({ attempts = [], game = {}, now = new Date() } = {
 }
 
 // ---- persistence -------------------------------------------------------------------------------------------------
-export const getGame = async () => ({ lessons: {}, badges: {}, solutions: {}, goal: DEFAULT_DAILY_GOAL, ...(await kvGet('game', {})) });
+export const getGame = async () => ({ lessons: {}, badges: {}, solutions: {}, fixed: {}, goal: DEFAULT_DAILY_GOAL, ...(await kvGet('game', {})) });
 const saveGame = (game) => kvSet('game', game);
 
 export async function setDailyGoal(goal) {
@@ -167,3 +182,18 @@ export async function rewardLesson({ courseId, lessonId, courseOf, now = new Dat
 }
 
 export const isLessonDone = (game, courseId, lessonId) => Boolean(game.lessons && game.lessons[`${courseId}/${lessonId}`]);
+
+/**
+ * Call when a learner solved an exercise they had found hard, this time with no hints. Rewards it once.
+ * Returns { fixed, xpGained, levelUp, badges, total, stats }.
+ */
+export async function rewardFix({ exerciseId, courseOf, now = new Date() }) {
+  const game = await getGame();
+  if (game.fixed[exerciseId]) return { fixed: false, xpGained: 0, levelUp: null, badges: [], total: Object.keys(game.fixed).length };
+  game.fixed[exerciseId] = +now;
+  await saveGame(game);
+  const { stats } = await loadStats(courseOf, now);
+  const before = levelInfo(stats.xp - XP.fix).level;
+  const badges = await grantBadges(stats, await getGame(), +now);
+  return { fixed: true, xpGained: XP.fix, levelUp: stats.level.level > before ? stats.level : null, badges, total: stats.fixed, stats };
+}

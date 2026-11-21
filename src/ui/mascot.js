@@ -38,7 +38,7 @@ export function kato(mood = 'happy', size = 64) {
   const m = MOODS.includes(mood) ? mood : 'happy';
   const root = svg(
     'svg',
-    { viewBox: '0 0 100 100', width: size, height: size, role: 'img', 'aria-label': 'Kato, your coding guide', class: `kato kato-${m}` },
+    { viewBox: '0 0 100 100', width: size, height: size, 'aria-hidden': 'true', focusable: 'false', class: `kato kato-${m}` },
     // antenna
     svg('line', { x1: 50, y1: 12, x2: 50, y2: 22, stroke: 'var(--kato-body)', 'stroke-width': 4, 'stroke-linecap': 'round' }),
     svg('circle', { cx: 50, cy: 9, r: 5, fill: 'var(--kato-spark)', class: 'kato-spark' }),

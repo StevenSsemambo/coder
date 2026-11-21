@@ -321,6 +321,35 @@ try {
   B('no reminder right after a backup or a snooze', offlineUi.backupReminder({ backupAt: now - 86400000 }, { passed: 50 }, now) === null && offlineUi.backupReminder({ backupSnoozed: now - 86400000 }, { passed: 50 }, now) === null);
   B('backup controls draw on the settings screen', (await settingsView()).node.querySelector('.backup') && (await settingsView()).node.querySelector('.offline-check'));
   console.log(`  Release 2: ${pathChecked} course paths, welcome flow, ${meta.INTERESTS.length} interests, backup merge rules, offline and install rules checked`);
+  // ---- Release 3: review rules, badges, playground, contrast
+  {
+    const R = await server.ssrLoadModule('/src/lib/review.js');
+    const G = await server.ssrLoadModule('/src/lib/game.js');
+    const ok = (n, c) => { if (!c) { console.error('FAIL Release 3: ' + n); process.exitCode = 1; throw new Error('Release 3 check failed: ' + n); } };
+    const c0 = courses[0];
+    const e0 = c0.lessons[0].exercises[0].id;
+    const at = (n) => ({ exerciseId: e0, passed: false, at: n });
+    const base = { exerciseId: e0, courses, game: { fixed: {} } };
+    ok('no trouble with no attempts', R.troubleOf({ ...base, progress: {}, attempts: [] }) === null);
+    ok('2 failed tries and not passed = unfinished', R.troubleOf({ ...base, progress: {}, attempts: [at(1), at(2)] })?.kind === 'unfinished');
+    ok('a solution view is trouble', R.troubleOf({ ...base, progress: { [e0]: { passed: true } }, game: { fixed: {}, solutions: { [e0]: true } }, attempts: [{ exerciseId: e0, passed: true, at: 1 }] }) !== null);
+    ok('a fixed mistake is cleared', R.troubleOf({ ...base, progress: { [e0]: { passed: true } }, game: { fixed: { [e0]: 5 }, solutions: { [e0]: true } }, attempts: [{ exerciseId: e0, passed: true, at: 1 }] }) === null);
+    ok('session size capped', R.reviewSession(Array.from({ length: 20 }, (_, i) => ({ exerciseId: 'x' + i, courseId: 'c' + (i % 3), weight: 1 })), R.SESSION_SIZE).length <= R.SESSION_SIZE);
+    ok('19 badges', G.BADGES.length === 19);
+    const { reviewView } = await server.ssrLoadModule('/src/ui/views/review.js');
+    ok('review screen draws', (await reviewView()).node.querySelector('h1'));
+    const { playgroundView } = await server.ssrLoadModule('/src/ui/views/playground.js');
+    const pg = await playgroundView();
+    ok('playground has 7 language tabs', pg.node.querySelectorAll('[role=tab]').length === 7);
+    pg.cleanup?.();
+    // contrast: white text on every course colour, and the muted text on the page background
+    const lum = (hex) => { const v = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+    const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+    for (const c of courses) ok(`white on ${c.id} colour is readable`, ratio('#ffffff', meta.metaOf(c).color) >= 4.5);
+    ok('muted text readable on page', ratio('#6a675f', '#f6f5f1') >= 4.5);
+    ok('accent button readable', ratio('#ffffff', '#0b6b4f') >= 4.5);
+    console.log('  Release 3: review rules, 19 badges, 7-language playground, colour contrast checked');
+  }
   console.log(`  ${stepsChecked} lessons split into ${stepsTotal} steps (every block once, in order); ${walked} lessons walked through step by step`);
 } finally {
   await server.close();

@@ -81,7 +81,9 @@ export function mergeData(local = {}, incoming = {}) {
   const ig = incoming.game || {};
   const lessons = { ...(ig.lessons || {}) };
   for (const [k, at] of Object.entries(lg.lessons || {})) lessons[k] = earliest(at, lessons[k]);
-  out.game = { ...lg, lessons, badges: { ...(ig.badges || {}), ...(lg.badges || {}) }, solutions: union(lg.solutions, ig.solutions), goal: [1, 2, 3].includes(ig.goal) ? ig.goal : lg.goal };
+  const fixed = { ...(ig.fixed || {}) };
+  for (const [k, at] of Object.entries(lg.fixed || {})) fixed[k] = earliest(at, fixed[k]);
+  out.game = { ...lg, lessons, fixed, badges: { ...(ig.badges || {}), ...(lg.badges || {}) }, solutions: union(lg.solutions, ig.solutions), goal: [1, 2, 3].includes(ig.goal) ? ig.goal : lg.goal };
   if (out.game.goal == null) delete out.game.goal;
 
   const newer = (a, b) => (a && b ? (a.at >= b.at ? a : b) : a || b);

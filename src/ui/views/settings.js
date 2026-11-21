@@ -37,6 +37,13 @@ export async function settingsView() {
     },
   });
 
+  // ---- reading size (whole app)
+  const scaleSelect = h(
+    'select',
+    { class: 'select', 'aria-label': 'Reading text size', onchange: (e) => { state.settings.textScale = Number(e.target.value); persist(); } },
+    [['Normal', 1], ['Large', 1.15], ['Extra large', 1.3]].map(([label, v]) => h('option', { value: v, selected: (state.settings.textScale || 1) === v }, label)),
+  );
+
   // ---- sound, vibration and the daily goal (switches that apply at once)
   const toggle = (setting, title, help) => {
     const box = h('input', { type: 'checkbox', class: 'switch', checked: state.settings[setting] !== false, 'aria-label': title, onchange: (e) => { state.settings[setting] = e.target.checked; persist(); if (e.target.checked) feel('ok'); } });
@@ -126,6 +133,7 @@ export async function settingsView() {
     packRows.map((p) => p.row),
     h('h2', { class: 'section-title' }, 'Reading and language'),
     h('label', { class: 'field' }, h('span', null, 'Explain errors in'), langSelect),
+    h('label', { class: 'field' }, h('span', null, 'Reading text size'), scaleSelect),
     h('label', { class: 'field' }, h('span', null, 'Code text size'), sizeInput, sizeValue),
     h('h2', { class: 'section-title' }, 'Fun and goals'),
     toggle('sound', 'Sounds', 'Short happy sounds when you get something right.'),

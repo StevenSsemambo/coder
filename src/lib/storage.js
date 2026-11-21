@@ -96,7 +96,7 @@ export async function kvAll() {
 }
 
 // ---- settings ---------------------------------------------------------------
-export const DEFAULT_SETTINGS = { lang: 'en', fontSize: 16, sound: true, haptics: true };
+export const DEFAULT_SETTINGS = { lang: 'en', fontSize: 16, textScale: 1, sound: true, haptics: true };
 
 export async function loadSettings() {
   return { ...DEFAULT_SETTINGS, ...(await kvGet('settings', {})) };
@@ -150,7 +150,7 @@ export async function recordAttempt({ exerciseId, courseId, passedCount, total, 
   }
   // Tell the app shell (see main.js): it shows the celebration. Plain Node (the tests) has no window to tell.
   if (typeof globalThis.dispatchEvent === 'function' && typeof globalThis.CustomEvent === 'function') {
-    globalThis.dispatchEvent(new globalThis.CustomEvent('saymacoder:attempt', { detail: { exerciseId, courseId, passed, firstPass, hintsUsed } }));
+    globalThis.dispatchEvent(new globalThis.CustomEvent('saymacoder:attempt', { detail: { exerciseId, courseId, passed, firstPass, hintsUsed, at: now } }));
   }
   return { entry, firstPass };
 }
