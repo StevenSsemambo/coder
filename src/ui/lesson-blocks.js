@@ -14,7 +14,7 @@ const CHOICE_LABEL = { predict: 'Predict the output', bug: 'Find the bug', quiz:
 const paragraphs = (text) => String(text).split('\n\n').map((para) => h('p', null, richText(para)));
 
 // ---- editable, runnable example ----------------------------------------------
-function tryBlock(block, language, ctx, label = 'Try it yourself') {
+function tryBlock(block, language, ctx, label = 'Try it yourself', hooks = {}) {
   const mount = h('div', { class: 'try-mount' });
   const editor = createEditor(mount, { language: editorLanguage(language), doc: block.code });
   ctx.cleanups.push(() => editor.destroy());
@@ -46,6 +46,7 @@ function tryBlock(block, language, ctx, label = 'Try it yourself') {
     replace(result, outputView(res, language));
     runBtn.disabled = false;
     busy = false;
+    hooks.onRun?.();
   }
 
   return h(
@@ -61,9 +62,14 @@ function tryBlock(block, language, ctx, label = 'Try it yourself') {
 }
 
 // ---- multiple choice (predict / bug / quiz) -----------------------------------
-function choiceBlock(block, blockIndex = 0) {
+// `hooks` is used by step mode (all optional; the full-page lesson passes none):
+//   onResult({ correct, revealed, tries })  an answer was found, or given after `giveUpAfter` wrong tries
+//   onWrong(tries)                          a wrong answer
+function choiceBlock(block, blockIndex = 0, hooks = {}) {
   const feedback = h('div', { class: 'feedback', 'aria-live': 'polite' });
   const buttons = [];
+  const byIndex = new Map();
+  let wrongs = 0;
   const finish = () => buttons.forEach((b) => { b.disabled = true; });
 
   // shown shuffled, but `index` stays the option's ORIGINAL position, which is what block.answer refers to
@@ -79,16 +85,27 @@ function choiceBlock(block, blockIndex = 0) {
             btn.classList.add('ok');
             finish();
             replace(feedback, h('div', { class: 'feedback-ok' }, h('strong', null, 'Correct! '), richText(block.explain)));
+            hooks.onResult?.({ correct: true, tries: wrongs + 1 });
           } else {
             btn.classList.add('wrong');
             btn.disabled = true;
-            replace(feedback, h('div', { class: 'feedback-bad' }, 'Not quite. Read the code once more and try another answer.'));
+            wrongs += 1;
+            if (hooks.giveUpAfter && wrongs >= hooks.giveUpAfter) {
+              byIndex.get(block.answer)?.classList.add('ok');
+              finish();
+              replace(feedback, h('div', { class: 'feedback-ok' }, h('strong', null, 'The right answer is in green. '), richText(block.explain)));
+              hooks.onResult?.({ correct: false, revealed: true, tries: wrongs });
+            } else {
+              replace(feedback, h('div', { class: 'feedback-bad' }, 'Not quite. Read the code once more and try another answer.'));
+              hooks.onWrong?.(wrongs);
+            }
           }
         },
       },
       h('span', { class: 'choice-text' }, option),
     );
     buttons.push(btn);
+    byIndex.set(index, btn);
   });
 
   return h(
@@ -103,7 +120,8 @@ function choiceBlock(block, blockIndex = 0) {
 }
 
 // ---- fill the gaps ---------------------------------------------------------------
-function fillBlock(block) {
+function fillBlock(block, hooks = {}) {
+  let wrongs = 0;
   const feedback = h('div', { class: 'feedback', 'aria-live': 'polite' });
   const selects = block.blanks.map((blank, gap) =>
     h('select', { class: 'gap', 'aria-label': 'Choose the missing part' }, h('option', { value: '' }, '…'), choiceOrder(blank.options, `${block.template}|${blank.answer}`, gap).map((i) => h('option', { value: blank.options[i] }, blank.options[i]))),
@@ -128,8 +146,21 @@ function fillBlock(block) {
     });
     if (ok) {
       replace(feedback, h('div', { class: 'feedback-ok' }, h('strong', null, 'Correct! '), 'The program prints:', h('pre', { class: 'out' }, block.output || '(nothing)')));
+      hooks.onResult?.({ correct: true, tries: wrongs + 1 });
     } else {
-      replace(feedback, h('div', { class: 'feedback-bad' }, 'Some gaps are not right yet. The red ones need another look.'));
+      wrongs += 1;
+      if (hooks.giveUpAfter && wrongs >= hooks.giveUpAfter) {
+        selects.forEach((s, i) => {
+          s.value = block.blanks[i].answer;
+          s.classList.add('ok');
+          s.classList.remove('wrong');
+        });
+        replace(feedback, h('div', { class: 'feedback-ok' }, h('strong', null, 'The right answers are filled in. '), 'The program prints:', h('pre', { class: 'out' }, block.output || '(nothing)')));
+        hooks.onResult?.({ correct: false, revealed: true, tries: wrongs });
+      } else {
+        replace(feedback, h('div', { class: 'feedback-bad' }, 'Some gaps are not right yet. The red ones need another look.'));
+        hooks.onWrong?.(wrongs);
+      }
     }
   };
 
@@ -145,7 +176,8 @@ function fillBlock(block) {
 }
 
 // ---- put the lines in order ----------------------------------------------------------
-function reorderBlock(block, seed) {
+function reorderBlock(block, seed, hooks = {}) {
+  let wrongs = 0;
   const feedback = h('div', { class: 'feedback', 'aria-live': 'polite' });
   const answerBox = h('div', { class: 'order-answer', 'aria-label': 'Your order' });
   const poolBox = h('div', { class: 'order-pool', 'aria-label': 'Lines to place' });
@@ -169,8 +201,18 @@ function reorderBlock(block, seed) {
       replace(feedback, h('div', { class: 'feedback-bad' }, 'Place all the lines first.'));
     } else if (attempt.join('\n') === block.lines.join('\n')) {
       replace(feedback, h('div', { class: 'feedback-ok' }, h('strong', null, 'Correct! '), 'The program prints:', h('pre', { class: 'out' }, block.output || '(nothing)')));
+      hooks.onResult?.({ correct: true, tries: wrongs + 1 });
     } else {
-      replace(feedback, h('div', { class: 'feedback-bad' }, 'Not the right order yet. Think about what must happen first. Tap a placed line to remove it.'));
+      wrongs += 1;
+      if (hooks.giveUpAfter && wrongs >= hooks.giveUpAfter) {
+        chosen = block.lines.map((_, i) => i);
+        draw();
+        replace(feedback, h('div', { class: 'feedback-ok' }, h('strong', null, 'The right order is shown above. '), 'The program prints:', h('pre', { class: 'out' }, block.output || '(nothing)')));
+        hooks.onResult?.({ correct: false, revealed: true, tries: wrongs });
+      } else {
+        replace(feedback, h('div', { class: 'feedback-bad' }, 'Not the right order yet. Think about what must happen first. Tap a placed line to remove it.'));
+        hooks.onWrong?.(wrongs);
+      }
     }
   };
 
@@ -203,7 +245,9 @@ function webBlock(block, ctx) {
 }
 
 // ---- "what will the browser show?" (web track) ----------------------------------------------------
-function seeBlock(block, ctx, blockIndex = 0) {
+function seeBlock(block, ctx, blockIndex = 0, hooks = {}) {
+  let wrongs = 0;
+  const byIndex = new Map();
   const feedback = h('div', { class: 'feedback', 'aria-live': 'polite' });
   const reveal = h('div', { class: 'see-reveal' });
   const buttons = [];
@@ -216,23 +260,38 @@ function seeBlock(block, ctx, blockIndex = 0) {
         class: 'choice',
         type: 'button',
         onclick: () => {
+          const showPreview = () => {
+            const preview = renderOnce(files, { assets: block.assets, api: block.api });
+            ctx.cleanups.push(() => preview.destroy());
+            replace(reveal, h('div', { class: 'label' }, 'Here is what the browser really shows'), preview.frame);
+          };
           if (index === block.answer) {
             btn.classList.add('ok');
             buttons.forEach((b) => { b.disabled = true; });
             replace(feedback, h('div', { class: 'feedback-ok' }, h('strong', null, 'Correct! '), richText(block.explain)));
-            const preview = renderOnce(files, { assets: block.assets, api: block.api });
-            ctx.cleanups.push(() => preview.destroy());
-            replace(reveal, h('div', { class: 'label' }, 'Here is what the browser really shows'), preview.frame);
+            showPreview();
+            hooks.onResult?.({ correct: true, tries: wrongs + 1 });
           } else {
             btn.classList.add('wrong');
             btn.disabled = true;
-            replace(feedback, h('div', { class: 'feedback-bad' }, 'Not quite. Read the code again, tag by tag, and try another answer.'));
+            wrongs += 1;
+            if (hooks.giveUpAfter && wrongs >= hooks.giveUpAfter) {
+              byIndex.get(block.answer)?.classList.add('ok');
+              buttons.forEach((b) => { b.disabled = true; });
+              replace(feedback, h('div', { class: 'feedback-ok' }, h('strong', null, 'The right answer is in green. '), richText(block.explain)));
+              showPreview();
+              hooks.onResult?.({ correct: false, revealed: true, tries: wrongs });
+            } else {
+              replace(feedback, h('div', { class: 'feedback-bad' }, 'Not quite. Read the code again, tag by tag, and try another answer.'));
+              hooks.onWrong?.(wrongs);
+            }
           }
         },
       },
       h('span', { class: 'choice-text' }, option),
     );
     buttons.push(btn);
+    byIndex.set(index, btn);
   });
   return h(
     'div',
@@ -254,7 +313,7 @@ export function renderBlock(block, opts) {
   return node;
 }
 
-function renderBlockInner(block, { language, index = 0, ctx }) {
+function renderBlockInner(block, { language, index = 0, ctx, hooks = {} }) {
   switch (block.t) {
     case 'p':
       return h('p', null, richText(block.text));
@@ -299,27 +358,27 @@ function renderBlockInner(block, { language, index = 0, ctx }) {
         ),
       );
     case 'try':
-      return tryBlock(block, language, ctx);
+      return tryBlock(block, language, ctx, 'Try it yourself', hooks);
     case 'project':
       return h(
         'div',
         { class: 'project' },
         h('div', { class: 'project-head' }, h('span', { class: 'chip chip-accent' }, 'Project step'), h('strong', null, block.title)),
         block.text ? paragraphs(block.text) : null,
-        tryBlock(block, language, ctx, 'Your project so far'),
+        tryBlock(block, language, ctx, 'Your project so far', hooks),
       );
     case 'predict':
     case 'bug':
     case 'quiz':
-      return choiceBlock(block, index);
+      return choiceBlock(block, index, hooks);
     case 'fill':
-      return fillBlock(block);
+      return fillBlock(block, hooks);
     case 'reorder':
-      return reorderBlock(block, index + 1);
+      return reorderBlock(block, index + 1, hooks);
     case 'web':
       return webBlock(block, ctx);
     case 'see':
-      return seeBlock(block, ctx, index);
+      return seeBlock(block, ctx, index, hooks);
     default:
       return null;
   }

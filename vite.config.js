@@ -32,9 +32,10 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,png,svg,webmanifest,wasm}'],
         globIgnores: ['pyodide/**', 'php/**', 'java/**'],
         // All courses live in one JavaScript file, which grew past the 2 MiB default when the PHP lessons were added.
-        // A file over the limit is silently NOT precached, which would break offline use. 4 MiB gives every track room to grow.
+        // A file over the limit is silently NOT precached, which would break offline use. The main file was 3.8 MiB on 2026-11-21 (4 MiB was almost used up),
+        // so the limit is now 8 MiB. The "Show a solution" answers already load as their own chunk. Longer term: load each course on demand.
         // Longer term: load each course on demand (dynamic import) instead of bundling all of them together.
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
         navigateFallback: 'index.html',
         // The C++ phone test page (public/cpp-test/) is its own page: never answer it with the app shell.
         navigateFallbackDenylist: [/\/cpp-test\//],

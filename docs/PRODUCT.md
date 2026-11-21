@@ -14,7 +14,7 @@ Everything we build must serve one of these three things: **easy** (a frightened
 **fun** (it feels like a game, not an exam) and **offline** (it works with no internet, on a cheap phone).
 
 Who we serve: a 16 to 30 year old in Uganda or East Africa, on a low-end Android phone, with little or no data, who thinks
-programming is "for clever people", and who reads English and may prefer Kiswahili. Often alone, with no teacher.
+programming is "for clever people", and who reads English, often as a second language, so the app uses short, simple English. Often alone, with no teacher.
 
 ## 2. Design principles (the product owner decides disputes with these)
 
@@ -22,7 +22,7 @@ programming is "for clever people", and who reads English and may prefer Kiswahi
 2. **Small steps.** One idea per screen. A learner should never face a wall of text.
 3. **No dead ends.** Every exercise has a way forward: hints, then a solution. Nobody is stuck with no teacher.
 4. **Celebrate effort, never shame mistakes.** Wrong answers are normal and are explained kindly.
-5. **Errors are friends.** Every error message is explained in plain words (English and Kiswahili).
+5. **Errors are friends.** Every error message is explained in plain words (the Kiswahili explanations that already exist stay as they are).
 6. **Offline always.** Nothing may need the internet after the first visit. No spinners that wait for a server.
 7. **Cheap phones first.** Small downloads, quick screens, 48px tap targets, works in sunlight and in the dark.
 8. **Honest rewards.** Rewards are for learning and effort, never for speed or for beating other people.
@@ -110,9 +110,9 @@ screenshot description). The product owner answers in the same row. Do not edit 
 
 | Phase | What | Status |
 |---|---|---|
-| 1. Feel like a game | Continue button, step-by-step lessons, stars, XP, levels, badges, celebration with sound and vibration, daily goal, show-solution | In progress |
+| 1. Feel like a game (**Release 1, built 2026-11-21**) | Step-by-step lessons with a Continue button (the long page is still at `#/page/...`), a home screen that starts with "Continue", Kato the guide, stars, XP, levels, 12 badges, the daily goal, a celebration with sound and vibration (both can be switched off in Settings), "Show a solution", and lesson-finished tracking | **Done**. Needs real-phone testing |
 | 2. Feel easy | Welcome and "what do you want to build?", a visual path per course, a guide character, course colours and icons | Planned |
-| 3. Trust and reach | Progress backup (export and import a file), full Kiswahili interface, install prompt, "ready offline" check, practise-your-mistakes review | Planned |
+| 3. Trust and reach | Progress backup (export and import a file), install prompt, "ready offline" check, practise-your-mistakes review | Planned |
 | 4. The long game | Career path across courses, certificates, lecturer mode, memory visualizer, on-device tutor | Planned |
 
 ## 8. What we cannot measure, and what we do instead
@@ -120,3 +120,15 @@ screenshot description). The product owner answers in the same row. Do not edit 
 The app is offline and private: there is no analytics. We cannot see where learners quit. So: real-phone testing by people
 (see "Open items" in `docs/TRACKS.md`), conservative changes, and tests that protect behaviour (`tests/render.mjs` clicks through every
 choice block of every course). When in doubt, choose the simpler, calmer, faster option.
+
+## 9. Decisions of the project owner
+
+* **The app interface is English only** (2026-11-21). No Kiswahili or Luganda interface is planned. The Kiswahili *error explanations* that already exist in `src/lib/errors.js` stay as they are.
+* **The guide is Kato**, a small friendly robot drawn in code (`src/ui/mascot.js`): no image files, follows light and dark mode. Kato appears on the home screen, in lessons (a greeting, a cheer for right answers, a gentle word for wrong ones), in celebrations and on the progress screen.
+* The name stays **SayMaCoder**.
+
+## 10. What Release 1 added (for track accounts)
+
+* A lesson now opens in **step mode**. `src/ui/steps.js` splits your blocks automatically; nothing in your lesson files changed. Question blocks (`predict`, `fill`, `reorder`, `bug`, `quiz`, `see`) unlock "Continue" when answered, or after **two wrong tries**, when the right answer is shown. Short blocks make good screens (see section 4).
+* **Show a solution** appears on an exercise after all the hints, or after three checks that did not pass. It reads the reference solution from `tests/solutions.mjs` (export `solutions`), loaded only when asked. **Keep that export in place.** An exercise with no stored solution shows a kind "no solution" card with a Skip button. (Web exercises have their own screen and show the goal page instead.)
+* Rewards are worked out by `src/lib/game.js` and shown by `src/ui/rewards.js` whenever `recordAttempt` (in `storage.js`) records a graded attempt, so every language, including Web, gets them with no extra code.

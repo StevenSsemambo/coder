@@ -6,6 +6,9 @@ import { state, applySettings } from './state.js';
 import { loadSettings, getProgress } from './lib/storage.js';
 import { learnView, courseView } from './ui/views/learn.js';
 import { lessonView } from './ui/views/lesson.js';
+import { stepLessonView } from './ui/views/steps-lesson.js';
+import { onAttempt } from './ui/rewards.js';
+import { unlockAudio } from './ui/feedback.js';
 import { exerciseView } from './ui/views/exercise.js';
 import { playgroundView } from './ui/views/playground.js';
 import { progressView } from './ui/views/progress.js';
@@ -14,7 +17,7 @@ import { registerSW } from 'virtual:pwa-register';
 import { toast } from './ui/components.js';
 
 const TABS = [
-  { path: '/learn', label: 'Learn', icon: 'learn', match: /^\/(learn|course|lesson|exercise)/ },
+  { path: '/learn', label: 'Learn', icon: 'learn', match: /^\/(learn|course|lesson|page|exercise)/ },
   { path: '/code', label: 'Code', icon: 'code', match: /^\/code/ },
   { path: '/progress', label: 'Progress', icon: 'progress', match: /^\/progress/ },
   { path: '/settings', label: 'Settings', icon: 'settings', match: /^\/settings/ },
@@ -37,6 +40,10 @@ async function boot() {
   window.addEventListener('offline', updateNet);
   updateNet();
 
+  // Phones allow sound only after a touch: wake the audio on the first one. Celebrations listen for graded attempts.
+  document.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
+  window.addEventListener('saymacoder:attempt', (e) => onAttempt(e.detail));
+
   // While typing, hide the tab bar so the dock sits right above the keyboard and the editor gets the space.
   const isTypingTarget = (el) => el?.matches?.('.cm-content, textarea, input[type="text"], input:not([type])');
   document.addEventListener('focusin', (e) => document.body.classList.toggle('typing', !!isTypingTarget(e.target)));
@@ -53,7 +60,8 @@ async function boot() {
 
   route('/learn', () => learnView());
   route('/course/:id', (id) => courseView(id));
-  route('/lesson/:course/:lesson', (c, l) => lessonView(c, l));
+  route('/lesson/:course/:lesson', (c, l) => stepLessonView(c, l));
+  route('/page/:course/:lesson', (c, l) => lessonView(c, l));
   route('/exercise/:course/:lesson/:id', (c, l, id) => exerciseView(c, l, id));
   route('/code', () => playgroundView());
   route('/progress', () => progressView());

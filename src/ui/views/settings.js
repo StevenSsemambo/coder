@@ -4,6 +4,8 @@ import { saveSettings } from '../../lib/storage.js';
 import { LANGUAGES } from '../../lib/errors.js';
 import { PACKS, packStatus, downloadPack, removePack, formatBytes, cacheSupported } from '../../lib/packs.js';
 import { toast } from '../components.js';
+import { feel } from '../feedback.js';
+import { DAILY_GOALS, getGame, setDailyGoal } from '../../lib/game.js';
 
 export async function settingsView() {
   const persist = async () => {
@@ -33,6 +35,18 @@ export async function settingsView() {
       persist();
     },
   });
+
+  // ---- sound, vibration and the daily goal (switches that apply at once)
+  const toggle = (setting, title, help) => {
+    const box = h('input', { type: 'checkbox', class: 'switch', checked: state.settings[setting] !== false, 'aria-label': title, onchange: (e) => { state.settings[setting] = e.target.checked; persist(); if (e.target.checked) feel('ok'); } });
+    return h('label', { class: 'field field-switch' }, h('span', { class: 'grow' }, h('strong', null, title), h('span', { class: 'muted small block' }, help)), box);
+  };
+  const game = await getGame();
+  const goalSelect = h(
+    'select',
+    { class: 'select', 'aria-label': 'Daily goal', onchange: async (e) => { await setDailyGoal(Number(e.target.value)); toast('Daily goal saved.'); } },
+    DAILY_GOALS.map((n) => h('option', { value: n, selected: n === game.goal }, n === 1 ? '1 thing a day' : `${n} things a day`)),
+  );
 
   // ---- runtime packs (Python, PHP, Java): each is a separate download so the app stays small
   const packRows = ['python', 'php', 'java'].map((id) => makePackRow(id));
@@ -106,10 +120,14 @@ export async function settingsView() {
     h('h2', { class: 'section-title' }, 'Reading and language'),
     h('label', { class: 'field' }, h('span', null, 'Explain errors in'), langSelect),
     h('label', { class: 'field' }, h('span', null, 'Code text size'), sizeInput, sizeValue),
+    h('h2', { class: 'section-title' }, 'Fun and goals'),
+    toggle('sound', 'Sounds', 'Short happy sounds when you get something right.'),
+    toggle('haptics', 'Vibration', 'A small buzz when you win. Your phone must support it.'),
+    h('label', { class: 'field' }, h('span', null, 'Daily goal'), goalSelect, h('span', { class: 'muted small' }, 'An exercise passed or a lesson finished counts as one thing.')),
     h('h2', { class: 'section-title' }, 'Keep your data safe'),
     cacheSupported() ? [storageNote, persistBtn] : h('p', { class: 'muted' }, 'Storage controls are not available in this browser.'),
     h('h2', { class: 'section-title' }, 'About'),
-    h('p', { class: 'muted' }, 'SayMaCoder v0.1 (Phase 0 prototype). Everything runs on your phone. Your code and progress never leave it.'),
+    h('p', { class: 'muted' }, 'SayMaCoder. Everything runs on your phone. Your code and progress never leave it.'),
   );
   return { node };
 }

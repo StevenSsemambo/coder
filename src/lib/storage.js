@@ -66,7 +66,7 @@ export async function kvSet(key, value) {
 }
 
 // ---- settings ---------------------------------------------------------------
-export const DEFAULT_SETTINGS = { lang: 'en', fontSize: 16 };
+export const DEFAULT_SETTINGS = { lang: 'en', fontSize: 16, sound: true, haptics: true };
 
 export async function loadSettings() {
   return { ...DEFAULT_SETTINGS, ...(await kvGet('settings', {})) };
@@ -118,6 +118,10 @@ export async function recordAttempt({ exerciseId, courseId, passedCount, total, 
     days.push(today);
     await kvSet('days', days.slice(-400));
   }
+  // Tell the app shell (see main.js): it shows the celebration. Plain Node (the tests) has no window to tell.
+  if (typeof globalThis.dispatchEvent === 'function' && typeof globalThis.CustomEvent === 'function') {
+    globalThis.dispatchEvent(new globalThis.CustomEvent('saymacoder:attempt', { detail: { exerciseId, courseId, passed, firstPass, hintsUsed } }));
+  }
   return { entry, firstPass };
 }
 
@@ -135,4 +139,18 @@ export async function getStreak(now = new Date()) {
     cursor.setDate(cursor.getDate() - 1);
   }
   return { current, activeToday, totalDays: days.size };
+}
+
+// ---- where the learner was last, and which step of a lesson they reached --------------------------------------------
+/** The lesson the learner opened most recently: { courseId, lessonId } or null. */
+export const getLast = () => kvGet('last', null);
+export const setLast = (courseId, lessonId) => kvSet('last', { courseId, lessonId, at: Date.now() });
+
+/** Step reached in each lesson that is not finished: { 'course/lesson': stepIndex }. */
+export const getResume = () => kvGet('resume', {});
+export async function setResume(key, step) {
+  const all = await getResume();
+  if (step > 0) all[key] = step;
+  else delete all[key];
+  await kvSet('resume', all);
 }

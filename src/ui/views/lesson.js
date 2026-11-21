@@ -21,6 +21,7 @@ export function lessonView(courseId, lessonId) {
     'div',
     { class: 'view lesson' },
     h('a', { class: 'back', href: `#/course/${course.id}` }, `← ${course.title}`),
+    h('a', { class: 'step-full muted small', href: `#/lesson/${course.id}/${lesson.id}` }, 'Switch to step by step'),
     lesson.level ? h('span', { class: 'chip chip-accent lesson-level' }, lesson.level) : null,
     h('h1', null, lesson.title),
     lesson.minutes ? h('p', { class: 'muted small' }, `About ${lesson.minutes} minutes`) : null,

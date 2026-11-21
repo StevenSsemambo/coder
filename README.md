@@ -19,16 +19,21 @@ It is built by several Claude accounts, one track each. **Contributors: read `do
 | Error translator: plain English and Kiswahili (Luganda needs a native speaker) | Working |
 | Progress, streaks and saved drafts (IndexedDB) | Working |
 | Installs to the home screen and works with the network off | Working (tested) |
-| **Web track** (HTML, CSS, JavaScript with a sandboxed live preview and auto-checker): 45 lessons, 136 exercises. Roadmap in `docs/WEB-TRACK.md` | Written |
-| **Python**: 35 lessons in 5 levels, 68 exercises | Written |
+| **Web track** (HTML, CSS, JavaScript with a sandboxed live preview and auto-checker): 60 lessons, 201 exercises. Roadmap in `docs/WEB-TRACK.md` | Complete |
+| **Python**: 57 lessons in 9 levels, 125 exercises. Roadmap in `docs/PY-TRACK.md` | Complete |
 | **C**: 32 lessons, 98 exercises, from `printf` to pointers, bits, macros, algorithms, sorting and a stock-system capstone. Roadmap in `docs/C-TRACK.md` | Written |
 | **C Part 2** (`c-advanced`, a full C engine): 14 lessons, 42 exercises: structs, `enum`, `union`, `malloc`/`free`/`realloc`, linked lists, text and binary files, and a stock-system capstone. Roadmap and limits in `docs/CX-TRACK.md` | Written |
 | **C++**: 18 lessons, 54 exercises, from `cout` to pointers (Part A, what C++ shares with C plus streams). Strings, vectors, references, classes and templates (Part B) wait for a real C++ compiler. Roadmap in `docs/CPP-TRACK.md` | Part A written |
-| **SQL** (SQLite): 25 lessons, 75 exercises, one shop database throughout. Roadmap in `docs/SQL-TRACK.md` | Written |
+| **SQL** (SQLite): 33 lessons, 99 exercises, one shop database throughout. Roadmap in `docs/SQL-TRACK.md` | Complete |
+| **Java** (real `javac`): 23 lessons, 94 exercises so far. Roadmap in `docs/JAVA-TRACK.md` | In progress |
+| **PHP** (PHP 8.3 on WebAssembly): 33 lessons, 107 exercises. Roadmap in `docs/PHP-TRACK.md` | Complete |
+| **Step-by-step lessons**: one idea per screen, a big Continue button, your place saved (the long page is one tap away) | Working |
+| **Home screen** that starts with "Continue" (resume the lesson, the next exercise or the next lesson), your daily goal, streak and level | Working |
+| **Kato**, the friendly guide robot, and a **game layer**: stars, XP, levels, 12 badges, a daily goal, a celebration with sound and vibration (switchable in Settings) | Working |
+| **Show a solution** after the hints, so nobody is ever stuck | Working |
 | Rich lessons: real-life stories, analogies, runnable examples, predict-the-output, fill-the-gaps, put-in-order, find-the-bug, mistake museum, recap cards | Working |
 
-Not built yet: C memory visualizer, lecturer mode, certificates, phone-to-phone sharing,
-on-device AI tutor, Java and VB.NET (both need a runtime first, see `docs/TRACKS.md`). See the roadmap in the project document.
+Not built yet: first-run welcome and a visual path per course, progress backup, an install prompt, the C memory visualizer, lecturer mode, certificates and a career path, phone-to-phone sharing, on-device AI tutor, and VB.NET (it needs a runtime first, see `docs/TRACKS.md`). The roadmap is in `docs/PRODUCT.md`.
 
 ## Run it
 

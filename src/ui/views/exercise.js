@@ -3,13 +3,19 @@ import { getExercise, nextExercise } from '../../content/index.js';
 import { createEditor } from '../../lib/editor.js';
 import { runCode, warmUp, onRunnerStatus } from '../../lib/runners.js';
 import { gradeExercise } from '../../lib/grader.js';
-import { getDraft, saveDraft, clearDraft, recordAttempt, getProgress } from '../../lib/storage.js';
+import { getDraft, saveDraft, clearDraft, recordAttempt, getProgress, setLast } from '../../lib/storage.js';
+import { getSolution } from '../../lib/solutions.js';
+import { markSolutionUsed } from '../../lib/game.js';
+import { katoSays, pickLine } from '../mascot.js';
+import { feel } from '../feedback.js';
 import { state } from '../../state.js';
 import { symbolBar, stdinField, outputView, testResultsView, dock } from '../components.js';
 import { webExerciseView } from './web-exercise.js';
 
 const HINT_LABELS = ['Nudge', 'Bigger hint', 'Worked example'];
-const LANGUAGE_NAME = { c: 'C', python: 'Python', java: 'Java', web: 'JavaScript', sql: 'SQLite', php: 'PHP' };
+const LANGUAGE_NAME = { c: 'C', cx: 'C', cpp: 'C++', cppfull: 'C++', python: 'Python', java: 'Java', web: 'JavaScript', sql: 'SQLite', php: 'PHP' };
+// After this many checks that did not pass, "Show a solution" appears even if the learner has not used every hint.
+const SOLUTION_AFTER_FAILS = 3;
 
 function promptBlocks(text) {
   return text.split('\n\n').map((para) => h('p', null, para.split('\n').map((line, i, all) => [richText(line), i < all.length - 1 ? h('br') : null])));
@@ -32,9 +38,11 @@ export function exerciseView(courseId, lessonId, exerciseId) {
   if (ex.language === 'web') return webExerciseView(ex);
 
   warmUp(ex.language);
+  setLast(ex.courseId, ex.lessonId);
 
   let busy = false;
   let hintsShown = 0;
+  let failedChecks = 0;
 
   const mount = h('div', { class: 'editor-mount' });
   const editor = createEditor(mount, {
@@ -49,12 +57,15 @@ export function exerciseView(courseId, lessonId, exerciseId) {
   const stdin = ex.usesInput ? stdinField(ex.sampleInput || '', ex.language) : null;
   const result = h('div', { class: 'result', 'aria-live': 'polite' });
   const hintsBox = h('div', { class: 'hints' });
+  const nudge = h('div', { class: 'nudge' });
+  const solutionBox = h('div', { class: 'solution-box' });
   const runtimeNote = h('p', { class: 'muted small runtime' });
 
   const runBtn = h('button', { class: 'btn', type: 'button', onclick: doRun }, 'Run');
   const checkBtn = h('button', { class: 'btn btn-primary', type: 'button', onclick: doCheck }, 'Check answer');
   const hintBtn = h('button', { class: 'btn', type: 'button', onclick: showHint }, `Hint (0/${ex.hints.length})`);
   const resetBtn = h('button', { class: 'btn btn-ghost', type: 'button', onclick: reset }, 'Reset');
+  const solutionBtn = h('button', { class: 'btn btn-ghost hidden', type: 'button', onclick: askSolution }, 'Show a solution');
 
   const stop = onRunnerStatus(({ language, state: s, detail }) => {
     if (language !== ex.language) return;
@@ -92,7 +103,15 @@ export function exerciseView(courseId, lessonId, exerciseId) {
     if (!graded.initFailed) {
       const { firstPass } = await recordAttempt({ exerciseId: ex.id, courseId: ex.courseId, passedCount: graded.passedCount, total: graded.total, hintsUsed: hintsShown });
       state.progress = await getProgress();
-      if (graded.passed) result.append(successCard(firstPass));
+      if (graded.passed) {
+        result.append(successCard(firstPass));
+        replace(nudge);
+      } else {
+        failedChecks += 1;
+        feel('wrong');
+        maybeOfferSolution();
+        if (failedChecks >= 2 && hintsShown === 0) replace(nudge, katoSays('think', pickLine('stuck', failedChecks)));
+      }
     }
     setBusy(false);
   }
@@ -123,6 +142,51 @@ export function exerciseView(courseId, lessonId, exerciseId) {
     );
     hintBtn.textContent = `Hint (${hintsShown}/${ex.hints.length})`;
     hintBtn.disabled = hintsShown >= ex.hints.length;
+    feel('tap');
+    maybeOfferSolution();
+  }
+
+  // ---- "Show a solution": never a dead end. It appears after every hint was used, or after a few tries that did not pass.
+  function maybeOfferSolution() {
+    if (hintsShown >= ex.hints.length || failedChecks >= SOLUTION_AFTER_FAILS) solutionBtn.classList.remove('hidden');
+  }
+
+  let confirming = false;
+  function askSolution() {
+    if (!confirming) {
+      confirming = true;
+      solutionBtn.textContent = 'Yes, show it (1 star)';
+      solutionBtn.classList.add('btn-confirm');
+      replace(solutionBox, h('p', { class: 'muted small' }, 'Looking at a solution is fine. This exercise will then give 1 star. Tap the button again to see it.'));
+      return;
+    }
+    confirming = false;
+    solutionBtn.classList.add('hidden');
+    revealSolution();
+  }
+
+  async function revealSolution() {
+    const code = await getSolution(ex);
+    if (code) await markSolutionUsed(ex.id);
+    const next = nextExercise(ex.courseId, ex.id);
+    replace(
+      solutionBox,
+      h(
+        'div',
+        { class: 'card solution' },
+        h('div', { class: 'label' }, code ? 'A solution' : 'No solution to show'),
+        code
+          ? [
+              h('pre', { class: 'code' }, h('code', null, code)),
+              h('p', { class: 'muted small' }, 'Read it slowly. Then put it in your editor, run it, and change one thing to see what happens.'),
+              h('div', { class: 'actions' }, h('button', { class: 'btn btn-primary', type: 'button', onclick: () => { editor.setValue(code); revealResult(mount); } }, 'Put it in my editor'), h('button', { class: 'btn btn-ghost', type: 'button', onclick: () => replace(solutionBox) }, 'Hide')),
+            ]
+          : [
+              h('p', null, 'There is no stored solution for this one. Use hint 3 (a worked example of a similar problem), or move on and come back later.'),
+              next ? h('a', { class: 'btn', href: `#/exercise/${next.courseId}/${next.lessonId}/${next.id}` }, 'Skip for now') : h('a', { class: 'btn', href: `#/lesson/${ex.courseId}/${ex.lessonId}` }, 'Back to the lesson'),
+            ],
+      ),
+    );
   }
 
   async function reset() {
@@ -143,9 +207,12 @@ export function exerciseView(courseId, lessonId, exerciseId) {
     // The dock stays at the bottom of the screen: symbols and the main buttons are always reachable.
     dock(symbolBar(editor, ex.language), h('div', { class: 'actions' }, runBtn, checkBtn)),
     h('div', { class: 'actions actions-secondary' }, hintBtn, resetBtn),
+    solutionBtn,
     runtimeNote,
     result,
+    nudge,
     hintsBox,
+    solutionBox,
   );
 
   return {
