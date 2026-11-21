@@ -5,6 +5,7 @@ import { LANGUAGES } from '../../lib/errors.js';
 import { PACKS, packStatus, downloadPack, removePack, formatBytes, cacheSupported } from '../../lib/packs.js';
 import { toast } from '../components.js';
 import { feel } from '../feedback.js';
+import { offlineCheckCard, installCard, backupCard } from '../offline-ui.js';
 import { DAILY_GOALS, getGame, setDailyGoal } from '../../lib/game.js';
 
 export async function settingsView() {
@@ -110,10 +111,16 @@ export async function settingsView() {
   }
   refreshStorage();
 
+  const offlineSlot = h('div', null, await offlineCheckCard());
+  const install = installCard({ dismissible: false });
+
   const node = h(
     'div',
     { class: 'view' },
     h('h1', null, 'Settings'),
+    h('h2', { class: 'section-title' }, 'Ready for offline?'),
+    offlineSlot,
+    install,
     h('h2', { class: 'section-title' }, 'Downloads'),
     h('p', { class: 'muted' }, `C and SQL are built in. Python, PHP and Java are separate downloads so the app stays small.`),
     packRows.map((p) => p.row),
@@ -124,8 +131,12 @@ export async function settingsView() {
     toggle('sound', 'Sounds', 'Short happy sounds when you get something right.'),
     toggle('haptics', 'Vibration', 'A small buzz when you win. Your phone must support it.'),
     h('label', { class: 'field' }, h('span', null, 'Daily goal'), goalSelect, h('span', { class: 'muted small' }, 'An exercise passed or a lesson finished counts as one thing.')),
+    h('h2', { class: 'section-title' }, 'Backup and restore'),
+    backupCard({ onRestored: () => { location.hash = '#/learn'; } }),
     h('h2', { class: 'section-title' }, 'Keep your data safe'),
     cacheSupported() ? [storageNote, persistBtn] : h('p', { class: 'muted' }, 'Storage controls are not available in this browser.'),
+    h('h2', { class: 'section-title' }, 'Your journey'),
+    h('a', { class: 'btn btn-block', href: '#/welcome' }, 'Choose my starting course again'),
     h('h2', { class: 'section-title' }, 'About'),
     h('p', { class: 'muted' }, 'SayMaCoder. Everything runs on your phone. Your code and progress never leave it.'),
   );

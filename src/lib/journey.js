@@ -42,13 +42,13 @@ function firstOpenLesson(course, game, progress, afterIndex = -1) {
   return null;
 }
 
-export function nextUp({ courses, progress = {}, game = {}, last = null, resume = {} }) {
+export function nextUp({ courses, progress = {}, game = {}, last = null, resume = {}, startCourse = null }) {
   const byId = new Map(courses.map((c) => [c.id, c]));
   let cursor = last && byId.get(last.courseId)?.lessons.some((l) => l.id === last.lessonId) ? last : null;
   if (!cursor) cursor = lastFromProgress(courses, progress);
 
   if (!cursor) {
-    const start = byId.get(START_HERE) || courses[0];
+    const start = byId.get(startCourse) || byId.get(START_HERE) || courses[0];
     if (!start || !start.lessons.length) return { type: 'done' };
     return { type: 'start', courseId: start.id, lessonId: start.lessons[0].id };
   }

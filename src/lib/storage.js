@@ -65,6 +65,36 @@ export async function kvSet(key, value) {
   }
 }
 
+/** Every key and value in the store (used by backup). Works with IndexedDB, then localStorage, then memory. */
+export async function kvAll() {
+  const out = {};
+  try {
+    const db = await openDB();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readonly');
+      const cursor = tx.objectStore('kv').openCursor();
+      cursor.onsuccess = () => {
+        const c = cursor.result;
+        if (c) { out[c.key] = c.value; c.continue(); }
+      };
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+    return out;
+  } catch {
+    try {
+      const ls = globalThis.localStorage;
+      for (let i = 0; i < (ls?.length || 0); i += 1) {
+        const k = ls.key(i);
+        if (k && k.startsWith('saymacoder:')) out[k.slice(11)] = JSON.parse(ls.getItem(k));
+      }
+    } catch { /* ignore */ }
+    for (const [k, v] of memory) if (!(k in out)) out[k] = v;
+    return out;
+  }
+}
+
 // ---- settings ---------------------------------------------------------------
 export const DEFAULT_SETTINGS = { lang: 'en', fontSize: 16, sound: true, haptics: true };
 

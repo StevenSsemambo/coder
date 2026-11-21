@@ -31,9 +31,12 @@ It is built by several Claude accounts, one track each. **Contributors: read `do
 | **Home screen** that starts with "Continue" (resume the lesson, the next exercise or the next lesson), your daily goal, streak and level | Working |
 | **Kato**, the friendly guide robot, and a **game layer**: stars, XP, levels, 12 badges, a daily goal, a celebration with sound and vibration (switchable in Settings) | Working |
 | **Show a solution** after the hints, so nobody is ever stuck | Working |
+| **First-run welcome and a visual path per course**: "What do you want to build?", a recommended first lesson, a path with "you are here", a colour, emoji and tagline for every course | Working |
+| **Offline check, download banner and install card**: Settings shows what is ready for offline use; a lesson that needs Python, PHP or Java offers the download on its first screen | Working |
+| **Backup and restore** of progress as a file (it merges, so restoring never erases work already on the phone) | Working |
 | Rich lessons: real-life stories, analogies, runnable examples, predict-the-output, fill-the-gaps, put-in-order, find-the-bug, mistake museum, recap cards | Working |
 
-Not built yet: first-run welcome and a visual path per course, progress backup, an install prompt, the C memory visualizer, lecturer mode, certificates and a career path, phone-to-phone sharing, on-device AI tutor, and VB.NET (it needs a runtime first, see `docs/TRACKS.md`). The roadmap is in `docs/PRODUCT.md`.
+Not built yet: practise-your-mistakes review, the C memory visualizer, lecturer mode, certificates and a career path, phone-to-phone sharing, on-device AI tutor, and VB.NET (it needs a runtime first, see `docs/TRACKS.md`). The roadmap is in `docs/PRODUCT.md`.
 
 ## Run it
 

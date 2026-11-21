@@ -74,6 +74,7 @@ export const LINES = {
   practice: ['Now let us practise. Doing it is how you learn.', 'Time to try it yourself. I am here to help.'],
   stuck: ['Stuck? Hints cost nothing. Take one.', 'Every coder gets stuck. A hint is a good friend.'],
   done: ['You finished every step. Well done!', 'That lesson is done. I am proud of you!'],
+  ready: ['Your first lesson is ready. Tap Continue!', 'All set! Tap Continue to begin.', 'Ready when you are. Tap Continue.'],
 };
 
 export const pickLine = (kind, n = Date.now()) => {

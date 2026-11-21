@@ -9,6 +9,8 @@ import { lessonView } from './ui/views/lesson.js';
 import { stepLessonView } from './ui/views/steps-lesson.js';
 import { onAttempt } from './ui/rewards.js';
 import { unlockAudio } from './ui/feedback.js';
+import { welcomeView } from './ui/views/welcome.js';
+import { captureInstall } from './lib/install.js';
 import { exerciseView } from './ui/views/exercise.js';
 import { playgroundView } from './ui/views/playground.js';
 import { progressView } from './ui/views/progress.js';
@@ -43,6 +45,7 @@ async function boot() {
   // Phones allow sound only after a touch: wake the audio on the first one. Celebrations listen for graded attempts.
   document.addEventListener('pointerdown', unlockAudio, { once: true, passive: true });
   window.addEventListener('saymacoder:attempt', (e) => onAttempt(e.detail));
+  captureInstall();
 
   // While typing, hide the tab bar so the dock sits right above the keyboard and the editor gets the space.
   const isTypingTarget = (el) => el?.matches?.('.cm-content, textarea, input[type="text"], input:not([type])');
@@ -58,6 +61,7 @@ async function boot() {
     h('nav', { class: 'tabbar', 'aria-label': 'Main' }, tabLinks),
   );
 
+  route('/welcome', () => welcomeView());
   route('/learn', () => learnView());
   route('/course/:id', (id) => courseView(id));
   route('/lesson/:course/:lesson', (c, l) => stepLessonView(c, l));
@@ -91,6 +95,7 @@ async function boot() {
       toast('A new version is ready.', { label: 'Update', run: () => update(true) });
     },
     onOfflineReady() {
+      state.offlineReady = true;
       toast('The app is ready to work offline.');
     },
   });

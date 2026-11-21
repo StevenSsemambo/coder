@@ -12,6 +12,8 @@ import { setLast, getResume, setResume } from '../../lib/storage.js';
 import { getGame, isLessonDone } from '../../lib/game.js';
 import { onLessonReached } from '../rewards.js';
 import { progressBar } from '../components.js';
+import { metaOf } from '../course-meta.js';
+import { packBanner } from '../offline-ui.js';
 
 /** Small stable number from text, so Kato's lines differ from lesson to lesson but never flicker. */
 const seedOf = (text) => [...String(text)].reduce((n, ch) => (n * 31 + ch.charCodeAt(0)) % 100003, 7);
@@ -45,6 +47,9 @@ export async function stepLessonView(courseId, lessonId) {
   const body = h('div', { class: 'step-body', tabindex: '-1' });
   const backBtn = h('button', { class: 'btn', type: 'button', onclick: () => go(step - 1) }, '← Back');
   const nextSlot = h('div', { class: 'step-next' });
+  // If this course needs a one-time download that is missing, say so on the first screen, with a button.
+  const banner = h('div', { class: 'banner-slot' });
+  packBanner(course.language).then((b) => b && banner.append(b));
 
   function drawChrome() {
     counter.textContent = `Step ${step + 1} of ${steps.length}`;
@@ -93,6 +98,7 @@ export async function stepLessonView(courseId, lessonId) {
       return;
     }
 
+    if (step === 0) content.push(banner);
     if (step === 0) content.push(katoSays('happy', pickLine(position === 0 && !Object.keys(resume).length ? 'welcome' : 'back', seed)));
 
     let unlock = () => {};
@@ -157,7 +163,7 @@ export async function stepLessonView(courseId, lessonId) {
 
   const node = h(
     'div',
-    { class: 'view stepview' },
+    { class: 'view stepview', style: `--course:${metaOf(course).color}` },
     h(
       'div',
       { class: 'step-top' },

@@ -5,7 +5,7 @@ import { JSDOM } from 'jsdom';
 
 const dom = new JSDOM('<!doctype html><html><body><div id="app"></div></body></html>', { url: 'https://example.test/', pretendToBeVisual: true });
 const w = dom.window;
-for (const k of ['window', 'document', 'navigator', 'HTMLElement', 'Node', 'Element', 'MutationObserver', 'getComputedStyle', 'requestAnimationFrame', 'cancelAnimationFrame', 'DOMParser', 'Range', 'Selection', 'Event', 'KeyboardEvent', 'MouseEvent', 'CustomEvent', 'FocusEvent', 'InputEvent', 'DocumentFragment', 'Text', 'Window', 'HTMLInputElement', 'HTMLTextAreaElement', 'HTMLIFrameElement', 'HTMLButtonElement', 'NodeFilter', 'ResizeObserver', 'IntersectionObserver']) {
+for (const k of ['window', 'document', 'navigator', 'HTMLElement', 'Node', 'Element', 'MutationObserver', 'getComputedStyle', 'requestAnimationFrame', 'cancelAnimationFrame', 'DOMParser', 'Range', 'Selection', 'Event', 'KeyboardEvent', 'MouseEvent', 'CustomEvent', 'FocusEvent', 'InputEvent', 'DocumentFragment', 'Text', 'Window', 'HTMLInputElement', 'HTMLTextAreaElement', 'HTMLIFrameElement', 'HTMLButtonElement', 'NodeFilter', 'ResizeObserver', 'IntersectionObserver', 'location', 'localStorage', 'File', 'Blob']) {
   if (w[k] !== undefined) Object.defineProperty(globalThis, k, { value: w[k], configurable: true, writable: true });
 }
 globalThis.window = w;
@@ -216,6 +216,111 @@ try {
   showCelebration({ title: 'Test', stars: 3, xpGained: 20, levelUp: { level: 2, title: 'Code Explorer' }, badges: [{ icon: '🌱', title: 'First program', desc: 'x' }], daily: { done: 1, goal: 1, reached: true }, primary: { label: 'Next', href: '#/learn' } });
   if (!document.querySelector('.celebrate .star.on') || !document.querySelector('.celebrate .badge-new') || !document.querySelector('.celebrate .levelup')) failures.push('the celebration is missing its stars, level-up or badge');
   closeCelebration();
+
+  // ---- Release 2: course identity, welcome, path, backup, offline, install
+  const meta = await server.ssrLoadModule('/src/ui/course-meta.js');
+  const { welcomeView } = await server.ssrLoadModule('/src/ui/views/welcome.js');
+  const backup = await server.ssrLoadModule('/src/lib/backup.js');
+  const offline = await server.ssrLoadModule('/src/lib/offline.js');
+  const install = await server.ssrLoadModule('/src/lib/install.js');
+  const profileLib = await server.ssrLoadModule('/src/lib/profile.js');
+  const storage = await server.ssrLoadModule('/src/lib/storage.js');
+  const offlineUi = await server.ssrLoadModule('/src/ui/offline-ui.js');
+  const { allCourses, courses: offered, getCourse } = await server.ssrLoadModule('/src/content/index.js');
+
+  // 1) every course has a face, and every "what do you want to build?" answer leads to a course the app really offers
+  for (const c of allCourses) {
+    const m = meta.metaOf(c);
+    if (!m.emoji) failures.push(`${c.id}: no emoji`);
+    if (!/^#[0-9a-f]{6}$/i.test(m.color)) failures.push(`${c.id}: colour ${m.color} is not a hex colour`);
+    if (m.tagline.length === 0 || m.tagline.length > 60) failures.push(`${c.id}: the tagline must be 1 to 60 characters (it is ${m.tagline.length})`);
+  }
+  for (const it of meta.INTERESTS) if (!offered.some((c) => c.id === it.course)) failures.push(`welcome answer "${it.label}" points at ${it.course}, which the app does not offer`);
+  if (meta.metaOf({ id: 'x', language: 'c', emoji: '🔥', tagline: 'mine' }).emoji !== '🔥') failures.push("a course's own emoji must win over the default");
+
+  // 2) welcome: hello -> ask -> recommendation -> start. It must save the choice and the first lesson.
+  document.body.className = '';
+  const wv = welcomeView();
+  const press = (root, text) => { const b = [...root.querySelectorAll('button')].find((x) => x.textContent.includes(text)); if (!b) throw new Error(`welcome: no button "${text}"`); b.click(); };
+  try {
+    press(wv.node, "Let's go");
+    if (wv.node.querySelectorAll('.interest').length !== meta.INTERESTS.length) failures.push('welcome: the interest buttons are missing');
+    wv.node.querySelectorAll('.interest')[2].click(); // data -> sql-start
+    if (!wv.node.querySelector('.pick')) failures.push('welcome: no recommended course was shown');
+    press(wv.node, 'Start my first lesson');
+    await new Promise((r) => setTimeout(r, 60));
+    const prof = await profileLib.getProfile();
+    if (!prof.welcomed || prof.startCourse !== 'sql-start') failures.push(`welcome: the choice was not saved (${JSON.stringify(prof)})`);
+    const last = await storage.getLast();
+    if (!last || last.courseId !== 'sql-start') failures.push('welcome: the first lesson of the chosen course was not remembered');
+  } catch (e) { failures.push(`welcome flow failed: ${e.message}`); }
+  wv.cleanup();
+  if (document.body.classList.contains('in-welcome')) failures.push('welcome: the tab bar stayed hidden after leaving');
+
+  // 3) a brand-new learner is sent to the welcome; a learner who has seen it is not
+  await storage.kvSet('last', null); await storage.kvSet('game', {}); await storage.kvSet('progress', {}); await storage.kvSet('profile', {});
+  state.progress = {};
+  location.hash = '#/learn';
+  await learnView();
+  if (location.hash !== '#/welcome') failures.push(`home: a brand-new learner was not sent to the welcome (hash is ${location.hash})`);
+  await profileLib.updateProfile({ welcomed: true, startCourse: 'web-start' });
+  const homeAfter = await learnView();
+  const target = homeAfter.node.querySelector('.continue');
+  if (!target || !target.getAttribute('href').includes('web-start')) failures.push('home: the Continue card must point at the course the learner chose');
+
+  // 4) the course path: one node per lesson, exactly one "you are here", nothing locked
+  let pathChecked = 0;
+  for (const c of offered) {
+    const v = await server.ssrLoadModule('/src/ui/views/learn.js').then((m) => m.courseView(c.id));
+    const nodes = v.node.querySelectorAll('.path-node');
+    if (nodes.length !== c.lessons.length) failures.push(`${c.id}: the path shows ${nodes.length} of ${c.lessons.length} lessons`);
+    if (v.node.querySelectorAll('.path-node.current').length !== 1) failures.push(`${c.id}: the path must have exactly one "you are here" lesson`);
+    if (![...nodes].every((n) => n.querySelector('a[href^="#/lesson/"]'))) failures.push(`${c.id}: a path lesson cannot be opened (nothing may be locked)`);
+    pathChecked += 1;
+  }
+
+  // 5) backup: merging never loses work, damaged files are refused kindly
+  const now = 1_800_000_000_000;
+  const phoneA = { progress: { a1: { passed: true, best: 1, attempts: 2, firstPassedAt: now, hintsAtFirstPass: 2, lastAt: now } }, days: ['2026-11-20'], game: { lessons: { 'c/x': now }, badges: { 'first-run': now }, solutions: { a1: true }, goal: 2 }, last: { courseId: 'c', lessonId: 'x', at: now }, drafts: { a1: 'mine' }, profile: { welcomed: true, startCourse: 'py-start' } };
+  const file = { progress: { a1: { passed: false, best: 0.5, attempts: 5, lastAt: now + 9 }, b1: { passed: true, best: 1, attempts: 1, firstPassedAt: now - 5, hintsAtFirstPass: 0, lastAt: now - 5 } }, days: ['2026-11-19', '2026-11-20'], game: { lessons: { 'c/y': now - 9 }, badges: { ten: now }, solutions: {} }, last: { courseId: 'c', lessonId: 'y', at: now + 50 }, drafts: { a1: 'theirs', b1: 'old' }, profile: { welcomed: false, startCourse: 'web-start', backupAt: 77 } };
+  const m1 = backup.mergeData(phoneA, file);
+  const B = (name, ok) => { if (!ok) failures.push(`backup: ${name}`); };
+  B('a passed exercise stays passed even if the file says it was not', m1.progress.a1.passed === true && m1.progress.a1.best === 1);
+  B('exercises only in the file are added, with their stars data', m1.progress.b1.passed && m1.progress.b1.hintsAtFirstPass === 0);
+  B('days are joined without repeats', JSON.stringify(m1.days) === JSON.stringify(['2026-11-19', '2026-11-20']));
+  B('lessons and badges from both are kept', m1.game.lessons['c/x'] && m1.game.lessons['c/y'] && m1.game.badges['first-run'] && m1.game.badges.ten && m1.game.solutions.a1);
+  B('the most recent "last lesson" wins', m1.last.lessonId === 'y');
+  B('a draft already on the phone is never replaced', m1.drafts.a1 === 'mine' && m1.drafts.b1 === 'old');
+  B('the profile on the phone wins, the file fills gaps', m1.profile.welcomed === true && m1.profile.startCourse === 'py-start' && m1.profile.backupAt === 77);
+  B('merging twice changes nothing (safe to restore again)', JSON.stringify(backup.mergeData(m1, file)) === JSON.stringify(m1));
+  B('merging into an empty phone gives the whole file', backup.mergeData({}, file).progress.b1.passed === true);
+  B('not a backup is refused kindly', !backup.checkBackup('hello').ok && !backup.checkBackup('{"a":1}').ok && backup.checkBackup('hello').why.length > 10);
+  B('a newer backup version is refused', !backup.checkBackup({ app: 'saymacoder', version: 99, data: {} }).ok);
+  B('a damaged backup is refused', !backup.checkBackup({ app: 'saymacoder', version: 1, data: { progress: [1] } }).ok);
+  B('a good backup is accepted', backup.checkBackup(JSON.stringify(backup.makeBackup({ progress: {} }))).ok);
+  // round trip through real storage
+  await storage.kvSet('progress', { z1: { passed: true, best: 1, attempts: 1 } }); await storage.kvSet('draft:z1', 'my code'); await storage.kvSet('draft:z2', null);
+  const collected = await backup.collectData();
+  B('collectData gathers progress and non-empty drafts only', collected.progress.z1.passed && collected.drafts.z1 === 'my code' && !('z2' in (collected.drafts || {})));
+  await storage.kvSet('progress', {});
+  const summary = await backup.restoreData(JSON.parse(JSON.stringify(collected)));
+  B('restoring puts the progress back', (await storage.getProgress()).z1?.passed === true && summary.passed >= 1);
+  B('the file name has the date', /^saymacoder-backup-\d{4}-\d{2}-\d{2}\.json$/.test(backup.backupFileName(new Date(2026, 10, 21))));
+
+  // 6) offline and install rules
+  B('python, php and java need a download; the rest need none', offline.packIdFor('python') === 'python' && offline.packIdFor('php') === 'php' && offline.packIdFor('java') === 'java' && !offline.packIdFor('c') && !offline.packIdFor('sql') && !offline.packIdFor('web'));
+  const rep = await offline.offlineReport({ shellReady: true });
+  B('the offline report lists every pack and never throws', rep.packs.length === 3 && typeof rep.allReady === 'boolean');
+  B('nothing missing for a built-in language', (await offline.missingPack('sql')) === null);
+  B('with nothing to install, no install card is shown', install.installState() === 'none' && offlineUi.installCard() === null);
+  const card = await offlineUi.offlineCheckCard();
+  B('the offline check card draws', card.querySelectorAll('.check-row').length >= 7);
+  const prof2 = { backupAt: 0, backupSnoozed: 0 };
+  B('no backup reminder before real progress', offlineUi.backupReminder(prof2, { passed: 3 }, now) === null);
+  B('a backup reminder after 10 exercises and no backup', offlineUi.backupReminder(prof2, { passed: 10 }, now) !== null);
+  B('no reminder right after a backup or a snooze', offlineUi.backupReminder({ backupAt: now - 86400000 }, { passed: 50 }, now) === null && offlineUi.backupReminder({ backupSnoozed: now - 86400000 }, { passed: 50 }, now) === null);
+  B('backup controls draw on the settings screen', (await settingsView()).node.querySelector('.backup') && (await settingsView()).node.querySelector('.offline-check'));
+  console.log(`  Release 2: ${pathChecked} course paths, welcome flow, ${meta.INTERESTS.length} interests, backup merge rules, offline and install rules checked`);
   console.log(`  ${stepsChecked} lessons split into ${stepsTotal} steps (every block once, in order); ${walked} lessons walked through step by step`);
 } finally {
   await server.close();

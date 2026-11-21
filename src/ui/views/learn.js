@@ -4,15 +4,19 @@ import { state } from '../../state.js';
 import { progressBar } from '../components.js';
 import { katoSays, pickLine } from '../mascot.js';
 import { feel } from '../feedback.js';
+import { go } from '../router.js';
+import { metaOf } from '../course-meta.js';
+import { getProfile } from '../../lib/profile.js';
+import { lessonFinished } from '../../lib/journey.js';
+import { packBanner } from '../offline-ui.js';
+import { installCard, backupReminder } from '../offline-ui.js';
 import { getLast, getResume } from '../../lib/storage.js';
-import { loadStats, setDailyGoal, todayProgress, DAILY_GOALS } from '../../lib/game.js';
+import { loadStats, setDailyGoal, todayProgress, DAILY_GOALS, getGame } from '../../lib/game.js';
 import { nextUp } from '../../lib/journey.js';
 import { courseOf } from '../rewards.js';
 
 const LANGUAGE_LABEL = { c: 'C', cpp: 'C++', cppfull: 'C++ (full)', python: 'Python', java: 'Java', web: 'Web', sql: 'SQL', php: 'PHP', cx: 'C' };
-// A friendly picture for each language. A course can set its own `emoji` later; this is only the default.
-const LANGUAGE_EMOJI = { c: '⚙️', cx: '🧩', cpp: '🚀', cppfull: '🚀', python: '🐍', java: '☕', web: '🌐', sql: '🗄️', php: '🐘' };
-export const emojiOf = (course) => course.emoji || LANGUAGE_EMOJI[course.language] || '💻';
+export const emojiOf = (course) => metaOf(course).emoji;
 
 /** The big "what should I do next?" card. */
 function continueCard(up) {
@@ -59,9 +63,14 @@ function dailyCard(day, goalControl) {
 }
 
 export async function learnView() {
-  const [{ stats, game, attempts }, last, resume] = await Promise.all([loadStats(courseOf), getLast(), getResume()]);
-  const up = nextUp({ courses, progress: state.progress, game, last, resume });
+  const [{ stats, game, attempts }, last, resume, profile] = await Promise.all([loadStats(courseOf), getLast(), getResume(), getProfile()]);
   const brandNew = stats.passed === 0 && stats.lessonsDone === 0 && !last;
+  // A brand-new learner meets Kato first and picks what to build (see views/welcome.js).
+  if (brandNew && !profile.welcomed) {
+    go('/welcome');
+    return { node: h('div', { class: 'view' }) };
+  }
+  const up = nextUp({ courses, progress: state.progress, game, last, resume, startCourse: profile.startCourse });
 
   let day = todayProgress({ attempts, game });
   const dayHolder = h('div', null);
@@ -79,6 +88,13 @@ export async function learnView() {
   });
   drawDay();
 
+  // The course the learner will open next may need a one-time download (Python, PHP, Java): say so before they hit a wall.
+  const needBanner = h('div', { class: 'banner-slot' });
+  const nextCourse = up.courseId ? getCourse(up.courseId) : null;
+  if (nextCourse) packBanner(nextCourse.language).then((b) => b && needBanner.append(b));
+
+  // Nothing done yet: keep the screen calm (the goal only). Streak, stars and XP appear once there is something to show.
+  const started = stats.passed + stats.lessonsDone > 0;
   const lv = stats.level;
   const status = h(
     'div',
@@ -91,18 +107,21 @@ export async function learnView() {
   const node = h(
     'div',
     { class: 'view home' },
-    katoSays(brandNew ? 'happy' : 'cheer', pickLine(brandNew ? 'welcome' : 'back', stats.xp + stats.streak), { size: 64 }),
+    katoSays(started ? 'cheer' : 'happy', pickLine(started ? 'back' : 'ready', stats.xp + stats.streak), { size: 64 }),
     continueCard(up),
-    brandNew ? null : [dayHolder, status],
+    needBanner,
+    started ? [dayHolder, status] : dayHolder,
+    brandNew || stats.passed + stats.lessonsDone < 1 || profile.installDismissed ? null : installCard(),
+    backupReminder(profile, stats),
     h('h2', { class: 'section-title' }, 'Courses'),
     courses.map((course) => {
       const p = courseProgress(course, state.progress);
       return h(
         'a',
-        { class: 'card course', href: `#/course/${course.id}` },
-        h('div', { class: 'course-top' }, h('span', { class: 'chip chip-accent' }, `${emojiOf(course)} ${LANGUAGE_LABEL[course.language]}`), h('span', { class: 'muted small' }, `${p.done} of ${p.total} done`)),
+        { class: 'card course', href: `#/course/${course.id}`, style: `--course:${metaOf(course).color}` },
+        h('div', { class: 'course-top' }, h('span', { class: 'chip chip-course' }, `${metaOf(course).emoji} ${LANGUAGE_LABEL[course.language]}`), h('span', { class: 'muted small' }, `${p.done} of ${p.total} done`)),
         h('h3', null, course.title),
-        course.tagline ? h('p', { class: 'muted' }, course.tagline) : h('p', { class: 'muted course-sub' }, course.subtitle),
+        h('p', { class: 'muted course-sub' }, metaOf(course).tagline || course.subtitle),
         progressBar(p.fraction),
       );
     }),
@@ -110,29 +129,59 @@ export async function learnView() {
   return { node };
 }
 
-export function courseView(courseId) {
+export async function courseView(courseId) {
   const course = getCourse(courseId);
   if (!course) return { node: h('div', { class: 'view' }, h('p', null, 'Course not found.')) };
+  const meta = metaOf(course);
+  const game = await getGame();
+  const p = courseProgress(course, state.progress);
+  const finished = course.lessons.map((l) => lessonFinished(game, state.progress, course.id, l));
+  const currentIndex = finished.indexOf(false); // the first lesson not finished: "you are here" (nothing is ever locked)
+  const up = currentIndex >= 0 ? course.lessons[currentIndex] : null;
+
+  // group lessons by level, keeping the order of the course
+  const groups = [];
+  course.lessons.forEach((lesson, i) => {
+    const name = lesson.level || 'Lessons';
+    if (!groups.length || groups[groups.length - 1].name !== name) groups.push({ name, items: [] });
+    groups[groups.length - 1].items.push({ lesson, i });
+  });
+
   const node = h(
     'div',
-    { class: 'view' },
+    { class: 'view course-page', style: `--course:${meta.color}` },
     h('a', { class: 'back', href: '#/learn' }, '← All courses'),
-    h('h1', null, `${emojiOf(course)} ${course.title}`),
-    h('p', { class: 'muted' }, course.subtitle),
-    course.lessons.map((lesson, i) => {
-      const done = lesson.exercises.filter((e) => state.progress[e.id]?.passed).length;
-      const startsLevel = lesson.level && lesson.level !== course.lessons[i - 1]?.level;
-      const row = h(
-        'a',
-        { class: 'card lesson-row', href: `#/lesson/${course.id}/${lesson.id}` },
-        h('span', { class: 'lesson-num' }, String(i + 1)),
-        h('div', { class: 'grow' }, h('h3', null, lesson.title), h('p', { class: 'muted small' }, lesson.summary)),
-        h('span', { class: `chip ${done === lesson.exercises.length ? 'chip-ok' : ''}` }, `${done}/${lesson.exercises.length}`),
+    h(
+      'div',
+      { class: 'course-hero' },
+      h('div', { class: 'course-hero-top' }, h('span', { class: 'course-hero-emoji', 'aria-hidden': 'true' }, meta.emoji), h('div', { class: 'grow' }, h('h1', null, course.title), meta.tagline ? h('p', { class: 'course-hero-tag' }, meta.tagline) : null)),
+      h('div', { class: 'hero-bar' }, progressBar(p.fraction)),
+      h('p', { class: 'course-hero-stat' }, `${p.done} of ${p.total} exercises · ${finished.filter(Boolean).length} of ${course.lessons.length} lessons`),
+      up ? h('a', { class: 'btn btn-light btn-block', href: `#/lesson/${course.id}/${up.id}` }, finished.some(Boolean) || p.done ? 'Continue: ' + up.title : 'Start: ' + up.title) : h('p', { class: 'course-hero-tag' }, '🎉 You finished this course!'),
+    ),
+    course.subtitle ? h('details', { class: 'about-course' }, h('summary', null, 'About this course'), h('p', { class: 'muted' }, course.subtitle)) : null,
+    groups.map((g) => {
+      const done = g.items.filter(({ i }) => finished[i]).length;
+      return h(
+        'section',
+        { class: 'path-level' },
+        h('div', { class: 'path-flag' }, h('strong', null, g.name), h('span', { class: 'path-count' }, `${done}/${g.items.length}`)),
+        h(
+          'ol',
+          { class: 'path' },
+          g.items.map(({ lesson, i }) => {
+            const state2 = finished[i] ? 'done' : i === currentIndex ? 'current' : 'open';
+            const ex = lesson.exercises.filter((e) => state.progress[e.id]?.passed).length;
+            return h(
+              'li',
+              { class: `path-node ${state2}` },
+              h('a', { class: 'path-link', href: `#/lesson/${course.id}/${lesson.id}`, 'aria-label': `${lesson.title}${state2 === 'done' ? ', finished' : state2 === 'current' ? ', up next' : ''}` }, h('span', { class: 'path-dot', 'aria-hidden': 'true' }, state2 === 'done' ? '✓' : String(i + 1)), h('div', { class: 'path-card' }, state2 === 'current' ? h('span', { class: 'you-are-here' }, 'You are here') : null, h('h3', null, lesson.title), h('p', { class: 'muted small' }, lesson.summary), h('span', { class: `chip ${ex === lesson.exercises.length && lesson.exercises.length ? 'chip-ok' : ''}` }, `${ex}/${lesson.exercises.length} exercises`))),
+            );
+          }),
+        ),
       );
-      return startsLevel ? [h('h2', { class: 'section-title' }, lesson.level), row] : row;
     }),
   );
-  // referenced so bundlers keep the helper import used for future logic
   void flatExercises;
   return { node };
 }

@@ -111,8 +111,8 @@ screenshot description). The product owner answers in the same row. Do not edit 
 | Phase | What | Status |
 |---|---|---|
 | 1. Feel like a game (**Release 1, built 2026-11-21**) | Step-by-step lessons with a Continue button (the long page is still at `#/page/...`), a home screen that starts with "Continue", Kato the guide, stars, XP, levels, 12 badges, the daily goal, a celebration with sound and vibration (both can be switched off in Settings), "Show a solution", and lesson-finished tracking | **Done**. Needs real-phone testing |
-| 2. Feel easy | Welcome and "what do you want to build?", a visual path per course, a guide character, course colours and icons | Planned |
-| 3. Trust and reach | Progress backup (export and import a file), install prompt, "ready offline" check, practise-your-mistakes review | Planned |
+| 2. Feel easy (**Release 2, built 2026-11-21**) | First-run welcome ("What do you want to build?" then a first lesson), a visual path per course ("you are here", nothing locked), a face for every course (emoji, colour, tagline), an "offline check" in Settings, a one-tap download banner when a lesson needs Python, PHP or Java, an install card, progress backup and restore (a file that merges, never overwrites) | **Done**. Needs real-phone testing |
+| 3. Trust and reach | Practise-your-mistakes review, more badges, polish for small phones and screen readers | Planned |
 | 4. The long game | Career path across courses, certificates, lecturer mode, memory visualizer, on-device tutor | Planned |
 
 ## 8. What we cannot measure, and what we do instead
@@ -132,3 +132,11 @@ choice block of every course). When in doubt, choose the simpler, calmer, faster
 * A lesson now opens in **step mode**. `src/ui/steps.js` splits your blocks automatically; nothing in your lesson files changed. Question blocks (`predict`, `fill`, `reorder`, `bug`, `quiz`, `see`) unlock "Continue" when answered, or after **two wrong tries**, when the right answer is shown. Short blocks make good screens (see section 4).
 * **Show a solution** appears on an exercise after all the hints, or after three checks that did not pass. It reads the reference solution from `tests/solutions.mjs` (export `solutions`), loaded only when asked. **Keep that export in place.** An exercise with no stored solution shows a kind "no solution" card with a Skip button. (Web exercises have their own screen and show the goal page instead.)
 * Rewards are worked out by `src/lib/game.js` and shown by `src/ui/rewards.js` whenever `recordAttempt` (in `storage.js`) records a graded attempt, so every language, including Web, gets them with no extra code.
+
+## 11. What Release 2 added (for track accounts)
+
+* **Every course now has a face**, kept in the app shell (`src/ui/course-meta.js`): emoji, colour and a tagline of at most 60 characters. **Set `emoji`, `color` or `tagline` on your course object and yours wins.** New courses get a language default until then. The tests check that every course has a tagline of 1 to 60 characters.
+* **The course page is a path.** Lessons are grouped by their `level` text (so keep writing `level: 'Level 3: Functions'`). The first lesson that is not finished shows "You are here". Nothing is locked.
+* **A lesson that needs Python, PHP or Java** shows a download banner on its first screen if that runtime is not on the phone yet. This reads `PACKS` in `src/lib/packs.js` (the Java account owns that file: please keep the export).
+* **Backup and restore** (`src/lib/backup.js`) saves progress, attempts, days, game, last lesson, drafts and the learner profile as one JSON file. Restoring **merges** and never removes work already on the phone. If you add a new key to storage that must survive a phone change, add it to `KEYS` in that file.
+* **Welcome**: a brand-new learner is sent to `#/welcome` once. Settings has "Choose my starting course again".
