@@ -47,6 +47,9 @@ reference solution passes (`npm test`). The runner for language `cppfull` is `te
     `stable_sort`, or make every key different.
   * Do not print an uninitialised variable, read `v[i]` out of range, or rely on any other undefined behaviour: the answer
     differs per compiler. Use `at()` (which stops the program here) when a lesson needs to show an out-of-range stop.
+* **Run parity in the foreground, two lessons at a time** (`CPP_REAL=wasm ONLY_COURSE=cpp-pro ONLY_LESSON=a,b node tests/run.mjs`,
+  about 2.5 minutes each). Long detached runs were sometimes killed by the sandbox without a trace. `ONLY_LESSON` is a comma list of lesson ids.
+* Lessons that define a class **inside `main`** cannot use `static` members (a C++ rule): put such classes above `main`.
 * Avoid `reorder` blocks with more than 4 lines in this course: the test tries every other order, and each try is a compile.
 
 ## Roadmap
@@ -61,15 +64,15 @@ reference solution passes (`npm test`). The runner for language `cppfull` is `te
 - [x] 5. `cppp-structs` `struct`, `enum class`, a `vector` of structs
 - [x] 6. `cppp-ledger` project: Mama Rose's ledger (strings, vectors, structs, sorting, a text menu)
 
-**Level 2: Classes and objects**
-- [ ] 7. `cppp-classes` classes, `private`/`public`, member functions, `this`
-- [ ] 8. `cppp-constructors` constructors, destructors, initializer lists, `const` members, `static`
-- [ ] 9. `cppp-encapsulation` encapsulation and invariants (a bank account that cannot go negative)
-- [ ] 10. `cppp-operators` operator overloading (`+`, `==`, `<<`)
-- [ ] 11. `cppp-inheritance` inheritance
-- [ ] 12. `cppp-polymorphism` `virtual`, abstract classes, polymorphism
-- [ ] 13. `cppp-design` composition or inheritance? designing with objects
-- [ ] 14. `cppp-shop` project: an object-oriented shop (items, orders, discounts)
+**Level 2: Classes and objects** (complete: 8 lessons, 30 exercises)
+- [x] 7. `cppp-classes` classes, `private`/`public`, member functions, `this`
+- [x] 8. `cppp-constructors` constructors, destructors, initializer lists, `const` members, `static`
+- [x] 9. `cppp-encapsulation` encapsulation and invariants (a bank account that cannot go negative)
+- [x] 10. `cppp-operators` operator overloading (`+`, `==`, `<<`)
+- [x] 11. `cppp-inheritance` inheritance
+- [x] 12. `cppp-polymorphism` `virtual`, abstract classes, polymorphism
+- [x] 13. `cppp-design` composition or inheritance? designing with objects
+- [x] 14. `cppp-shop` project: an object-oriented shop (items, orders, discounts)
 
 **Level 3: Generic and modern C++**
 - [ ] 15. `cppp-templates` function and class templates

@@ -7,7 +7,9 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { allCourses, flatExercises } from '../src/content/index.js';
 // While writing lessons, ONLY_COURSE=java-start node tests/run.mjs runs just that course's lessons and exercises.
-const courses = process.env.ONLY_COURSE ? allCourses.filter((c) => c.id === process.env.ONLY_COURSE) : allCourses;
+const courses = (process.env.ONLY_COURSE ? allCourses.filter((c) => c.id === process.env.ONLY_COURSE) : allCourses)
+  // ONLY_LESSON=id1,id2 (with ONLY_COURSE) checks just those lessons, e.g. for a quick parity run of new C++ Pro lessons.
+  .map((c) => (process.env.ONLY_LESSON ? { ...c, lessons: c.lessons.filter((l) => process.env.ONLY_LESSON.split(',').includes(l.id)) } : c));
 import { gradeExercise, normalizeOutput } from '../src/lib/grader.js';
 import { translateError, extractLine } from '../src/lib/errors.js';
 import { normalizeC, prepareSource } from '../src/lib/csource.js';
