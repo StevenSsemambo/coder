@@ -11,6 +11,8 @@ import { onAttempt } from './ui/rewards.js';
 import { unlockAudio } from './ui/feedback.js';
 import { welcomeView } from './ui/views/welcome.js';
 import { reviewView } from './ui/views/review.js';
+import { logoMark } from './ui/logo.js';
+import { hideSplash, splashFailed } from './ui/splash.js';
 import { pathsView, certificateView } from './ui/views/paths.js';
 import { captureInstall } from './lib/install.js';
 import { exerciseView } from './ui/views/exercise.js';
@@ -58,7 +60,7 @@ async function boot() {
   });
 
   document.getElementById('app').replaceChildren(
-    h('header', { class: 'topbar' }, h('a', { class: 'brand', href: '#/learn' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, '</>'), h('span', null, 'SayMaCoder')), offlineBadge),
+    h('header', { class: 'topbar' }, h('a', { class: 'brand', href: '#/learn' }, h('span', { class: 'brand-mark', 'aria-hidden': 'true' }, logoMark(30)), h('span', { class: 'brand-name' }, 'SayMa', h('b', null, 'Coder'))), offlineBadge),
     main,
     h('nav', { class: 'tabbar', 'aria-label': 'Main' }, tabLinks),
   );
@@ -109,4 +111,7 @@ async function boot() {
   });
 }
 
-boot();
+boot().then(hideSplash).catch((e) => {
+  console.error(e);
+  splashFailed();
+});

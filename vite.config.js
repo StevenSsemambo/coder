@@ -14,7 +14,7 @@ export default defineConfig({
         short_name: 'SayMaCoder',
         description: 'Learn to code on your phone with no data and no subscription.',
         theme_color: '#0b6b4f',
-        background_color: '#f6f5f1',
+        background_color: '#06261d',
         display: 'standalone',
         orientation: 'portrait',
         start_url: './',
