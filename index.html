@@ -32,7 +32,8 @@
       #splash .term .cur { display: inline-block; width: .55em; height: 1.05em; margin-left: 3px; vertical-align: -.18em; background: #8ff0c4; animation: blink 1s steps(1) infinite; }
       #splash .bar { margin-top: 34px; width: min(220px, 56vw); height: 4px; border-radius: 4px; background: rgba(255,255,255,.14); overflow: hidden; }
       #splash .bar span { display: block; height: 100%; width: 40%; border-radius: 4px; background: linear-gradient(90deg, #8ff0c4, #ffc94d); animation: slide 1.3s ease-in-out infinite; }
-      #splash .foot { position: absolute; left: 0; right: 0; bottom: calc(26px + env(safe-area-inset-bottom)); font-size: .82rem; color: #8fbfa9; letter-spacing: .04em; }
+      #splash .foot { position: absolute; left: 0; right: 0; bottom: calc(28px + env(safe-area-inset-bottom)); display: grid; gap: 2px; font-size: .78rem; color: #8fbfa9; letter-spacing: .06em; text-transform: lowercase; animation: rise .5s .5s ease both; }
+      #splash .foot strong { font-size: 1rem; color: #e6f7ef; letter-spacing: .03em; text-transform: none; font-weight: 700; }
       #splash .slow { margin-top: 18px; max-width: 300px; font-size: .9rem; color: #ffd98a; opacity: 0; transition: opacity .4s; }
       #splash.late .slow { opacity: 1; }
       @keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -65,7 +66,7 @@
       <div class="term" aria-hidden="true"><i>$</i> print("Hello, world!")<span class="cur"></span></div>
       <div class="bar" aria-hidden="true"><span></span></div>
       <p class="slow">Still loading. Check your connection, then reload the page.</p>
-      <div class="foot" aria-hidden="true">From zero to pro, one small step at a time</div>
+      <div class="foot" aria-hidden="true"><span>from</span><strong>SayMyTech Developers</strong></div>
     </div>
     <div id="app"></div>
     <noscript>SayMaCoder needs JavaScript to run.</noscript>

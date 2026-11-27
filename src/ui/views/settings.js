@@ -147,6 +147,7 @@ export async function settingsView() {
     h('a', { class: 'btn btn-block', href: '#/welcome' }, 'Choose my starting course again'),
     h('h2', { class: 'section-title' }, 'About'),
     h('p', { class: 'muted' }, 'SayMaCoder. Everything runs on your phone. Your code and progress never leave it.'),
+    h('p', { class: 'muted small' }, 'Made by SayMyTech Developers.'),
   );
   return { node };
 }
