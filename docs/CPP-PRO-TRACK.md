@@ -75,10 +75,10 @@ reference solution passes (`npm test`). The runner for language `cppfull` is `te
 - [x] 14. `cppp-shop` project: an object-oriented shop (items, orders, discounts)
 
 **Level 3: Generic and modern C++**
-- [ ] 15. `cppp-templates` function and class templates
-- [ ] 16. `cppp-containers` `map`, `unordered_map`, `set`, `pair`, `stack`, `queue`
-- [ ] 17. `cppp-iterators` iterators and more `<algorithm>`, lambdas in depth
-- [ ] 18. `cppp-memory` `new`/`delete`, ownership, RAII, `unique_ptr`, `shared_ptr`
+- [x] 15. `cppp-templates` function and class templates
+- [x] 16. `cppp-containers` `map`, `unordered_map`, `set`, `pair`, `stack`, `queue`
+- [x] 17. `cppp-iterators` iterators and more `<algorithm>`, lambdas in depth
+- [x] 18. `cppp-memory` `new`/`delete`, ownership, RAII, `unique_ptr`, `shared_ptr`
 - [ ] 19. `cppp-optional` handling failure without exceptions: `std::optional`, `std::variant`, return codes
 - [ ] 20. `cppp-streams` `stringstream`, formatting, parsing (and `fstream` once the engine has a virtual file system)
 - [ ] 21. `cppp-capstone` capstone: a market-ready inventory manager (classes, STL, smart pointers, a text menu)

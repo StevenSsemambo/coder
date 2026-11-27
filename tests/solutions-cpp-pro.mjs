@@ -33,6 +33,15 @@ const INC_DF = INC_D + '\n#include <iomanip>';
 const PDF = (above, body, inc = INC_D) => progProFn(above, body, inc);
 const INC_SH = '#include <iostream>\n#include <string>\n#include <vector>\n#include <algorithm>';
 const PSH = (above, body) => progProFn(above, body, INC_SH);
+const INC_T = '#include <iostream>\n#include <string>\n#include <vector>';
+const PTF = (above, body, inc = INC_T) => progProFn(above, body, inc);
+const INC_M = '#include <iostream>\n#include <string>\n#include <vector>\n#include <map>\n#include <set>\n#include <stack>\n#include <queue>\n#include <unordered_map>';
+const PMF = (above, body, inc = INC_M) => progProFn(above, body, inc);
+const INC_IT = '#include <iostream>\n#include <string>\n#include <vector>\n#include <map>\n#include <algorithm>\n#include <numeric>\n#include <iterator>';
+const PITF = (above, body, inc = INC_IT) => progProFn(above, body, inc);
+const INC_MEM = '#include <iostream>\n#include <string>\n#include <vector>\n#include <memory>\n#include <utility>';
+const INC_MEMF = INC_MEM + '\n#include <iomanip>';
+const PMEMF = (above, body, inc = INC_MEM) => progProFn(above, body, inc);
 const PVF = (body) => progPro(body, INC_V + '\n#include <iomanip>');
 
 export const cppProSolutions = {
@@ -1413,4 +1422,381 @@ public:
             log.report();
         }
     }`),
+
+  // Lesson 15: templates
+  'cppp15-extremes': PTF(String.raw`template <typename T>
+T smallest(const vector<T> &v) {
+    T best = v[0];
+    for (const T &x : v) {
+        if (x < best) {
+            best = x;
+        }
+    }
+    return best;
+}
+
+template <typename T>
+T largest(const vector<T> &v) {
+    T best = v[0];
+    for (const T &x : v) {
+        if (best < x) {
+            best = x;
+        }
+    }
+    return best;
+}`, String.raw`    int n;
+    cin >> n;
+    vector<int> nums(n);
+    for (int i = 0; i < n; i++) {
+        cin >> nums[i];
+    }
+    int m;
+    cin >> m;
+    vector<string> words(m);
+    for (int i = 0; i < m; i++) {
+        cin >> words[i];
+    }
+    cout << "Ints: " << smallest(nums) << " " << largest(nums) << endl;
+    cout << "Words: " << smallest(words) << " " << largest(words) << endl;`),
+  'cppp15-pair': PTF(String.raw`template <typename A, typename B>
+class Pair {
+    A first;
+    B second;
+public:
+    Pair(A a, B b) : first(a), second(b) {}
+    A getFirst() const { return first; }
+    B getSecond() const { return second; }
+    Pair<B, A> swapped() const { return Pair<B, A>(second, first); }
+};`, String.raw`    int number;
+    string word;
+    while (cin >> number >> word) {
+        Pair<int, string> p(number, word);
+        Pair<string, int> s = p.swapped();
+        cout << "(" << s.getFirst() << ", " << s.getSecond() << ")" << endl;
+    }`),
+  'cppp15-stacks': PTF(String.raw`template <typename T>
+class Stack {
+    vector<T> items;
+public:
+    void push(const T &x) { items.push_back(x); }
+    void pop() { items.pop_back(); }
+    T top() const { return items.back(); }
+    bool empty() const { return items.empty(); }
+};`, String.raw`    Stack<string> words;
+    Stack<int> lengths;
+    string w;
+    while (cin >> w) {
+        words.push(w);
+        lengths.push(w.length());
+    }
+    bool first = true;
+    while (!words.empty()) {
+        if (!first) {
+            cout << " ";
+        }
+        cout << words.top();
+        words.pop();
+        first = false;
+    }
+    cout << endl;
+    first = true;
+    while (!lengths.empty()) {
+        if (!first) {
+            cout << " ";
+        }
+        cout << lengths.top();
+        lengths.pop();
+        first = false;
+    }
+    cout << endl;`),
+  'cppp15-countif': PTF(String.raw`template <typename T, typename F>
+int countIf(const vector<T> &v, F pred) {
+    int n = 0;
+    for (const T &x : v) {
+        if (pred(x)) {
+            n++;
+        }
+    }
+    return n;
+}`, String.raw`    int n;
+    cin >> n;
+    vector<int> nums(n);
+    for (int i = 0; i < n; i++) {
+        cin >> nums[i];
+    }
+    int m;
+    cin >> m;
+    vector<string> words(m);
+    for (int i = 0; i < m; i++) {
+        cin >> words[i];
+    }
+    cout << "Big numbers: " << countIf(nums, [](int x) { return x > 10; }) << endl;
+    cout << "Long words: " << countIf(words, [](const string &w) { return w.length() > 3; }) << endl;`),
+
+  // Lesson 16: containers
+  'cppp16-wordcount': PMF('', String.raw`    map<string, int> count;
+    string word;
+    while (cin >> word) {
+        count[word]++;
+    }
+    for (const auto &entry : count) {
+        cout << entry.first << ": " << entry.second << endl;
+    }`),
+  'cppp16-distinct': PMF('', String.raw`    set<int> unique;
+    int x;
+    while (cin >> x) {
+        unique.insert(x);
+    }
+    bool first = true;
+    for (int n : unique) {
+        if (!first) {
+            cout << " ";
+        }
+        cout << n;
+        first = false;
+    }
+    cout << endl;
+    cout << "Distinct: " << unique.size() << endl;`),
+  'cppp16-brackets': PMF('', String.raw`    string text;
+    cin >> text;
+    stack<char> open;
+    bool ok = true;
+    for (char c : text) {
+        if (c == '(' || c == '[' || c == '{') {
+            open.push(c);
+        } else {
+            if (open.empty()) {
+                ok = false;
+                break;
+            }
+            char t = open.top();
+            open.pop();
+            if ((c == ')' && t != '(') || (c == ']' && t != '[') || (c == '}' && t != '{')) {
+                ok = false;
+                break;
+            }
+        }
+    }
+    if (!open.empty()) {
+        ok = false;
+    }
+    cout << (ok ? "Balanced" : "Not balanced") << endl;`),
+  'cppp16-queue': PMF('', String.raw`    queue<string> line;
+    string cmd;
+    while (cin >> cmd) {
+        if (cmd == "arrive") {
+            string name;
+            cin >> name;
+            line.push(name);
+        } else if (cmd == "serve") {
+            if (line.empty()) {
+                cout << "Nobody waiting" << endl;
+            } else {
+                cout << "Serving " << line.front() << endl;
+                line.pop();
+            }
+        } else if (cmd == "size") {
+            cout << "Waiting: " << line.size() << endl;
+        }
+    }`),
+
+  // Lesson 17: iterators, algorithms and lambdas
+  'cppp17-odds': PITF('', String.raw`    vector<int> v;
+    int x;
+    while (cin >> x) {
+        v.push_back(x);
+    }
+    v.erase(remove_if(v.begin(), v.end(), [](int n) { return n % 2 == 0; }), v.end());
+    if (v.empty()) {
+        cout << "none" << endl;
+    } else {
+        for (int i = 0; i < v.size(); i++) {
+            if (i > 0) {
+                cout << " ";
+            }
+            cout << v[i];
+        }
+        cout << endl;
+    }`),
+  'cppp17-squares': PITF('', String.raw`    vector<int> v;
+    int x;
+    while (cin >> x) {
+        v.push_back(x);
+    }
+    vector<int> positives, squares;
+    copy_if(v.begin(), v.end(), back_inserter(positives), [](int n) { return n > 0; });
+    transform(positives.begin(), positives.end(), back_inserter(squares), [](int n) { return n * n; });
+    if (squares.empty()) {
+        cout << "none" << endl;
+    } else {
+        for (int i = 0; i < squares.size(); i++) {
+            if (i > 0) {
+                cout << " ";
+            }
+            cout << squares[i];
+        }
+        cout << endl;
+    }`),
+  'cppp17-threshold': PITF('', String.raw`    int limit;
+    cin >> limit;
+    vector<int> sales;
+    int x;
+    while (cin >> x) {
+        sales.push_back(x);
+    }
+    int count = count_if(sales.begin(), sales.end(), [limit](int s) { return s > limit; });
+    int total = 0;
+    for_each(sales.begin(), sales.end(), [&total, limit](int s) {
+        if (s > limit) {
+            total += s;
+        }
+    });
+    cout << "Count: " << count << endl;
+    cout << "Sum: " << total << endl;`),
+  'cppp17-prune': PITF('', String.raw`    map<string, int> m;
+    string word;
+    int count;
+    while (cin >> word >> count) {
+        m[word] = count;
+    }
+    for (auto it = m.begin(); it != m.end();) {
+        if (it->second < 3) {
+            it = m.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    if (m.empty()) {
+        cout << "none" << endl;
+    }
+    for (const auto &entry : m) {
+        cout << entry.first << ": " << entry.second << endl;
+    }`),
+
+  // Lesson 18: memory and smart pointers
+  'cppp18-move': PMEMF(String.raw`class Tag {
+    string name;
+public:
+    Tag(string n) : name(n) { cout << "make " << name << endl; }
+    ~Tag() { cout << "free " << name << endl; }
+};
+
+void consume(unique_ptr<Tag> t) {
+    cout << "consuming" << endl;
+}`, String.raw`    string name;
+    cin >> name;
+    auto t = make_unique<Tag>(name);
+    consume(move(t));
+    cout << "after" << endl;`),
+  'cppp18-shapes': PMEMF(String.raw`class Shape {
+public:
+    virtual double area() const = 0;
+    virtual ~Shape() {}
+};
+
+class Square : public Shape {
+    double s;
+public:
+    Square(double side) : s(side) {}
+    double area() const override { return s * s; }
+};
+
+class Rect : public Shape {
+    double w, h;
+public:
+    Rect(double w, double h) : w(w), h(h) {}
+    double area() const override { return w * h; }
+};`, String.raw`    vector<unique_ptr<Shape>> shapes;
+    string kind;
+    while (cin >> kind) {
+        if (kind == "square") {
+            double s;
+            cin >> s;
+            shapes.push_back(make_unique<Square>(s));
+        } else if (kind == "rect") {
+            double w, h;
+            cin >> w >> h;
+            shapes.push_back(make_unique<Rect>(w, h));
+        }
+    }
+    double total = 0;
+    for (const auto &s : shapes) {
+        total += s->area();
+    }
+    cout << "Shapes: " << shapes.size() << endl;
+    cout << fixed << setprecision(2);
+    cout << "Total area: " << total << endl;`, INC_MEMF),
+  'cppp18-shared': PMEMF(String.raw`class Tag {
+    string name;
+public:
+    Tag(string n) : name(n) { cout << "make " << name << endl; }
+    ~Tag() { cout << "free " << name << endl; }
+};`, String.raw`    string name;
+    cin >> name;
+    auto first = make_shared<Tag>(name);
+    vector<shared_ptr<Tag>> extra;
+    string cmd;
+    while (cin >> cmd) {
+        if (cmd == "share") {
+            extra.push_back(first);
+        } else if (cmd == "drop") {
+            if (!extra.empty()) {
+                extra.pop_back();
+            }
+        } else if (cmd == "count") {
+            cout << "Owners: " << first.use_count() << endl;
+        }
+    }
+    cout << "end" << endl;`),
+  'cppp18-pool': PMEMF(String.raw`class Tag {
+    string name;
+public:
+    Tag(string n) : name(n) {}
+    ~Tag() { cout << "free " << name << endl; }
+    string getName() const { return name; }
+};
+
+class Pool {
+    vector<unique_ptr<Tag>> tags;
+public:
+    void add(const string &name) { tags.push_back(make_unique<Tag>(name)); }
+    bool remove(const string &name) {
+        for (int i = 0; i < tags.size(); i++) {
+            if (tags[i]->getName() == name) {
+                tags.erase(tags.begin() + i);
+                return true;
+            }
+        }
+        return false;
+    }
+    void list() const {
+        cout << "Tags:";
+        for (const auto &t : tags) {
+            cout << " " << t->getName();
+        }
+        cout << endl;
+    }
+    void closeAll() {
+        while (!tags.empty()) {
+            tags.pop_back();
+        }
+    }
+};`, String.raw`    Pool pool;
+    string cmd, name;
+    while (cin >> cmd) {
+        if (cmd == "add") {
+            cin >> name;
+            pool.add(name);
+            cout << "Added " << name << endl;
+        } else if (cmd == "remove") {
+            cin >> name;
+            if (!pool.remove(name)) {
+                cout << "No such tag" << endl;
+            }
+        } else if (cmd == "list") {
+            pool.list();
+        }
+    }
+    cout << "closing" << endl;
+    pool.closeAll();`),
 };

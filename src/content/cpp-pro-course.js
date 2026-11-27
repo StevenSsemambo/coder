@@ -16,11 +16,15 @@ import { inheritanceLesson } from './cpp-pro/inheritance.js';
 import { polymorphismLesson } from './cpp-pro/polymorphism.js';
 import { designLesson } from './cpp-pro/design.js';
 import { shopLesson } from './cpp-pro/shop.js';
+import { templatesLesson } from './cpp-pro/templates.js';
+import { containersLesson } from './cpp-pro/containers.js';
+import { iteratorsLesson } from './cpp-pro/iterators.js';
+import { memoryLesson } from './cpp-pro/memory.js';
 
 export const cppProCourse = {
   id: 'cpp-pro',
   language: 'cppfull',
   title: 'C++ Pro: Real C++',
   subtitle: 'Strings, vectors, classes, templates and the standard library, with a real compiler',
-  lessons: [stringsLesson, vectorsLesson, algorithmsLesson, referencesLesson, structsLesson, ledgerLesson, classesLesson, constructorsLesson, encapsulationLesson, operatorsLesson, inheritanceLesson, polymorphismLesson, designLesson, shopLesson],
+  lessons: [stringsLesson, vectorsLesson, algorithmsLesson, referencesLesson, structsLesson, ledgerLesson, classesLesson, constructorsLesson, encapsulationLesson, operatorsLesson, inheritanceLesson, polymorphismLesson, designLesson, shopLesson, templatesLesson, containersLesson, iteratorsLesson, memoryLesson],
 };
